@@ -1,6 +1,6 @@
 # PhotoGalleries
 
-A website to showcase the londonbikers.com photo galleries, both old and new. Currently in development.
+A website to showcase the https://londonbikers.com photo galleries, both old and new. Currently in development.
 
 Planned tech stack:
 
@@ -20,5 +20,6 @@ Planned features:
 * Discourse API integration to allow cross-posting onto londonbikers.com
 * Photo user comments
 * Gallery user comments
+* OpenID Connect federation with our IdentityServer IDP
 
 Photos will need migrating from both our archive and the current LB photos website.
