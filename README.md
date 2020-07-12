@@ -26,4 +26,14 @@ Photos will need migrating from both our archive and the current LB photos websi
 
 ** Website Structure
 
-/ homepage ()
+/ (latest galleries + intro)
+/categories (list of categories)
+/categories/{name}
+/galleries/{id}/{name} (gallery detail)
+/admin
+/admin/categories (categories list)
+/admin/categories/new
+/admin/categories/{id}
+/admin/galleries (gallery list)
+/admin/galleries/new
+/admin/galleries/{id} (gallery detail)
