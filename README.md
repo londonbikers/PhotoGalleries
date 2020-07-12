@@ -23,3 +23,7 @@ Planned features:
 * OpenID Connect federation with our IdentityServer IDP
 
 Photos will need migrating from both our archive and the current LB photos website.
+
+** Website Structure
+
+/ homepage ()
