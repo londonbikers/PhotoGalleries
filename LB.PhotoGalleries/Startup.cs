@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace LB.PhotoGalleries
 {
@@ -19,6 +20,26 @@ namespace LB.PhotoGalleries
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            // reduces down the claims received
+            JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = "Cookies";
+                options.DefaultChallengeScheme = "oidc";
+            })
+            .AddCookie("Cookies")
+            .AddOpenIdConnect("oidc", options =>
+            {
+                options.GetClaimsFromUserInfoEndpoint = true;
+                options.Authority = Configuration["Authentication.Authority"];
+                options.ClientId = Configuration["Authentication.ClientId"];
+                options.ClientSecret = Configuration["Authentication.ClientSecret"];
+                options.ResponseType = "code";
+                options.SaveTokens = true;
+                options.Scope.Add("profile");
+                options.Scope.Add("email");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -39,6 +60,7 @@ namespace LB.PhotoGalleries
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
