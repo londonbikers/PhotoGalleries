@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication;
 
 namespace LB.PhotoGalleries
 {
@@ -35,14 +36,26 @@ namespace LB.PhotoGalleries
             .AddCookie("Cookies")
             .AddOpenIdConnect("oidc", options =>
             {
-                options.GetClaimsFromUserInfoEndpoint = true;
+                // idp configuration
                 options.Authority = Configuration["Authentication.Authority"];
                 options.ClientId = Configuration["Authentication.ClientId"];
                 options.ClientSecret = Configuration["Authentication.ClientSecret"];
+                
+                // token and claim configuration
+                options.GetClaimsFromUserInfoEndpoint = true;
                 options.ResponseType = "code";
                 options.SaveTokens = true;
-                options.Scope.Add("profile");
+                options.Scope.Add("openid");
                 options.Scope.Add("email");
+                options.Scope.Add("profile");
+                options.Scope.Add("role");
+
+                // ensures that the name claim is used to populate ASP.NET Identity username, i.e. User.Identity.Name
+                options.TokenValidationParameters.NameClaimType = "name";
+
+                // ensures that role any claims are used to populate ASP.NET Identity roles
+                options.ClaimActions.MapJsonKey("role", "role", "role");
+                options.TokenValidationParameters.RoleClaimType = "role";
             });
         }
 
