@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +20,9 @@ namespace LB.PhotoGalleries
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // make sure all our urls are generated in lower-case for purely aesthetic reasons
+            services.Configure<RouteOptions>(o => o.LowercaseUrls = true);
+
             services.AddControllersWithViews();
 
             // reduces down the claims received
