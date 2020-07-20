@@ -1,5 +1,4 @@
-﻿using System;
-namespace LB.PhotoGalleries.Application.Servers
+﻿namespace LB.PhotoGalleries.Application.Servers
 {
     /// <summary>
     /// Provides CRUD functionality for Category objects.

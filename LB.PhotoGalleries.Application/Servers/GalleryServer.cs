@@ -1,5 +1,4 @@
-﻿using System;
-namespace LB.PhotoGalleries.Application.Servers
+﻿namespace LB.PhotoGalleries.Application.Servers
 {
     public class GalleryServer
     {

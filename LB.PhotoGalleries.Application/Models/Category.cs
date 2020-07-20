@@ -1,5 +1,6 @@
 ﻿using System;
-namespace LB.PhotoGalleries.Models
+
+namespace LB.PhotoGalleries.Application.Models
 {
     public class Category
     {

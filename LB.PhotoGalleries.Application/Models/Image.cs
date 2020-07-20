@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LB.PhotoGalleries.Models
+namespace LB.PhotoGalleries.Application.Models
 {
     public class Image
     {
