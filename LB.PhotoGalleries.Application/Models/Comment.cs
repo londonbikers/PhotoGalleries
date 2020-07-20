@@ -6,6 +6,7 @@ namespace LB.PhotoGalleries.Application.Models
     {
         #region accessors
         public DateTime Created { get; set; }
+        public string CreatedByUserId { get; set; }
         public string Text { get; set; }
         #endregion
 

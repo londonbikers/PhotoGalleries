@@ -16,6 +16,8 @@ namespace LB.PhotoGalleries.Application.Models
         public bool Active { get; set; }
         public Dictionary<int, Image> Images { get;set;}
         public List<Comment> Comments { get; set; }
+        public string CreatedByUserId { get; set; }
+        public DateTime Created { get; set; }
         #endregion
 
         #region constructors
@@ -23,6 +25,7 @@ namespace LB.PhotoGalleries.Application.Models
         {
             Images = new Dictionary<int, Image>();
             Comments = new List<Comment>();
+            Created = DateTime.Now;
         }
         #endregion
 

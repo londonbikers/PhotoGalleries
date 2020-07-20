@@ -14,6 +14,7 @@ namespace LB.PhotoGalleries.Application
         public static Server Instance { get; }
         public CategoryServer Categories { get; internal set; }
         public GalleryServer Galleries { get; internal set; }
+        public UserServer Users { get; internal set; }
         #endregion
 
         #region constructors
@@ -22,7 +23,8 @@ namespace LB.PhotoGalleries.Application
             Instance = new Server
             {
                 Categories = new CategoryServer(),
-                Galleries = new GalleryServer()
+                Galleries = new GalleryServer(),
+                Users = new UserServer()
             };
         }
         #endregion
