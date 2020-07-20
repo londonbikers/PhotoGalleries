@@ -2,7 +2,7 @@
 
 A website to showcase the https://londonbikers.com photo galleries, both old and new. Currently in development.
 
-Planned tech stack:
+## Planned tech stack:
 
 * ASP.NET Core MVC
 * Azure Cosmos DB
@@ -12,7 +12,7 @@ Planned tech stack:
 * Azure Web App hosting
 * Knockout.js
 
-Planned features:
+## Planned features:
 
 * Photo galleries
 * Gallery categories
@@ -24,16 +24,18 @@ Planned features:
 
 Photos will need migrating from both our archive and the current LB photos website.
 
-** Website Structure
+## Website Structure
 
-/ (latest galleries + intro)
-/categories (list of categories)
-/categories/{name}
-/galleries/{id}/{name} (gallery detail)
-/admin
-/admin/categories (categories list)
-/admin/categories/new
-/admin/categories/{id}
-/admin/galleries (gallery list)
-/admin/galleries/new
-/admin/galleries/{id} (gallery detail)
+| path | description |
+|---|---|
+|/|latest galleries + intro|
+|/categories|list of categories|
+|/categories/{name}|category detail page|
+|/galleries/{id}/{name}|gallery detail|
+|/admin|admin landing page|
+|/admin/categories|categories list|
+|/admin/categories/new|create a new category|
+|/admin/categories/{id}|category detail page|
+|/admin/galleries|gallery list|
+|/admin/galleries/new|create a new gallery|
+|/admin/galleries/{id}|gallery detail|
