@@ -3,8 +3,16 @@
     ViewData["Title"] = "Your Claims";
 }
 
+<h1>Welcome @User.Identity.Name</h1>
 <h2>Claims</h2>
-Used for debug purposes to verify authentication and authorisation data. Only you can see these details.
+<p>
+    Used for debug purposes to verify authentication and authorisation data. Only you can see these details.
+</p>
+
+<ul>
+    <li><b>Is Authenticated:</b> @User.Identity.IsAuthenticated</li>
+    <li><b>Authentication type:</b> @User.Identity.AuthenticationType</li>
+</ul>
 
 <dl>
     @foreach (var claim in User.Claims)
