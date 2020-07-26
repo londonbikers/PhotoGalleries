@@ -1,10 +1,13 @@
-﻿using System;
-namespace LB.PhotoGalleries.Application
+﻿namespace LB.PhotoGalleries.Application
 {
-    public class Constants
+    internal class Constants
     {
-        public Constants()
-        {
-        }
+        /// <summary>
+        /// The name of the CosmosDB database to use to store application data.
+        /// </summary>
+        internal static string DatabaseName => "PhotoGalleries";
+        internal static string UsersContainerName => "Users";
+        internal static string GalleriesContainerName => "Galleries";
+        internal static string CategoriesContainerName => "Categories";
     }
 }
