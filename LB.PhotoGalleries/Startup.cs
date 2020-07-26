@@ -1,3 +1,5 @@
+using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -6,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace LB.PhotoGalleries
 {
@@ -40,7 +43,7 @@ namespace LB.PhotoGalleries
                 options.Authority = Configuration["Authentication.Authority"];
                 options.ClientId = Configuration["Authentication.ClientId"];
                 options.ClientSecret = Configuration["Authentication.ClientSecret"];
-                
+
                 // token and claim configuration
                 options.GetClaimsFromUserInfoEndpoint = true;
                 options.ResponseType = "code";
@@ -56,7 +59,26 @@ namespace LB.PhotoGalleries
                 // ensures that role any claims are used to populate ASP.NET Identity roles
                 options.ClaimActions.MapJsonKey("role", "role", "role");
                 options.TokenValidationParameters.RoleClaimType = "role";
+
+                // create a user object in our database the first time they login
+                options.Events.OnTicketReceived = async ctx =>
+                {
+                    var user = new User
+                    {
+                        Id = ctx.Principal.FindFirstValue("sub"),
+                        Name = ctx.Principal.FindFirstValue("name"),
+                        Email = ctx.Principal.FindFirstValue("email"),
+                        Picture = ctx.Principal.FindFirstValue("picture"),
+                    };
+
+                    // we'll either create them or update them, which is useful if their
+                    // profile picture has changed from their source identity provider, i.e. Facebook
+                    await Server.Instance.Users.CreateOrUpdateUserAsync(user); 
+                };
             });
+
+            // configure the application tier
+            Server.Instance.SetConfigurationAsync(Configuration).Wait();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
