@@ -25,6 +25,16 @@ namespace LB.PhotoGalleries.Application.Models
         /// </summary>
         public List<Comment> Comments { get; set; }
         public string CreatedByUserId { get; set; }
+        /// <summary>
+        /// The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
+        /// Useful for URL conversion/redirects.
+        /// </summary>
+        public int LegacyNumId { get; set; }
+        /// <summary>
+        /// The guid id of the gallery when it was stored in the old londonbikers_v5 database.
+        /// Useful for URL conversion/redirects.
+        /// </summary>
+        public Guid LegacyGuidId { get; set; }
         public DateTime Created { get; set; }
         #endregion
 
