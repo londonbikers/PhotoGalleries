@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 
 namespace LB.PhotoGalleries.Application.Models
 {
@@ -41,6 +41,18 @@ namespace LB.PhotoGalleries.Application.Models
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
+        }
+
+        public bool IsValid()
+        {
+            if (string.IsNullOrEmpty(Id) ||
+                string.IsNullOrEmpty(Name) ||
+                string.IsNullOrEmpty(Description) ||
+                string.IsNullOrEmpty(CategoryId) ||
+                string.IsNullOrEmpty(CreatedByUserId))
+                return false;
+
+            return true;
         }
         #endregion
     }

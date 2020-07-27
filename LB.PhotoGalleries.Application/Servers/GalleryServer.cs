@@ -2,6 +2,7 @@
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -34,6 +35,21 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             throw new InvalidOperationException("No gallery found with id: " + galleryId);
+        }
+
+        public async Task CreateOrUpdateGalleryAsync(Gallery gallery)
+        {
+            if (gallery == null)
+                throw new InvalidOperationException("Gallery is null");
+
+            if (!gallery.IsValid())
+                throw new InvalidOperationException("Gallery is not valid. Check that all required properties are set");
+
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var partitionKey = new PartitionKey(gallery.CategoryId);
+            var response = await container.UpsertItemAsync(gallery, partitionKey);
+            var createdItem = response.StatusCode == HttpStatusCode.Created;
+            Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
         }
         #endregion
     }
