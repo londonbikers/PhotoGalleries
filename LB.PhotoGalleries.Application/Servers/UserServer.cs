@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Microsoft.Azure.Cosmos;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
 using User = LB.PhotoGalleries.Application.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -33,7 +33,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<User> GetUserAsync(string userId)
         {
-            var query = $"SELECT * FROM c WHERE c.Id = '@userId'";
+            var query = "SELECT * FROM c WHERE c.Id = '@userId'";
             var queryDefinition = new QueryDefinition(query);
             queryDefinition.WithParameter("@userId", userId);
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
