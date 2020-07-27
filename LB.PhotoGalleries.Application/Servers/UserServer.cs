@@ -33,7 +33,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<User> GetUserAsync(string userId)
         {
-            var query = "SELECT * FROM c WHERE c.Id = '@userId'";
+            const string query = "SELECT * FROM c WHERE c.Id = '@userId'";
             var queryDefinition = new QueryDefinition(query);
             queryDefinition.WithParameter("@userId", userId);
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
