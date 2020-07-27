@@ -21,20 +21,23 @@ namespace LB.PhotoGalleries.Application.Servers
             const string query = "SELECT * FROM c WHERE c.Id = '@galleryId'";
             var queryDefinition = new QueryDefinition(query);
             queryDefinition.WithParameter("@galleryId", galleryId);
-            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
-            var queryResult = container.GetItemQueryIterator<Gallery>(queryDefinition);
+            return await GetGalleryByQueryAsync(queryDefinition);
+        }
 
-            if (queryResult.HasMoreResults)
-            {
-                var resultSet = await queryResult.ReadNextAsync();
-                foreach (var gallery in resultSet)
-                {
-                    Debug.WriteLine("GalleryServer.GetGalleryAsync(): Found a gallery with id: " + galleryId);
-                    return gallery;
-                }
-            }
+        public async Task<Gallery> GetGalleryByLegacyNumIdAsync(int galleryLegacyId)
+        {
+            const string query = "SELECT * FROM c WHERE c.LegacyNumId = @galleryLegacyId";
+            var queryDefinition = new QueryDefinition(query);
+            queryDefinition.WithParameter("@galleryLegacyId", galleryLegacyId);
+            return await GetGalleryByQueryAsync(queryDefinition);
+        }
 
-            throw new InvalidOperationException("No gallery found with id: " + galleryId);
+        public async Task<Gallery> GetGalleryByLegacyGuidIdAsync(Guid galleryLegacyId)
+        {
+            const string query = "SELECT * FROM c WHERE c.LegacyGuidId = '@galleryLegacyId'";
+            var queryDefinition = new QueryDefinition(query);
+            queryDefinition.WithParameter("@galleryLegacyId", galleryLegacyId);
+            return await GetGalleryByQueryAsync(queryDefinition);
         }
 
         public async Task CreateOrUpdateGalleryAsync(Gallery gallery)
@@ -52,5 +55,26 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
         }
         #endregion
+
+        #region private methods
+        public async Task<Gallery> GetGalleryByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var queryResult = container.GetItemQueryIterator<Gallery>(queryDefinition);
+
+            if (queryResult.HasMoreResults)
+            {
+                var resultSet = await queryResult.ReadNextAsync();
+                foreach (var gallery in resultSet)
+                {
+                    Debug.WriteLine("GalleryServer.GetGalleryAsync(): Found a gallery using query: " + queryDefinition.QueryText);
+                    return gallery;
+                }
+            }
+
+            throw new InvalidOperationException("No gallery found using query: " + queryDefinition.QueryText);
+        }
+        #endregion
+
     }
 }
