@@ -33,11 +33,9 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<User> GetUserAsync(string userId)
         {
-            // userId doesn't come from user input so no SQL Injection risk.
-            // but all the same I don't like building a query like this one bit.
-            // need to find a better way.
-            var query = $"SELECT * FROM c WHERE c.Id = '{userId}'";
+            var query = $"SELECT * FROM c WHERE c.Id = '@userId'";
             var queryDefinition = new QueryDefinition(query);
+            queryDefinition.WithParameter("@userId", userId);
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
 
