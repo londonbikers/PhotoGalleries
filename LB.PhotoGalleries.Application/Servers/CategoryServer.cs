@@ -95,9 +95,6 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </remarks>
         private static async Task<bool> IsCategoryNameUniqueAsync(Category category)
         {
-            // need to know:
-            // -- is name unique?
-            // -- if not unique, are the ids the same, so no name change?
             var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.Name = @name").WithParameter("@name", category.Name);
             var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
             var queryResult = container.GetItemQueryIterator<Category>(queryDefinition);
