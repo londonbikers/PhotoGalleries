@@ -83,7 +83,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     _categories.Add(category);
             }
 
-            Debug.WriteLine($"CategoryServer.LoadCategoriesAsync(): Loaded ${_categories.Count} categories from the database.");
+            Debug.WriteLine($"CategoryServer.LoadCategoriesAsync(): Loaded {_categories.Count} categories from the database.");
         }
 
         /// <summary>
