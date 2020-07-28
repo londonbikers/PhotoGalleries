@@ -77,8 +77,12 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/categories/delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(string id)
         {
+            ViewData.Model = Server.Instance.Categories.Categories.SingleOrDefault(q => q.Id.Equals(id));
+            if (ViewData.Model == null)
+                ViewData["error"] = "No category found with that id, sorry.";
+
             return View();
         }
 
