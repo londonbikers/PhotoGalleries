@@ -51,7 +51,8 @@ namespace LB.PhotoGalleries.Application.Servers
             if (!category.IsValid())
                 throw new InvalidOperationException("Category is not valid. Check that all required properties are set");
 
-            // todo: validate that the name is unique if creating a new category
+            if (!await IsCategoryNameUniqueAsync(category))
+                throw new InvalidOperationException("New category name would not be unique. Please change it and try again.");
 
             var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
             var response = await container.UpsertItemAsync(category, new PartitionKey(category.PartitionKey));
@@ -83,6 +84,37 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             Debug.WriteLine($"CategoryServer.LoadCategoriesAsync(): Loaded ${_categories.Count} categories from the database.");
+        }
+
+        /// <summary>
+        /// Checks if a category name would be new, either for a new category or an updated one.
+        /// </summary>
+        /// <remarks>
+        /// If this was a high-transaction system then this would probably make sense to perform at the database level via a trigger.
+        /// But this isn't, categories won't be created very often so no need to worry about consistency/performance.
+        /// </remarks>
+        private static async Task<bool> IsCategoryNameUniqueAsync(Category category)
+        {
+            // need to know:
+            // -- is name unique?
+            // -- if not unique, are the ids the same, so no name change?
+            var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.Name = @name").WithParameter("@name", category.Name);
+            var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
+            var queryResult = container.GetItemQueryIterator<Category>(queryDefinition);
+            var isUnique = true;
+
+            if (queryResult.HasMoreResults)
+            {
+                var resultSet = await queryResult.ReadNextAsync();
+                Debug.WriteLine("CategoryServer.IsCategoryNameUniqueAsync: Request charge: " + resultSet.RequestCharge);
+                foreach (var dbCategory in resultSet)
+                {
+                    if (dbCategory.Id != category.Id)
+                        isUnique = false;
+                }
+            }
+
+            return isUnique;
         }
         #endregion
     }
