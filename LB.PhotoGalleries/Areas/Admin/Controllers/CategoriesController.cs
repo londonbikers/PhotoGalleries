@@ -62,14 +62,16 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/categories/edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(string id, Category category)
         {
             try
             {
+                await Server.Instance.Categories.CreateOrUpdateCategoryAsync(category);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }
