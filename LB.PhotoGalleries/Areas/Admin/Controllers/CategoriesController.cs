@@ -1,9 +1,10 @@
-﻿using System;
-using LB.PhotoGalleries.Application;
+﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -15,7 +16,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/categories
         public ActionResult Index()
         {
-            ViewData["categories"] = Server.Instance.Categories.Categories;
+            ViewData.Model = Server.Instance.Categories.Categories;
             return View();
         }
 
@@ -51,6 +52,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/categories/edit/5
         public ActionResult Edit(string id)
         {
+            ViewData.Model = Server.Instance.Categories.Categories.SingleOrDefault(q => q.Id.Equals(id));
+            if (ViewData.Model == null)
+                ViewData["error"] = "No category found with that id, sorry.";
+
             return View();
         }
 
