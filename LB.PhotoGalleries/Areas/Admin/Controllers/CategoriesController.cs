@@ -20,12 +20,6 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
-        // GET: /admin/categories/details/5
-        public ActionResult Details(string id)
-        {
-            return View();
-        }
-
         // GET: /admin/categories/create
         public ActionResult Create()
         {
