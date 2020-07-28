@@ -42,8 +42,16 @@ namespace LB.PhotoGalleries.Application.Servers
             if (category == null)
                 throw new InvalidOperationException("Category is null");
 
+            if (string.IsNullOrEmpty(category.PartitionKey))
+                category.PartitionKey = Constants.CategoriesPartitionKeyValue;
+
+            if (string.IsNullOrEmpty(category.Id))
+                category.Id = Guid.NewGuid().ToString();
+
             if (!category.IsValid())
                 throw new InvalidOperationException("Category is not valid. Check that all required properties are set");
+
+            // todo: validate that the name is unique if creating a new category
 
             var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
             var response = await container.UpsertItemAsync(category, new PartitionKey(category.PartitionKey));

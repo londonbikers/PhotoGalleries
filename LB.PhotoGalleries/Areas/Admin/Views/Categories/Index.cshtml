@@ -1,8 +1,48 @@
-﻿@{
+﻿@using LB.PhotoGalleries.Application.Models
+@{
     ViewData["Title"] = "Categories Admin";
+    var categories = (List<Category>)ViewData["categories"];
 }
 
 <div class="text-center">
     <h1 class="display-4">Categories Admin</h1>
     <p>From here you can create, update and delete (empty) gallery categories.</p>
 </div>
+
+<a class="nav-link text-dark" asp-area="Admin" asp-controller="Categories" asp-action="Create">Create a category</a>
+<hr />
+
+<h2>Categories</h2>
+<table class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Id</th>
+        <th scope="col">Name</th>
+        <th scope="col">Edit</th>
+        <th scope="col">Delete</th>
+    </tr>
+    </thead>
+    <tbody>
+    
+    @if (categories == null || categories.Count == 0)
+    {
+        <tr>
+            <td colspan="4" class="text-center">No categories to show. Create the first using the form above!</td>
+        </tr>
+    }
+    
+    @if (categories != null)
+    {
+        foreach (var category in categories)
+        {
+            <tr>
+                <th scope="row">@category.Id</th>
+                <td>@category.Name</td>
+                <td>[edit]</td>
+                <td>[delete]</td>
+            </tr>
+        }
+    }
+
+    </tbody>
+</table>

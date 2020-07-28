@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace LB.PhotoGalleries.Application.Models
 {
@@ -7,19 +8,15 @@ namespace LB.PhotoGalleries.Application.Models
         #region accessors
         [JsonProperty("id")]
         public string Id { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public string Description { get; set; }
         /// <summary>
-        /// Used by CosmosDB to partition container contents to make querying more performant.
+        /// Used by CosmosDB to partition container contents to make querying perform better.
         /// The value should be an arbitrary constant as we don't have many categories so all items can reside in the same partition.
         /// </summary>
         public string PartitionKey { get; set; }
-        #endregion
-
-        #region constructors
-        public Category()
-        {
-        }
         #endregion
 
         #region public methods

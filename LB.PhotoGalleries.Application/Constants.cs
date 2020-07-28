@@ -9,5 +9,10 @@
         internal static string UsersContainerName => "Users";
         internal static string GalleriesContainerName => "Galleries";
         internal static string CategoriesContainerName => "Categories";
+
+        /// <summary>
+        /// All categories go into a single partition due to the expected low volume of them.
+        /// </summary>
+        internal static string CategoriesPartitionKeyValue => "Default";
     }
 }
