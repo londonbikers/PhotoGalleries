@@ -88,6 +88,25 @@ namespace LB.PhotoGalleries.Application.Servers
 
             return count;
         }
+
+        public async Task DeleteCategoryAsync(Category category)
+        {
+            if (category == null)
+                throw new InvalidOperationException("Category is null");
+
+            var galleriesCount = await GetCategoryGalleryCountAsync(category);
+            if (galleriesCount > 0)
+                throw new InvalidOperationException("Category is not empty of galleries. Cannot delete it.");
+
+            var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
+            var response = await container.DeleteItemAsync<Category>(category.Id, new PartitionKey(category.PartitionKey));
+            
+            Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Request charge: " + response.RequestCharge);
+            Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Status code: " + response.StatusCode);
+
+            // clear the categories cache so they're loaded afresh on the next request
+            _categories = null;
+        }
         #endregion
 
         #region private methods

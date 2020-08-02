@@ -91,14 +91,30 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/categories/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> Delete(string id, IFormCollection collection)
         {
             try
             {
+                var category = Server.Instance.Categories.Categories.SingleOrDefault(q => q.Id.Equals(id));
+                if (category == null)
+                {
+                    ViewData["error"] = "No category found with that id, sorry.";
+                    return View();
+                }
+
+                var galleryCount = await Server.Instance.Categories.GetCategoryGalleryCountAsync(category);
+                if (galleryCount > 0)
+                {
+                    ViewData["error"] = "Category is not empty of galleries. Cannot delete.";
+                    return View();
+                }
+
+                await Server.Instance.Categories.DeleteCategoryAsync(category);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }

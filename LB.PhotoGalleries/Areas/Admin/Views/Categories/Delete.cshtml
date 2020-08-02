@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Delete Category";
     var error = (string)ViewData["error"];
-    var galleryCount = (int)ViewData["galleryCount"];
+    var galleryCount = (int?) ViewData["galleryCount"] ?? 0;
 }
 
 <h1>Delete Category</h1>
