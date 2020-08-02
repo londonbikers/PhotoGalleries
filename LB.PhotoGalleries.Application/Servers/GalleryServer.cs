@@ -54,6 +54,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.UpsertItemAsync(gallery, partitionKey);
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
+            Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Request charge: " + response.RequestCharge);
         }
         #endregion
 
@@ -68,7 +69,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var resultSet = await queryResult.ReadNextAsync();
                 foreach (var gallery in resultSet)
                 {
-                    Debug.WriteLine("GalleryServer.GetGalleryAsync(): Found a gallery using query: " + queryDefinition.QueryText);
+                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Found a gallery using query: " + queryDefinition.QueryText);
+                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Request charge: " + resultSet.RequestCharge);
                     return gallery;
                 }
             }
