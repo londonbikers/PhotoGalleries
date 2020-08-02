@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -71,12 +72,20 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/categories/delete/5
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> Delete(string id)
         {
-            ViewData.Model = Server.Instance.Categories.Categories.SingleOrDefault(q => q.Id.Equals(id));
-            if (ViewData.Model == null)
+            var category = Server.Instance.Categories.Categories.SingleOrDefault(q => q.Id.Equals(id));
+            if (category == null)
+            {
                 ViewData["error"] = "No category found with that id, sorry.";
-
+            }
+            else
+            {
+                var galleryCount = await Server.Instance.Categories.GetCategoryGalleryCountAsync(category);
+                ViewData.Model = category;
+                ViewData["galleryCount"] = galleryCount;
+            }
+            
             return View();
         }
 

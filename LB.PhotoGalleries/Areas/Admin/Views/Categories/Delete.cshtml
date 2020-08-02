@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Delete Category";
     var error = (string)ViewData["error"];
+    var galleryCount = (int)ViewData["galleryCount"];
 }
 
 <h1>Delete Category</h1>
@@ -15,7 +16,16 @@
 
 @if (ViewData.Model != null)
 {
-    <h3>Are you sure you want to delete this?</h3>
+
+    if (galleryCount == 0)
+    {
+        <h3>Are you sure you want to delete this?</h3>
+    }
+    else
+    {
+        <h3>Category is not empty of galleries. Cannot delete!</h3>
+    }
+
     <div>
         <hr />
         <dl class="row">
@@ -39,10 +49,14 @@
             </dd>
         </dl>
 
-        <form asp-action="Delete">
-            <input type="submit" value="Delete" class="btn btn-danger" /> |
-            <a asp-action="Index">Back to List</a>
-        </form>
+        @if (galleryCount == 0)
+        {
+            <form asp-action="Delete">
+                <input type="submit" value="Delete" class="btn btn-danger" /> |
+                <a asp-action="Index">Back to List</a>
+            </form>
+        }
+
     </div>
 
 }

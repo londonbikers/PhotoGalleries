@@ -3,8 +3,11 @@ using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -58,9 +61,37 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.UpsertItemAsync(category, new PartitionKey(category.PartitionKey));
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Created category? " + createdItem);
+            Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Request charge: " + response.RequestCharge);
 
             // clear the cached categories list so it's retrieved fresh with these latest changes
             _categories = null;
+        }
+
+        /// <summary>
+        /// Categories can't be deleted whilst galleries are referencing them so it's helpful to know how many are.
+        /// </summary>
+        public async Task<int> GetCategoryGalleryCountAsync(Category category)
+        {
+            if (category == null)
+                throw new InvalidOperationException("Category is null");
+
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            //var galleries = container.GetItemLinqQueryable<Gallery>();
+            //return galleries.Count(g => g.CategoryId.Equals(category.Id));
+
+            var query = new QueryDefinition("SELECT COUNT(0) AS NumOfGalleries FROM c WHERE c.CategoryId = @categoryId").WithParameter("@categoryId", category.Id);
+            var result = container.GetItemQueryIterator<object>(query);
+
+            var count = 0;
+            if (!result.HasMoreResults) 
+                return count;
+
+            var resultSet = await result.ReadNextAsync();
+            Debug.WriteLine("CategoryServer.GetCategoryGalleryCountAsync: Request charge: " + resultSet.RequestCharge);
+            foreach (JObject item in resultSet)
+                count = (int) item["NumOfGalleries"];
+
+            return count;
         }
         #endregion
 
@@ -79,11 +110,12 @@ namespace LB.PhotoGalleries.Application.Servers
             while (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
+                Debug.WriteLine("CategoryServer.LoadCategoriesAsync: Request charge: " + resultSet.RequestCharge);
                 foreach (var category in resultSet)
                     _categories.Add(category);
             }
 
-            Debug.WriteLine($"CategoryServer.LoadCategoriesAsync(): Loaded {_categories.Count} categories from the database.");
+            Debug.WriteLine($"CategoryServer.LoadCategoriesAsync: Loaded {_categories.Count} categories from the database.");
         }
 
         /// <summary>

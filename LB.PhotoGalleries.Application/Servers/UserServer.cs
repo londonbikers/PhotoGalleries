@@ -29,6 +29,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.UpsertItemAsync(user, partitionKey);
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Created user? " + createdItem);
+            Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Request charge: " + response.RequestCharge);
         }
 
         public async Task<User> GetUserAsync(string userId)
@@ -44,7 +45,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var resultSet = await queryResult.ReadNextAsync();
                 foreach (var user in resultSet)
                 {
-                    Debug.WriteLine("UserServer.GetUserAsync(): Found a user with id: " + userId);
+                    Debug.WriteLine("UserServer.GetUserAsync: Found a user with id: " + userId);
+                    Debug.WriteLine("UserServer.GetUserAsync: Request charge: " + resultSet.RequestCharge);
                     return user;
                 }
             }
