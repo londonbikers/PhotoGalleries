@@ -41,10 +41,14 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/users/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(string id, IFormCollection collection)
         {
             try
             {
+                // todo: anonymise any comments made by this user
+                // todo: anonymise any galleries made by this user
+                // todo: delete the user
+
                 return RedirectToAction(nameof(Index));
             }
             catch
