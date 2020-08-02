@@ -83,7 +83,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region private methods
-        public async Task<List<User>> GetUsersByQueryAsync(QueryDefinition queryDefinition)
+        private static async Task<List<User>> GetUsersByQueryAsync(QueryDefinition queryDefinition)
         {
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
