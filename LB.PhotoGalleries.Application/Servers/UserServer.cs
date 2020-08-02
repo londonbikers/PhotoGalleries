@@ -34,9 +34,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<User> GetUserAsync(string userId)
         {
-            const string query = "SELECT * FROM c WHERE c.Id = @userId";
-            var queryDefinition = new QueryDefinition(query);
-            queryDefinition.WithParameter("@userId", userId);
+            var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.Id = @userId").WithParameter("@userId", userId);
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
 
