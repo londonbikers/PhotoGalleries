@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -76,5 +77,27 @@ namespace LB.PhotoGalleries.Application.Servers
         }
         #endregion
 
+        #region internal methods
+        internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition, string queryColumnName)
+        {
+            if (queryDefinition == null)
+                throw new InvalidOperationException("queryDefinition is null");
+
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var result = container.GetItemQueryIterator<object>(queryDefinition);
+
+            var count = 0;
+            if (!result.HasMoreResults)
+                return count;
+
+            var resultSet = await result.ReadNextAsync();
+            Debug.WriteLine("UserServer.GetGalleriesScalarByQueryAsync: Query: " + queryDefinition.QueryText);
+            Debug.WriteLine("UserServer.GetGalleriesScalarByQueryAsync: Request charge: " + resultSet.RequestCharge);
+            foreach (JObject item in resultSet)
+                count = (int)item[queryColumnName];
+
+            return count;
+        }
+        #endregion
     }
 }

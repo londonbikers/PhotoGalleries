@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -65,20 +64,19 @@ namespace LB.PhotoGalleries.Application.Servers
             if (user == null)
                 throw new InvalidOperationException("User is null");
 
-            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
-            var query = new QueryDefinition("SELECT COUNT(0) AS NumOfGalleries FROM c WHERE c.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-            var result = container.GetItemQueryIterator<object>(query);
+            const string queryColumnName = "NumOfGalleries";
+            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
+        }
 
-            var count = 0;
-            if (!result.HasMoreResults)
-                return count;
+        public async Task<int> GetUserCommentCountAsync(User user)
+        {
+            if (user == null)
+                throw new InvalidOperationException("User is null");
 
-            var resultSet = await result.ReadNextAsync();
-            Debug.WriteLine("UserServer.GetUserGalleryCountAsync: Request charge: " + resultSet.RequestCharge);
-            foreach (JObject item in resultSet)
-                count = (int)item["NumOfGalleries"];
-
-            return count;
+            const string queryColumnName = "NumOfComments";
+            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId OR c.Images.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
         }
         #endregion
 
