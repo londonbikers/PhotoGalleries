@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace LB.PhotoGalleries.Application.Models
 {
@@ -31,6 +32,14 @@ namespace LB.PhotoGalleries.Application.Models
         /// The value should be the first letter of the Name property.
         /// </summary>
         public string PartitionKey { get; set; }
+        public DateTime Created { get; set; }
+        #endregion
+
+        #region constructors
+        public User()
+        {
+            Created = DateTime.Now;
+        }
         #endregion
 
         #region public methods
