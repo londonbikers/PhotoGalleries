@@ -20,7 +20,9 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/users/details/5
         public async Task<ActionResult> Details(string id)
         {
-            ViewData.Model = await Server.Instance.Users.GetUserAsync(id);
+            var user = await Server.Instance.Users.GetUserAsync(id);
+            ViewData.Model = user;
+            ViewData["galleriesCount"] = await Server.Instance.Users.GetUserGalleryCountAsync(user);
             return View();
         }
 
@@ -30,6 +32,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var user = await Server.Instance.Users.GetUserAsync(id);
             ViewData.Model = user;
             ViewData["ownAccount"] = User.Identity.Name == user.Name;
+            ViewData["galleriesCount"] = await Server.Instance.Users.GetUserGalleryCountAsync(user);
             return View();
         }
 

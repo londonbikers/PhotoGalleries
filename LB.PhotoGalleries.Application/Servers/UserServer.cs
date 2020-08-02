@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -57,6 +58,27 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             var queryDefinition = new QueryDefinition("SELECT TOP @maxResults * FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
             return await GetUsersByQueryAsync(queryDefinition);
+        }
+
+        public async Task<int> GetUserGalleryCountAsync(User user)
+        {
+            if (user == null)
+                throw new InvalidOperationException("User is null");
+
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var query = new QueryDefinition("SELECT COUNT(0) AS NumOfGalleries FROM c WHERE c.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            var result = container.GetItemQueryIterator<object>(query);
+
+            var count = 0;
+            if (!result.HasMoreResults)
+                return count;
+
+            var resultSet = await result.ReadNextAsync();
+            Debug.WriteLine("UserServer.GetUserGalleryCountAsync: Request charge: " + resultSet.RequestCharge);
+            foreach (JObject item in resultSet)
+                count = (int)item["NumOfGalleries"];
+
+            return count;
         }
         #endregion
 

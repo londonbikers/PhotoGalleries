@@ -3,6 +3,7 @@
     ViewData["Title"] = $"Delete user: {Model.Name}";
     var error = (string)ViewData["error"];
     var ownAccount = (bool)ViewData["ownAccount"];
+    var galleriesCount = (int) ViewData["galleriesCount"];
 }
 
 <h1>Delete User</h1>
@@ -68,6 +69,14 @@ Please note:
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Created)
         </dd>
+        
+        <dt class="col-sm-2">
+            Number of galleries
+        </dt>
+        <dd class="col-sm-10">
+            @galleriesCount
+        </dd>
+
     </dl>
 
     <form asp-action="Delete">
