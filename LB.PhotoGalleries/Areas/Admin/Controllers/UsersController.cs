@@ -18,8 +18,9 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/users/details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(string id)
         {
+            ViewData.Model = await Server.Instance.Users.GetUserAsync(id);
             return View();
         }
 
