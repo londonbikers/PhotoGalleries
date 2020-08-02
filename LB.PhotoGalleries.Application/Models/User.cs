@@ -27,7 +27,7 @@ namespace LB.PhotoGalleries.Application.Models
         public string Picture { get; set; }
         public string Email { get; set; }
         /// <summary>
-        /// Used by CosmosDB to partition container contents to make querying more performant.
+        /// Used by CosmosDB to partition container items to improve querying performance.
         /// The value should be the first letter of the Name property.
         /// </summary>
         public string PartitionKey { get; set; }
