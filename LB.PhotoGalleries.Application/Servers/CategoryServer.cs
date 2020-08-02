@@ -1,13 +1,11 @@
 ﻿using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos.Linq;
-using Newtonsoft.Json.Linq;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -76,9 +74,6 @@ namespace LB.PhotoGalleries.Application.Servers
                 throw new InvalidOperationException("Category is null");
 
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
-            //var galleries = container.GetItemLinqQueryable<Gallery>();
-            //return galleries.Count(g => g.CategoryId.Equals(category.Id));
-
             var query = new QueryDefinition("SELECT COUNT(0) AS NumOfGalleries FROM c WHERE c.CategoryId = @categoryId").WithParameter("@categoryId", category.Id);
             var result = container.GetItemQueryIterator<object>(query);
 
