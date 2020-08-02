@@ -80,7 +80,6 @@ namespace LB.PhotoGalleries.Application
             var createdUsersContainer = createdUsersContainerResponse.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
         }
-        
         #endregion
     }
 }
