@@ -1,10 +1,10 @@
 ﻿using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
