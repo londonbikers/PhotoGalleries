@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -61,8 +62,8 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Created category? " + createdItem);
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Request charge: " + response.RequestCharge);
 
-            // clear the cached categories list so it's retrieved fresh with these latest changes
-            _categories = null;
+            // add the category to the cache if it's already initialised
+            _categories?.Add(category);
         }
 
         /// <summary>
@@ -104,8 +105,8 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Request charge: " + response.RequestCharge);
             Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Status code: " + response.StatusCode);
 
-            // clear the categories cache so they're loaded afresh on the next request
-            _categories = null;
+            // remove the category from the cache
+            _categories?.Remove(category);
         }
         #endregion
 
