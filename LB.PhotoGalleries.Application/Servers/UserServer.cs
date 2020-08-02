@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
@@ -50,6 +51,30 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             throw new InvalidOperationException("No user found with id: " + userId);
+        }
+
+        public async Task<List<User>> GetLatestUsersAsync(int maxResults)
+        {
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults * FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            return await GetUsersByQueryAsync(queryDefinition);
+        }
+        #endregion
+
+        #region private methods
+        public async Task<List<User>> GetUsersByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
+            var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
+            var users = new List<User>();
+
+            while (queryResult.HasMoreResults)
+            {
+                var resultSet = await queryResult.ReadNextAsync();
+                Debug.WriteLine("UserServer.GetUsersByQueryAsync: Request charge: " + resultSet.RequestCharge);
+                users.AddRange(resultSet);
+            }
+
+            return users;
         }
         #endregion
     }
