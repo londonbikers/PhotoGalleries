@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -41,18 +42,20 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/users/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(string id, IFormCollection collection)
+        public async Task<ActionResult> Delete(string id, IFormCollection collection)
         {
             try
             {
-                // todo: anonymise any comments made by this user
-                // todo: anonymise any galleries made by this user
-                // todo: delete the user
+                var user = await Server.Instance.Users.GetUserAsync(id);
+                if (user.Name == User.Identity.Name)
+                    throw new InvalidOperationException("You cannot delete your own account.");
 
+                await Server.Instance.Users.DeleteUserAsync(user);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }
