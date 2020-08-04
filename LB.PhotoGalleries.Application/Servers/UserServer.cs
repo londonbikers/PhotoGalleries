@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using User = LB.PhotoGalleries.Application.Models.User;
@@ -31,6 +32,46 @@ namespace LB.PhotoGalleries.Application.Servers
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Created user? " + createdItem);
             Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Request charge: " + response.RequestCharge);
+        }
+
+        /// <summary>
+        /// Deletes a user from the database and any references to the user, which anonymises any content they've created.
+        /// This balances the need for a user's right for their personal data to be deleted (GDPR compliance, etc.) with ensuring the integrity of content.
+        /// </summary>
+        public async Task DeleteUserAsync(User user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            // get galleries where the user has been involved in some way (author/comments)
+            const string query = "SELECT * FROM c WHERE c.CreatedByUserId = @userId OR c.Comments.CreatedByUserId = @userId OR c.Images.Comments.CreatedByUserId = @userId";
+            var queryDefinition = new QueryDefinition(query).WithParameter("@userId", user.Id);
+            var galleries = await Server.Instance.Galleries.GetGalleriesByQueryAsync(queryDefinition);
+
+            // go through the galleries and look for user references and remove them then update the gallery
+            foreach (var gallery in galleries)
+            {
+                // remove any references to gallery creations
+                if (gallery.CreatedByUserId == user.Id)
+                    gallery.CreatedByUserId = Constants.AnonUserId;
+
+                // remove any references to gallery comments
+                foreach (var galleryComment in gallery.Comments.Where(q => q.CreatedByUserId == user.Id))
+                    galleryComment.CreatedByUserId = Constants.AnonUserId;
+
+                // remove any references to image comments
+                foreach (var comment in gallery.Images.Values.SelectMany(image => image.Comments.Where(c => c.CreatedByUserId == user.Id)))
+                    comment.CreatedByUserId = Constants.AnonUserId;
+
+                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+            }
+
+            // delete the user
+            var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
+            var result = await container.DeleteItemAsync<User>(user.Id, new PartitionKey(user.PartitionKey));
+
+            Debug.WriteLine("UserServer:DeleteUserAsync: Status code: " + result.StatusCode);
+            Debug.WriteLine("UserServer:DeleteUserAsync: Request charge: " + result.RequestCharge);
         }
 
         public async Task<User> GetUserAsync(string userId)

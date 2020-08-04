@@ -2,6 +2,7 @@
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
@@ -99,6 +100,26 @@ namespace LB.PhotoGalleries.Application.Servers
                 count = (int)item[queryColumnName];
 
             return count;
+        }
+
+        internal async Task<List<Gallery>> GetGalleriesByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var queryResult = container.GetItemQueryIterator<Gallery>(queryDefinition);
+            var galleries = new List<Gallery>();
+            double charge = 0;
+
+            while (queryResult.HasMoreResults)
+            {
+                var results = await queryResult.ReadNextAsync();
+                galleries.AddRange(results);
+                charge += results.RequestCharge;
+            }
+
+            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Found {galleries.Count} galleries using query: " + queryDefinition.QueryText);
+            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Total request charge: {charge}");
+
+            return galleries;
         }
         #endregion
     }

@@ -14,5 +14,10 @@
         /// All categories go into a single partition due to the expected low volume of them.
         /// </summary>
         internal static string CategoriesPartitionKeyValue => "Default";
+
+        /// <summary>
+        /// Used as a placeholder when objects become orphaned due to users being deleted.
+        /// </summary>
+        internal static string AnonUserId => "AnonUser";
     }
 }
