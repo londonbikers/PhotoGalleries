@@ -18,6 +18,14 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Index(string searchString)
+        {
+            ViewData.Model = await Server.Instance.Users.SearchForUsers(searchString, 50);
+            return View();
+        }
+
         // GET: /admin/users/details/5
         public async Task<ActionResult> Details(string id)
         {

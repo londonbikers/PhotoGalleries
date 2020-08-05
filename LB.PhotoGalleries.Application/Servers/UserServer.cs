@@ -96,7 +96,28 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<List<User>> GetLatestUsersAsync(int maxResults)
         {
+            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
+            if (maxResults > 100)
+                maxResults = 100;
+
             var queryDefinition = new QueryDefinition("SELECT TOP @maxResults * FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            return await GetUsersByQueryAsync(queryDefinition);
+        }
+
+        /// <summary>
+        /// Performs a search for users with a given search term in their name or email address.
+        /// </summary>
+        public async Task<List<User>> SearchForUsers(string searchString, int maxResults)
+        {
+            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
+            if (maxResults > 100)
+                maxResults = 100;
+
+            var queryDefinition =
+                new QueryDefinition("SELECT TOP @maxResults * FROM c WHERE CONTAINS(c.Name, @searchString, true) OR CONTAINS(c.Email, @searchString, true) ORDER BY c.Created DESC")
+                    .WithParameter("@searchString", searchString)
+                    .WithParameter("@maxResults", maxResults);
+                
             return await GetUsersByQueryAsync(queryDefinition);
         }
 
@@ -127,13 +148,17 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
             var users = new List<User>();
+            double charge = 0;
 
             while (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
-                Debug.WriteLine("UserServer.GetUsersByQueryAsync: Request charge: " + resultSet.RequestCharge);
+                charge += resultSet.RequestCharge;
                 users.AddRange(resultSet);
             }
+
+            Debug.WriteLine("UserServer.GetUsersByQueryAsync: Query: " + queryDefinition.QueryText);
+            Debug.WriteLine("UserServer.GetUsersByQueryAsync: Total request charge: " + charge);
 
             return users;
         }
