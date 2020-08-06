@@ -42,6 +42,33 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetGalleryByQueryAsync(queryDefinition);
         }
 
+        public async Task<List<GalleryStub>> GetLatestGalleriesAsync(int maxResults)
+        {
+            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
+            if (maxResults > 100)
+                maxResults = 100;
+
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.Id, c.CategoryId, c.Name, c.Active, c.Created FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            return await GetGalleryStubsByQueryAsync(queryDefinition);
+        }
+
+        /// <summary>
+        /// Performs a search for galleries with a given search term in their name.
+        /// </summary>
+        public async Task<List<GalleryStub>> SearchForGalleries(string searchString, int maxResults)
+        {
+            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
+            if (maxResults > 100)
+                maxResults = 100;
+
+            var queryDefinition =
+                new QueryDefinition("SELECT TOP @maxResults c.Id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
+                    .WithParameter("@searchString", searchString)
+                    .WithParameter("@maxResults", maxResults);
+
+            return await GetGalleryStubsByQueryAsync(queryDefinition);
+        }
+
         public async Task CreateOrUpdateGalleryAsync(Gallery gallery)
         {
             if (gallery == null)
@@ -100,6 +127,26 @@ namespace LB.PhotoGalleries.Application.Servers
                 count = (int)item[queryColumnName];
 
             return count;
+        }
+
+        internal async Task<List<GalleryStub>> GetGalleryStubsByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var queryResult = container.GetItemQueryIterator<GalleryStub>(queryDefinition);
+            var galleryStubs = new List<GalleryStub>();
+            double charge = 0;
+
+            while (queryResult.HasMoreResults)
+            {
+                var results = await queryResult.ReadNextAsync();
+                galleryStubs.AddRange(results);
+                charge += results.RequestCharge;
+            }
+
+            Debug.WriteLine($"GalleryServer.GetGalleryStubsByQueryAsync: Found {galleryStubs.Count} gallery stubs using query: {queryDefinition.QueryText}");
+            Debug.WriteLine($"GalleryServer.GetGalleryStubsByQueryAsync: Total request charge: {charge}");
+
+            return galleryStubs;
         }
 
         internal async Task<List<Gallery>> GetGalleriesByQueryAsync(QueryDefinition queryDefinition)

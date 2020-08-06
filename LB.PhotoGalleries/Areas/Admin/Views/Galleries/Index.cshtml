@@ -1,0 +1,53 @@
+﻿@model IEnumerable<LB.PhotoGalleries.Application.Models.GalleryStub>
+@{
+    ViewData["Title"] = "Admin: Galleries";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Galleries Admin</h1>
+    <p>From here you can create, update and delete galleries.</p>
+</div>
+
+<p>
+    <a asp-area="Admin" asp-controller="Galleries" asp-action="Create">Create a new gallery</a>
+</p>
+
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">@Html.DisplayNameFor(model => model.Id)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.CategoryId)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @if (Model == null || !Model.Any())
+        {
+            <tr>
+                <td colspan="6" class="text-center">No galleries to show. Create the first using the link above!</td>
+            </tr>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <th scope="row">@Html.DisplayFor(modelItem => item.Id)</th>
+                    <td>@Html.DisplayFor(modelItem => item.CategoryId)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Active)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Created)</td>
+                    <td>
+                        @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                        @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                    </td>
+                </tr>
+            }
+        }
+
+    </tbody>
+</table>
