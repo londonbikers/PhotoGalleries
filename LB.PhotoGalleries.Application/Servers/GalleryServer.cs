@@ -116,7 +116,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 charge += results.RequestCharge;
             }
 
-            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Found {galleries.Count} galleries using query: " + queryDefinition.QueryText);
+            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Found {galleries.Count} galleries using query: {queryDefinition.QueryText}");
             Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Total request charge: {charge}");
 
             return galleries;
