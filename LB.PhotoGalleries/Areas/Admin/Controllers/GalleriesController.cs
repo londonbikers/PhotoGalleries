@@ -43,8 +43,9 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/galleries/edit/5
-        public ActionResult Edit(string id)
+        public async Task<ActionResult> Edit(string id)
         {
+            ViewData.Model = await Server.Instance.Galleries.GetGalleryAsync(id);
             return View();
         }
 
