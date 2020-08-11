@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace LB.PhotoGalleries.Application.Models
 {
@@ -9,8 +10,12 @@ namespace LB.PhotoGalleries.Application.Models
         #region accessors
         [JsonProperty("id")]
         public string Id { get; set; }
+        [Required]
+        [Display(Name = "Category")]
         public string CategoryId { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public string Description { get; set; }
         /// <summary>
         /// Inactive photo galleries are not displayed to users.
@@ -24,6 +29,7 @@ namespace LB.PhotoGalleries.Application.Models
         /// Comments can be made by users against photo galleries themselves as well as on specific photos.
         /// </summary>
         public List<Comment> Comments { get; set; }
+        [Required]
         public string CreatedByUserId { get; set; }
         /// <summary>
         /// The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
@@ -35,6 +41,7 @@ namespace LB.PhotoGalleries.Application.Models
         /// Useful for URL conversion/redirects.
         /// </summary>
         public Guid LegacyGuidId { get; set; }
+        [Required]
         public DateTime Created { get; set; }
         #endregion
 
