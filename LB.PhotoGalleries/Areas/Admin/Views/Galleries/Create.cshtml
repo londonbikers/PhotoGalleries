@@ -2,6 +2,7 @@
 @model LB.PhotoGalleries.Application.Models.Gallery
 @{
     ViewData["Title"] = "Create Gallery";
+    var error = (string)ViewData["error"];
 }
 
 <h1>Gallery</h1>
@@ -13,6 +14,14 @@
 </div>
 
 <hr />
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">

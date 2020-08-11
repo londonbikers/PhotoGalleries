@@ -3,6 +3,7 @@ using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -27,14 +28,16 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/galleries/create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Gallery gallery)
+        public async Task<ActionResult> Create(Gallery gallery)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                return RedirectToAction(nameof(Edit), new { gallery.Id });
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }
