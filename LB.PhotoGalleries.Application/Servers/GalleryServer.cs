@@ -20,7 +20,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #region public methods
         public async Task<Gallery> GetGalleryAsync(string galleryId)
         {
-            const string query = "SELECT * FROM c WHERE c.Id = '@galleryId'";
+            const string query = "SELECT * FROM c WHERE c.id = @galleryId";
             var queryDefinition = new QueryDefinition(query);
             queryDefinition.WithParameter("@galleryId", galleryId);
             return await GetGalleryByQueryAsync(queryDefinition);
@@ -36,7 +36,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<Gallery> GetGalleryByLegacyGuidIdAsync(Guid galleryLegacyId)
         {
-            const string query = "SELECT * FROM c WHERE c.LegacyGuidId = '@galleryLegacyId'";
+            const string query = "SELECT * FROM c WHERE c.LegacyGuidId = @galleryLegacyId";
             var queryDefinition = new QueryDefinition(query);
             queryDefinition.WithParameter("@galleryLegacyId", galleryLegacyId);
             return await GetGalleryByQueryAsync(queryDefinition);
@@ -48,7 +48,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 100)
                 maxResults = 100;
 
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.Id, c.CategoryId, c.Name, c.Active, c.Created FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
             return await GetGalleryStubsByQueryAsync(queryDefinition);
         }
 
@@ -62,7 +62,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 maxResults = 100;
 
             var queryDefinition =
-                new QueryDefinition("SELECT TOP @maxResults c.Id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
+                new QueryDefinition("SELECT TOP @maxResults c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
                     .WithParameter("@searchString", searchString)
                     .WithParameter("@maxResults", maxResults);
 

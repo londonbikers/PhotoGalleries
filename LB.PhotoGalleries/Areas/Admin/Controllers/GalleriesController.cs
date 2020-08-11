@@ -32,6 +32,8 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         {
             try
             {
+                gallery.Id = Utilities.CreateNewId();
+                gallery.CreatedByUserId = Utilities.GetUserId(User);
                 await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
                 return RedirectToAction(nameof(Edit), new { gallery.Id });
             }
