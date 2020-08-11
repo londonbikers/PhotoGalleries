@@ -1,4 +1,6 @@
-﻿@model IEnumerable<LB.PhotoGalleries.Application.Models.GalleryStub>
+﻿@using LB.PhotoGalleries.Application
+@using LB.PhotoGalleries.Areas.Admin.Controllers
+@model IEnumerable<LB.PhotoGalleries.Application.Models.GalleryStub>
 @{
     ViewData["Title"] = "Admin: Galleries";
 }
@@ -15,9 +17,8 @@
 <table class="table">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">@Html.DisplayNameFor(model => model.Id)</th>
-            <th scope="col">@Html.DisplayNameFor(model => model.CategoryId)</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
+            <th scope="col">Category</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
             <th scope="col"></th>
@@ -36,9 +37,8 @@
             foreach (var item in Model)
             {
                 <tr>
-                    <th scope="row">@Html.DisplayFor(modelItem => item.Id)</th>
-                    <td>@Html.DisplayFor(modelItem => item.CategoryId)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                    <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
+                    <td>@Html.DisplayFor(modelItem => Server.Instance.Categories.Categories.First(c=>c.Id == item.CategoryId).Name)</td>
                     <td>@Html.DisplayFor(modelItem => item.Active)</td>
                     <td>@Html.DisplayFor(modelItem => item.Created)</td>
                     <td>

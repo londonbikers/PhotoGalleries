@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace LB.PhotoGalleries.Application.Models
@@ -11,7 +12,7 @@ namespace LB.PhotoGalleries.Application.Models
         [JsonProperty("id")]
         public string Id { get; set; }
         [Required]
-        [Display(Name = "Category")]
+        [DisplayName("Category")]
         public string CategoryId { get; set; }
         [Required]
         public string Name { get; set; }
@@ -30,16 +31,19 @@ namespace LB.PhotoGalleries.Application.Models
         /// </summary>
         public List<Comment> Comments { get; set; }
         [Required]
+        [DisplayName("Created by")]
         public string CreatedByUserId { get; set; }
         /// <summary>
         /// The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
+        [DisplayName("Legacy Number ID")]
         public int LegacyNumId { get; set; }
         /// <summary>
         /// The guid id of the gallery when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
+        [DisplayName("Legacy Guid ID")]
         public Guid LegacyGuidId { get; set; }
         [Required]
         public DateTime Created { get; set; }
