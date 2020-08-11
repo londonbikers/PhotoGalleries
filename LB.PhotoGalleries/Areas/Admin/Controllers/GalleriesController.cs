@@ -47,7 +47,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/galleries/edit/5
         public async Task<ActionResult> Edit(string id)
         {
-            ViewData.Model = await Server.Instance.Galleries.GetGalleryAsync(id);
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(id);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            ViewData.Model = gallery;
+            ViewData["username"] = createdByUser.Name;
             return View();
         }
 
