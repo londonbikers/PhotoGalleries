@@ -76,6 +76,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         {
             try
             {
+                // todo: ensure deletion can only be performed by administrators or creators of the gallery
                 return RedirectToAction(nameof(Index));
             }
             catch
