@@ -11,7 +11,7 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static string GetUserId(ClaimsPrincipal user)
         {
-            return user.FindFirst(c => c.Type == "sub").Value;
+            return user.FindFirstValue("sub");
         }
 
         /// <summary>
