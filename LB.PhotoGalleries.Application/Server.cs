@@ -65,7 +65,7 @@ namespace LB.PhotoGalleries.Application
             // create the CosmosDB database if it doesn't already exist
             var response = await CosmosClient.CreateDatabaseIfNotExistsAsync(Constants.DatabaseName);
             var createdDatabase = response.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("InitialiseDatabaseAsync: Created database? " + createdDatabase);
+            Debug.WriteLine("Server.InitialiseDatabaseAsync: Created database? " + createdDatabase);
 
             // keep a reference to the database so other parts of the app can easily interact with it
             Database = response.Database;
@@ -73,15 +73,15 @@ namespace LB.PhotoGalleries.Application
             // create containers for all our top level objects we want to persist
             var createdCategoriesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.CategoriesContainerName, "/PartitionKey");
             var createdCategoriesContainer = createdCategoriesContainerResponse.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("InitialiseDatabaseAsync: Created categories container? " + createdCategoriesContainer);
+            Debug.WriteLine("Server.InitialiseDatabaseAsync: Created categories container? " + createdCategoriesContainer);
 
             var createdGalleriesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.GalleriesContainerName, "/CategoryId");
             var createdGalleriesContainer = createdGalleriesContainerResponse.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("InitialiseDatabaseAsync: Created galleries container? " + createdGalleriesContainer);
+            Debug.WriteLine("Server.InitialiseDatabaseAsync: Created galleries container? " + createdGalleriesContainer);
 
             var createdUsersContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.UsersContainerName, "/PartitionKey");
             var createdUsersContainer = createdUsersContainerResponse.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
+            Debug.WriteLine("Server.InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
         }
 
         /// <summary>
@@ -96,6 +96,7 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(Constants.StorageOriginalContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageOriginalContainerName}");
             }
             catch (RequestFailedException e)
             {
