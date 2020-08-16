@@ -6,16 +6,25 @@ namespace LB.PhotoGalleries.Application.Models
     public class Image
     {
         #region accessors
-        public int Id { get; set; }
+        /// <summary>
+        /// Will be the unique identifier of the image file in storage.
+        /// </summary>
+        public string Id { get; set; }
+        /// <summary>
+        /// Descriptive name for the photo to be shown to users.
+        /// </summary>
         public string Name { get; set; }
         /// <summary>
-        /// Descriptive text for the photo
+        /// Descriptive text for the photo to be shown to users.
         /// </summary>
         public string Caption { get; set; }
         /// <summary>
         /// A credit for the photo, i.e. who took it.
         /// </summary>
         public string Credit { get; set; }
+        /// <summary>
+        /// When the photo was originally taken.
+        /// </summary>
         public DateTime CaptureDate { get; set; }
         /// <summary>
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.

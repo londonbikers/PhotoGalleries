@@ -1,9 +1,12 @@
-﻿using LB.PhotoGalleries.Application.Models;
+﻿using Azure.Storage.Blobs;
+using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -17,7 +20,7 @@ namespace LB.PhotoGalleries.Application.Servers
         }
         #endregion
 
-        #region public methods
+        #region gallery methods
         public async Task<Gallery> GetGalleryAsync(string galleryId)
         {
             const string query = "SELECT * FROM c WHERE c.id = @galleryId";
@@ -83,6 +86,42 @@ namespace LB.PhotoGalleries.Application.Servers
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Request charge: " + response.RequestCharge);
+        }
+        #endregion
+
+        #region image methods
+        public async Task AddImageAsync(string galleryId, Stream imageStream, string name)
+        {
+            // create the Image object
+            var image = new Image
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name
+            };
+
+            // create the original uploads container if it doesn't already exist
+            // it'll be created with no anonymous access privileges by default
+            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+
+            // store the uploaded image in Azure Blob storage
+            //var blobClient = blobContainerClient.GetBlobClient(image.Name);
+            //await blobClient.UploadAsync(imageStream);
+            //imageStream.Close();
+
+            await blobContainerClient.UploadBlobAsync(image.Id, imageStream);
+            imageStream.Close();
+
+            // create the gallery image
+            // todo: find a way to upload images without having to re-save the gallery and incur request charges each time
+            var gallery = await GetGalleryAsync(galleryId);
+
+            var position = 0;
+            if (gallery.Images.Count > 0)
+                position = gallery.Images.Keys.Max() + 1;
+
+            gallery.Images.Add(position, image);
+            await CreateOrUpdateGalleryAsync(gallery);
         }
         #endregion
 

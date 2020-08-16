@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -67,6 +68,21 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             {
                 return View();
             }
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> Upload(string galleryId, IFormFile file)
+        {
+            // store the file in cloud storage and post-process
+            // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
+
+            if (file.Length == 0)
+                return NoContent();
+
+            var stream = file.OpenReadStream();
+            var imageName = Path.GetFileNameWithoutExtension(file.FileName);
+            await Server.Instance.Galleries.AddImageAsync(galleryId, stream, imageName);
+            return Ok();
         }
 
         // GET: /admin/galleries/delete/5

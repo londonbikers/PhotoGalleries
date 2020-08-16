@@ -72,3 +72,7 @@ body {
 
 /* Custom (non-bootstrap or asp.net) styles
 -------------------------------------------------- */
+.dropzone {
+    border: 2px #ccc dashed;
+    border-radius: 5px;
+}

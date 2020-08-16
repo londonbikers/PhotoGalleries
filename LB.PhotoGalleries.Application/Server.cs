@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Storage.Blobs;
 using LB.PhotoGalleries.Application.Servers;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -50,11 +52,12 @@ namespace LB.PhotoGalleries.Application
         {
             Configuration = configuration;
             await InitialiseDatabaseAsync();
+            await InitialiseStorageAsync();
         }
         #endregion
 
-        #region internal methods
-        internal async Task InitialiseDatabaseAsync()
+        #region private methods
+        private async Task InitialiseDatabaseAsync()
         {
             // authenticate with the CosmosDB service and create a client we can re-use
             CosmosClient = new CosmosClient(Configuration["CosmosDB:Uri"], Configuration["CosmosDB:PrimaryKey"]);
@@ -79,6 +82,29 @@ namespace LB.PhotoGalleries.Application
             var createdUsersContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.UsersContainerName, "/PartitionKey");
             var createdUsersContainer = createdUsersContainerResponse.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
+        }
+
+        /// <summary>
+        /// Sets up the necessary containers in Azure Blob Storage.
+        /// </summary>
+        private async Task InitialiseStorageAsync()
+        {
+            var storageConnectionString = Configuration["Storage:ConnectionString"];
+            var blobServiceClient = new BlobServiceClient(storageConnectionString);
+
+            // create containers as necessary
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(Constants.StorageOriginalContainerName);
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageOriginalContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
         }
         #endregion
     }

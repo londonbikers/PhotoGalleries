@@ -19,5 +19,10 @@
         /// Used as a placeholder when objects become orphaned due to users being deleted.
         /// </summary>
         internal static string AnonUserId => "AnonUser";
+
+        /// <summary>
+        /// The name of the blob container in Azure Storage for where user-provided images are uploaded to.
+        /// </summary>
+        internal static string StorageOriginalContainerName => "originals";
     }
 }
