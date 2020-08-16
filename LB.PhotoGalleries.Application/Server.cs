@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
-using System.Net;
-using System.Threading.Tasks;
-using Azure;
+﻿using Azure;
 using Azure.Storage.Blobs;
 using LB.PhotoGalleries.Application.Servers;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application
 {
