@@ -76,7 +76,7 @@
                 @Html.DisplayNameFor(model => model.CreatedByUserId)
             </dt>
             <dd class="col-sm-10">
-                @Html.ActionLink((string)ViewData["username"], "Details", "Users", new { pk = Model.CreatedByUserPartitionKey, uid = Model.CreatedByUserId })
+                @Html.ActionLink((string)ViewData["username"], "Details", "Users", new { Model.CreatedByUserId })
             </dd>
 
             @if (Model.LegacyNumId > 0)
@@ -107,7 +107,7 @@
 <div class="row">
     <div class="col">
         <div id="dropzone">
-            <form asp-action="Upload" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
+            <form asp-action="Upload" asp-route-cid="@Model.CategoryId" asp-route-gid="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
                 <div class="dz-message needsclick">
                     Drop files here or click to upload.<br>
                 </div>

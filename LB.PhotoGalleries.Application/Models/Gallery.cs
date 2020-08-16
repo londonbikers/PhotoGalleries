@@ -37,10 +37,6 @@ namespace LB.PhotoGalleries.Application.Models
         [DisplayName("Created by")]
         public string CreatedByUserId { get; set; }
         /// <summary>
-        /// The partition key of the user who created the gallery.
-        /// </summary>
-        public string CreatedByUserPartitionKey { get; set; }
-        /// <summary>
         /// The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>

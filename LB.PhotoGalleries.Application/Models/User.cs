@@ -5,31 +5,15 @@ namespace LB.PhotoGalleries.Application.Models
 {
     public class User
     {
-        #region members
-        private string _name;
-        #endregion
-
         #region accessors
         [JsonProperty("id")]
         public string Id { get; set; }
-        public string Name
-        {
-            get
-            {
-                return _name;
-            }
-            set
-            {
-                // also set the partition key as the first character of the name
-                _name = value;
-                PartitionKey = _name.Substring(0, 1).ToLower();
-            }
-        }
+        public string Name { get; set; }
         public string Picture { get; set; }
         public string Email { get; set; }
         /// <summary>
         /// Used by CosmosDB to partition container items to improve querying performance.
-        /// The value should be the first letter of the Name property.
+        /// The value should be the first character of the id.
         /// </summary>
         public string PartitionKey { get; set; }
         public DateTime Created { get; set; }

@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Application.Models;
 using User = LB.PhotoGalleries.Application.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -23,6 +22,9 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             if (user == null)
                 throw new InvalidOperationException("User is null");
+
+            if (string.IsNullOrEmpty(user.PartitionKey))
+                user.PartitionKey = GetUserPartitionKeyFromId(user.Id);
 
             if (!user.IsValid())
                 throw new InvalidOperationException("User is not valid. Check that all required properties are set");
@@ -75,10 +77,10 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("UserServer:DeleteUserAsync: Request charge: " + result.RequestCharge);
         }
 
-        public async Task<User> GetUserAsync(string partitionKey, string userId)
+        public async Task<User> GetUserAsync(string userId)
         {
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
-            var response = await container.ReadItemAsync<User>(userId, new PartitionKey(partitionKey));
+            var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
             Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
             return response.Resource;
         }
@@ -128,6 +130,11 @@ namespace LB.PhotoGalleries.Application.Servers
             const string queryColumnName = "NumOfComments";
             var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId OR c.Images.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
             return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
+        }
+
+        public string GetUserPartitionKeyFromId(string userId)
+        {
+            return userId.Substring(0, 1).ToLower();
         }
         #endregion
 

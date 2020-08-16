@@ -41,8 +41,8 @@
                     <td>@Html.DisplayFor(modelItem => item.Active)</td>
                     <td>@Html.DisplayFor(modelItem => item.Created)</td>
                     <td>
-                        @Html.ActionLink("Edit", "Edit", new { categoryId = item.CategoryId, galleryId = item.Id }) |
-                        @Html.ActionLink("Delete", "Delete", new { categoryId = item.CategoryId, galleryId = item.Id })
+                        @Html.ActionLink("Edit", "Edit", new { cid = item.CategoryId, gid = item.Id }) |
+                        @Html.ActionLink("Delete", "Delete", new { cid = item.CategoryId, gid = item.Id })
                     </td>
                 </tr>
             }

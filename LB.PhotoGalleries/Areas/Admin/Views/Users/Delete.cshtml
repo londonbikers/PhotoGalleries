@@ -87,7 +87,7 @@ Please note:
 
     </dl>
 
-    <form asp-action="Delete" asp-route-pk="@Model.PartitionKey" asp-route-uid="@Model.Id">
+    <form asp-action="Delete">
         @if (!ownAccount)
         {
             <input type="submit" value="Delete" class="btn btn-danger" /> <text>|</text>

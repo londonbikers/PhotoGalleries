@@ -6,7 +6,7 @@ namespace LB.PhotoGalleries
     public class Utilities
     {
         /// <summary>
-        /// Retrieves the unique identifier for the currently logged-in user.
+        /// Retrieves the unique identifier for a currently logged-in user.
         /// The id is provided by the Identity Provider from the sub claim as part of the OpenID Connect authentication.
         /// </summary>
         public static string GetUserId(ClaimsPrincipal user)

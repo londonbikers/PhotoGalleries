@@ -74,7 +74,7 @@ namespace LB.PhotoGalleries
                         Id = ctx.Principal.FindFirstValue("sub"),
                         Name = ctx.Principal.FindFirstValue("name"),
                         Email = ctx.Principal.FindFirstValue("email"),
-                        Picture = ctx.Principal.FindFirstValue("picture"),
+                        Picture = ctx.Principal.FindFirstValue("picture")
                     };
 
                     // we'll either create them or update them, which is useful if their

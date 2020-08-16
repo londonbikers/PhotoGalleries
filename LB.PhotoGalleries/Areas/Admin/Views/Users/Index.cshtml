@@ -36,8 +36,8 @@
                 <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>@Html.DisplayFor(modelItem => item.Picture)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.ActionLink("Details", "Details", new { pk = item.PartitionKey, uid = item.Id })</td>
-                <td>@Html.ActionLink("Delete", "Delete", new { pk = item.PartitionKey, uid = item.Id })</td>
+                <td>@Html.ActionLink("Details", "Details", new { item.Id })</td>
+                <td>@Html.ActionLink("Delete", "Delete", new { item.Id })</td>
             </tr>
         }
     </tbody>
