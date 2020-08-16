@@ -58,7 +58,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Performs a search for galleries with a given search term in their name.
         /// </summary>
-        public async Task<List<GalleryStub>> SearchForGalleries(string searchString, int maxResults)
+        public async Task<List<GalleryStub>> SearchForGalleriesAsync(string searchString, int maxResults)
         {
             // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
             if (maxResults > 100)
