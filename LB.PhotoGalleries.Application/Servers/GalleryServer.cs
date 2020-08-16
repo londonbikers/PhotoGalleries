@@ -108,8 +108,6 @@ namespace LB.PhotoGalleries.Application.Servers
                 Name = Path.GetFileNameWithoutExtension(filename)
             };
 
-            // create the original uploads container if it doesn't already exist
-            // it'll be created with no anonymous access privileges by default
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
 
