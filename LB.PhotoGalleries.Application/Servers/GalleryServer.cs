@@ -125,27 +125,6 @@ namespace LB.PhotoGalleries.Application.Servers
         }
         #endregion
 
-        #region private methods
-        public async Task<Gallery> GetGalleryByQueryAsync(QueryDefinition queryDefinition)
-        {
-            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
-            var queryResult = container.GetItemQueryIterator<Gallery>(queryDefinition);
-
-            if (queryResult.HasMoreResults)
-            {
-                var resultSet = await queryResult.ReadNextAsync();
-                foreach (var gallery in resultSet)
-                {
-                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Found a gallery using query: " + queryDefinition.QueryText);
-                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Request charge: " + resultSet.RequestCharge);
-                    return gallery;
-                }
-            }
-
-            throw new InvalidOperationException("No gallery found using query: " + queryDefinition.QueryText);
-        }
-        #endregion
-
         #region internal methods
         internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition, string queryColumnName)
         {
@@ -206,6 +185,27 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Total request charge: {charge}");
 
             return galleries;
+        }
+        #endregion
+
+        #region private methods
+        public async Task<Gallery> GetGalleryByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var queryResult = container.GetItemQueryIterator<Gallery>(queryDefinition);
+
+            if (queryResult.HasMoreResults)
+            {
+                var resultSet = await queryResult.ReadNextAsync();
+                foreach (var gallery in resultSet)
+                {
+                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Found a gallery using query: " + queryDefinition.QueryText);
+                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Request charge: " + resultSet.RequestCharge);
+                    return gallery;
+                }
+            }
+
+            throw new InvalidOperationException("No gallery found using query: " + queryDefinition.QueryText);
         }
         #endregion
     }
