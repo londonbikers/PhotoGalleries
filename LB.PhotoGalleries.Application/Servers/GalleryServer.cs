@@ -75,7 +75,7 @@ namespace LB.PhotoGalleries.Application.Servers
         public async Task CreateOrUpdateGalleryAsync(Gallery gallery)
         {
             if (gallery == null)
-                throw new InvalidOperationException("Gallery is null");
+                throw new ArgumentNullException(nameof(gallery));
 
             if (!gallery.IsValid())
                 throw new InvalidOperationException("Gallery is not valid. Check that all required properties are set");
