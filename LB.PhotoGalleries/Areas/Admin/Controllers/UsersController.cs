@@ -26,10 +26,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
-        // GET: /admin/users/details/5
-        public async Task<ActionResult> Details(string id)
+        // GET: /admin/users/details/5/6
+        public async Task<ActionResult> Details(string pk, string uid)
         {
-            var user = await Server.Instance.Users.GetUserAsync(id);
+            var user = await Server.Instance.Users.GetUserAsync(pk, uid);
             ViewData.Model = user;
             ViewData["galleriesCount"] = await Server.Instance.Users.GetUserGalleryCountAsync(user);
             ViewData["commentsCount"] = await Server.Instance.Users.GetUserCommentCountAsync(user);
@@ -37,9 +37,9 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/users/delete/5
-        public async Task<ActionResult> Delete(string id)
+        public async Task<ActionResult> Delete(string pk, string uid)
         {
-            var user = await Server.Instance.Users.GetUserAsync(id);
+            var user = await Server.Instance.Users.GetUserAsync(pk, uid);
             ViewData.Model = user;
             ViewData["ownAccount"] = User.Identity.Name == user.Name;
             ViewData["galleriesCount"] = await Server.Instance.Users.GetUserGalleryCountAsync(user);
@@ -50,11 +50,11 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/users/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Delete(string id, IFormCollection collection)
+        public async Task<ActionResult> Delete(string pk, string uid, IFormCollection collection)
         {
             try
             {
-                var user = await Server.Instance.Users.GetUserAsync(id);
+                var user = await Server.Instance.Users.GetUserAsync(pk, uid);
                 if (user.Name == User.Identity.Name)
                     throw new InvalidOperationException("You cannot delete your own account.");
 

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Application.Models;
 using User = LB.PhotoGalleries.Application.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -74,24 +75,12 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("UserServer:DeleteUserAsync: Request charge: " + result.RequestCharge);
         }
 
-        public async Task<User> GetUserAsync(string userId)
+        public async Task<User> GetUserAsync(string partitionKey, string userId)
         {
-            var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.id = @userId").WithParameter("@userId", userId);
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
-            var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
-
-            if (queryResult.HasMoreResults)
-            {
-                var resultSet = await queryResult.ReadNextAsync();
-                foreach (var user in resultSet)
-                {
-                    Debug.WriteLine("UserServer.GetUserAsync: Found a user with id: " + userId);
-                    Debug.WriteLine("UserServer.GetUserAsync: Request charge: " + resultSet.RequestCharge);
-                    return user;
-                }
-            }
-
-            throw new InvalidOperationException("No user found with id: " + userId);
+            var response = await container.ReadItemAsync<User>(userId, new PartitionKey(partitionKey));
+            Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
+            return response.Resource;
         }
 
         public async Task<List<User>> GetLatestUsersAsync(int maxResults)

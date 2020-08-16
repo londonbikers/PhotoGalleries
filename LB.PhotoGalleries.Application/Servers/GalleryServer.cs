@@ -21,12 +21,12 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region gallery methods
-        public async Task<Gallery> GetGalleryAsync(string galleryId)
+        public async Task<Gallery> GetGalleryAsync(string categoryId, string galleryId)
         {
-            const string query = "SELECT * FROM c WHERE c.id = @galleryId";
-            var queryDefinition = new QueryDefinition(query);
-            queryDefinition.WithParameter("@galleryId", galleryId);
-            return await GetGalleryByQueryAsync(queryDefinition);
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var response = await container.ReadItemAsync<Gallery>(galleryId, new PartitionKey(categoryId));
+            Debug.WriteLine($"GalleryServer:GetGalleryAsync: Request charge: {response.RequestCharge}");
+            return response.Resource;
         }
 
         public async Task<Gallery> GetGalleryByLegacyNumIdAsync(int galleryLegacyId)
@@ -90,7 +90,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region image methods
-        public async Task AddImageAsync(string galleryId, Stream imageStream, string filename)
+        public async Task AddImageAsync(string categoryId, string galleryId, Stream imageStream, string filename)
         {
             if (string.IsNullOrEmpty(galleryId))
                 throw new ArgumentNullException(nameof(galleryId));
@@ -116,7 +116,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // create the gallery image
             // todo: find a way to upload images without having to re-save the gallery and incur request charges each time
-            var gallery = await GetGalleryAsync(galleryId);
+            var gallery = await GetGalleryAsync(categoryId, galleryId);
 
             var position = 0;
             if (gallery.Images.Count > 0)

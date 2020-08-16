@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -36,7 +35,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 gallery.Id = Utilities.CreateNewId();
                 gallery.CreatedByUserId = Utilities.GetUserId(User);
                 await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
-                return RedirectToAction(nameof(Edit), new { gallery.Id });
+                return RedirectToAction(nameof(Edit), new { categoryId = gallery.CategoryId, galleryId = gallery.Id });
             }
             catch (Exception ex)
             {
@@ -45,11 +44,11 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             }
         }
 
-        // GET: /admin/galleries/edit/5
-        public async Task<ActionResult> Edit(string id)
+        // GET: /admin/galleries/edit/5/6
+        public async Task<ActionResult> Edit(string categoryId, string galleryId)
         {
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(id);
-            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserPartitionKey, gallery.CreatedByUserId);
             ViewData.Model = gallery;
             ViewData["username"] = createdByUser.Name;
             return View();
@@ -71,7 +70,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> Upload(string galleryId, IFormFile file)
+        public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)
         {
             // store the file in cloud storage and post-process
             // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
@@ -80,7 +79,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return NoContent();
 
             var stream = file.OpenReadStream();
-            await Server.Instance.Galleries.AddImageAsync(galleryId, stream, file.FileName);
+            await Server.Instance.Galleries.AddImageAsync(categoryId, galleryId, stream, file.FileName);
             return Ok();
         }
 
