@@ -37,12 +37,17 @@ namespace LB.PhotoGalleries.Application.Models
         /// </summary>
         public Guid LegacyGuidId { get; set; }
         public List<Comment> Comments { get; set; }
+        /// <summary>
+        /// Tags that define the context of the photo, i.e. what's in it, where it is, etc.
+        /// </summary>
+        public List<string> Tags { get; set; }
         #endregion
         
         #region constructors
         public Image()
         {
             Comments = new List<Comment>();
+            Tags = new List<string>();
         }
         #endregion
     }
