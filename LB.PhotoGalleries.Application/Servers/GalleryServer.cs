@@ -90,24 +90,28 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region image methods
-        public async Task AddImageAsync(string galleryId, Stream imageStream, string name)
+        public async Task AddImageAsync(string galleryId, Stream imageStream, string filename)
         {
+            if (string.IsNullOrEmpty(galleryId))
+                throw new ArgumentNullException(nameof(galleryId));
+
+            if (imageStream == null)
+                throw new ArgumentNullException(nameof(imageStream));
+
+            if (string.IsNullOrEmpty(filename))
+                throw new ArgumentNullException(nameof(filename));
+
             // create the Image object
             var image = new Image
             {
-                Id = Guid.NewGuid().ToString(),
-                Name = name
+                Id = Guid.NewGuid() + Path.GetExtension(filename).ToLower(),
+                Name = Path.GetFileNameWithoutExtension(filename)
             };
 
             // create the original uploads container if it doesn't already exist
             // it'll be created with no anonymous access privileges by default
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-
-            // store the uploaded image in Azure Blob storage
-            //var blobClient = blobContainerClient.GetBlobClient(image.Name);
-            //await blobClient.UploadAsync(imageStream);
-            //imageStream.Close();
 
             await blobContainerClient.UploadBlobAsync(image.Id, imageStream);
             imageStream.Close();

@@ -80,8 +80,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return NoContent();
 
             var stream = file.OpenReadStream();
-            var imageName = Path.GetFileNameWithoutExtension(file.FileName);
-            await Server.Instance.Galleries.AddImageAsync(galleryId, stream, imageName);
+            await Server.Instance.Galleries.AddImageAsync(galleryId, stream, file.FileName);
             return Ok();
         }
 

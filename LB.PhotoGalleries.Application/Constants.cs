@@ -1,6 +1,6 @@
 ﻿namespace LB.PhotoGalleries.Application
 {
-    internal class Constants
+    public class Constants
     {
         /// <summary>
         /// The name of the CosmosDB database to use to store application data.
@@ -23,6 +23,6 @@
         /// <summary>
         /// The name of the blob container in Azure Storage for where user-provided images are uploaded to.
         /// </summary>
-        internal static string StorageOriginalContainerName => "originals";
+        public static string StorageOriginalContainerName => "originals";
     }
 }

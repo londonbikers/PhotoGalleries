@@ -1,3 +1,7 @@
+using Azure.Storage.Blobs;
+using Imageflow.Fluent;
+using Imageflow.Server;
+using Imageflow.Server.Storage.AzureBlob;
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -73,12 +77,17 @@ namespace LB.PhotoGalleries
 
                     // we'll either create them or update them, which is useful if their
                     // profile picture has changed from their source identity provider, i.e. Facebook
-                    await Server.Instance.Users.CreateOrUpdateUserAsync(user); 
+                    await Server.Instance.Users.CreateOrUpdateUserAsync(user);
                 };
             });
 
             // configure the application tier
             Server.Instance.SetConfigurationAsync(Configuration).Wait();
+
+            // add ImageFlow service for image resizing and serving
+            // make the originals container available on /i
+            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], new BlobClientOptions())
+                    .MapPrefix("/i/", Constants.StorageOriginalContainerName));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,7 +103,18 @@ namespace LB.PhotoGalleries
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
+
+            // configure ImageFlow for image resizing and serving
+            // ImageFlow says: it's a good idea to limit image sizes for security. Requests causing these to be exceeded will fail
+            // ImageFlow says: the last argument to FrameSizeLimit() is the maximum number of megapixels
+            app.UseImageflow(new ImageflowMiddlewareOptions()
+                .SetJobSecurityOptions(new SecurityOptions()
+                .SetMaxDecodeSize(new FrameSizeLimit(8000, 8000, 40))
+                .SetMaxFrameSize(new FrameSizeLimit(8000, 8000, 40))
+                .SetMaxEncodeSize(new FrameSizeLimit(8000, 8000, 20))));
+
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
