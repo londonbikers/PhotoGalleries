@@ -119,9 +119,9 @@ namespace LB.PhotoGalleries
             // ImageFlow says: the last argument to FrameSizeLimit() is the maximum number of megapixels
             app.UseImageflow(new ImageflowMiddlewareOptions()
                 .SetJobSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(8000, 8000, 40))
-                    .SetMaxFrameSize(new FrameSizeLimit(8000, 8000, 40))
-                    .SetMaxEncodeSize(new FrameSizeLimit(8000, 8000, 20)))
+                    .SetMaxDecodeSize(new FrameSizeLimit(9000, 9000, 60))
+                    .SetMaxFrameSize(new FrameSizeLimit(9000, 9000, 60))
+                    .SetMaxEncodeSize(new FrameSizeLimit(9000, 9000, 30)))
                 .SetAllowDiskCaching(true));
 
             app.UseStaticFiles();
