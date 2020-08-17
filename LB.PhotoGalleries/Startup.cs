@@ -132,6 +132,9 @@ namespace LB.PhotoGalleries
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
+                    name: "AdminWithPartitionKey",
+                    pattern: "{area:exists}/{controller=Home}/{action=Index}/{pk}/{id}");
+                endpoints.MapControllerRoute(
                     name: "Admin",
                     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute(

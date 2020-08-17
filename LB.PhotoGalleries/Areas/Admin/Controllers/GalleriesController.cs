@@ -35,7 +35,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 gallery.Id = Utilities.CreateNewId();
                 gallery.CreatedByUserId = Utilities.GetUserId(User);
                 await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
-                return RedirectToAction(nameof(Edit), new { cid = gallery.CategoryId, gid = gallery.Id });
+                return RedirectToAction(nameof(Edit), new { pk = gallery.CategoryId, id = gallery.Id });
             }
             catch (Exception ex)
             {
@@ -45,10 +45,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/galleries/edit/5/6
-        public async Task<ActionResult> Edit(string cid, string gid)
+        public async Task<ActionResult> Edit(string pk, string id)
         {
             
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(cid, gid);
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
             var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             ViewData.Model = gallery;
             ViewData["username"] = createdByUser.Name;
@@ -58,7 +58,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/galleries/edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(string cid, string gid, Gallery gallery)
+        public ActionResult Edit(string pk, string id, Gallery gallery)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> Upload(string cid, string gid, IFormFile file)
+        public async Task<IActionResult> Upload(string pk, string id, IFormFile file)
         {
             // store the file in cloud storage and post-process
             // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
@@ -80,12 +80,12 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return NoContent();
 
             var stream = file.OpenReadStream();
-            await Server.Instance.Galleries.AddImageAsync(cid, gid, stream, file.FileName);
+            await Server.Instance.Galleries.AddImageAsync(pk, id, stream, file.FileName);
             return Ok();
         }
 
         // GET: /admin/galleries/delete/5
-        public ActionResult Delete(string cid, string gid)
+        public ActionResult Delete(string pk, string id)
         {
             return View();
         }
@@ -93,7 +93,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/galleries/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(string cid, string gid, IFormCollection collection)
+        public ActionResult Delete(string pk, string id, IFormCollection collection)
         {
             try
             {
