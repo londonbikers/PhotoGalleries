@@ -134,7 +134,15 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public string GetUserPartitionKeyFromId(string userId)
         {
-            return userId.Substring(0, 1).ToLower();
+            // find first number in user id, which is a guid
+            // this could change in the future to just the first character (alpha-numeric) but for now 10 partitions seems suitable
+            // for the number of users we expect.
+
+            foreach (var character in userId)
+                if (int.TryParse(character.ToString(), out var number))
+                    return number.ToString();
+
+            throw new ArgumentException("Argument value does not seem to be a valid Guid.", nameof(userId));
         }
         #endregion
 
