@@ -76,7 +76,7 @@
                 @Html.DisplayNameFor(model => model.CreatedByUserId)
             </dt>
             <dd class="col-sm-10">
-                @Html.ActionLink((string)ViewData["username"], "Details", "Users", new { Model.CreatedByUserId })
+                @Html.ActionLink((string)ViewData["username"], "Details", "Users", new { id = Model.CreatedByUserId })
             </dd>
 
             @if (Model.LegacyNumId > 0)
