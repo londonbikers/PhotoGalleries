@@ -58,16 +58,31 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/galleries/edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(string pk, string id, Gallery gallery)
+        public async Task<ActionResult> Edit(string pk, string id, Gallery gallery)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                // map attributes from form gallery to one retrieved from the app server
+                var appGallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+                appGallery.Name = gallery.Name;
+                appGallery.Description = gallery.Description;
+                appGallery.Active = gallery.Active;
+             
+                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(appGallery);
+                ViewData.Model = appGallery;
+                var createdByUser = await Server.Instance.Users.GetUserAsync(appGallery.CreatedByUserId);
+                ViewData["username"] = createdByUser.Name;
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                var errorGallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+                ViewData.Model = errorGallery;
+                var createdByUser = await Server.Instance.Users.GetUserAsync(errorGallery.CreatedByUserId);
+                ViewData["username"] = createdByUser.Name;
+                ViewData["error"] = ex.Message;
             }
+
+            return View();
         }
         
         [HttpPost]
