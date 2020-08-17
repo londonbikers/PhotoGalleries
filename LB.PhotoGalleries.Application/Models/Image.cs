@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace LB.PhotoGalleries.Application.Models
@@ -9,7 +10,13 @@ namespace LB.PhotoGalleries.Application.Models
         /// <summary>
         /// Will be the unique identifier of the image file in storage.
         /// </summary>
+        [JsonProperty("id")]
         public string Id { get; set; }
+        public string GalleryId { get; set; }
+        /// <summary>
+        /// The position of the image in the gallery.
+        /// </summary>
+        public int Position { get; set; }
         /// <summary>
         /// Descriptive name for the photo to be shown to users.
         /// </summary>
@@ -22,6 +29,10 @@ namespace LB.PhotoGalleries.Application.Models
         /// A credit for the photo, i.e. who took it.
         /// </summary>
         public string Credit { get; set; }
+        /// <summary>
+        /// When the image was created, not when the photo was originally captured.
+        /// </summary>
+        public DateTime Created { get; set; }
         /// <summary>
         /// When the photo was originally taken.
         /// </summary>
@@ -46,8 +57,21 @@ namespace LB.PhotoGalleries.Application.Models
         #region constructors
         public Image()
         {
+            Created = DateTime.Now;
             Comments = new List<Comment>();
             Tags = new List<string>();
+        }
+        #endregion
+
+        #region public methods
+        public bool IsValid()
+        {
+            if (string.IsNullOrEmpty(Id) ||
+                string.IsNullOrEmpty(Name) ||
+                string.IsNullOrEmpty(GalleryId))
+                return false;
+
+            return true;
         }
         #endregion
     }

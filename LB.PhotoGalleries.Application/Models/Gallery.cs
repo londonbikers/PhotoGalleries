@@ -23,10 +23,6 @@ namespace LB.PhotoGalleries.Application.Models
         /// </summary>
         public bool Active { get; set; }
         /// <summary>
-        /// The ordered list of images in the photo gallery.
-        /// </summary>
-        public Dictionary<int, Image> Images { get; set;}
-        /// <summary>
         /// Comments can be made by users against photo galleries themselves as well as on specific photos.
         /// </summary>
         public List<Comment> Comments { get; set; }
@@ -55,7 +51,6 @@ namespace LB.PhotoGalleries.Application.Models
         #region constructors
         public Gallery()
         {
-            Images = new Dictionary<int, Image>();
             Comments = new List<Comment>();
             Created = DateTime.Now;
         }

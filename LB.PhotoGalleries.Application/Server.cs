@@ -21,6 +21,7 @@ namespace LB.PhotoGalleries.Application
         public static Server Instance { get; }
         public CategoryServer Categories { get; internal set; }
         public GalleryServer Galleries { get; internal set; }
+        public ImageServer Images { get; internal set; }
         public UserServer Users { get; internal set; }
         /// <summary>
         /// Provides access to application configuration data, i.e. connection strings.
@@ -38,6 +39,7 @@ namespace LB.PhotoGalleries.Application
             {
                 Categories = new CategoryServer(),
                 Galleries = new GalleryServer(),
+                Images = new ImageServer(),
                 Users = new UserServer()
             };
         }
@@ -78,6 +80,10 @@ namespace LB.PhotoGalleries.Application
             var createdGalleriesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.GalleriesContainerName, "/CategoryId");
             var createdGalleriesContainer = createdGalleriesContainerResponse.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("Server.InitialiseDatabaseAsync: Created galleries container? " + createdGalleriesContainer);
+
+            var createdImagesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.ImagesContainerName, "/GalleryId");
+            var createdImagesContainer = createdImagesContainerResponse.StatusCode == HttpStatusCode.Created;
+            Debug.WriteLine("Server.InitialiseDatabaseAsync: Created images container? " + createdImagesContainer);
 
             var createdUsersContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.UsersContainerName, "/PartitionKey");
             var createdUsersContainer = createdUsersContainerResponse.StatusCode == HttpStatusCode.Created;

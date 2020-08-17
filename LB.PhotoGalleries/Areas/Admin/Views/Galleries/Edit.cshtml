@@ -1,8 +1,10 @@
 ﻿@using LB.PhotoGalleries.Application
+@using LB.PhotoGalleries.Application.Models
 @model LB.PhotoGalleries.Application.Models.Gallery
 @{
     ViewData["Title"] = "Edit Gallery";
     var error = (string)ViewData["error"];
+    var images = (List<Image>) ViewData["images"];
 }
 
 @section Styles {
@@ -107,7 +109,7 @@
 <div class="row">
     <div class="col">
         <div id="dropzone">
-            <form asp-action="Upload" asp-route-pk="@Model.CategoryId" asp-route-id="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
+            <form asp-action="Upload" asp-route-id="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
                 <div class="dz-message needsclick">
                     Drop files here or click to upload.<br>
                 </div>
@@ -117,9 +119,9 @@
 </div>
 
 <h2>Images</h2>
-<p>Count: @Model.Images.Count</p>
+<p>Count: @images.Count</p>
 
-@foreach (var image in Model.Images.OrderBy(i => i.Key).Select(q => q.Value))
+@foreach (var image in images.OrderBy(i => i.Position))
 {
     <img
         srcset="
