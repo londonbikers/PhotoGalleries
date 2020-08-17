@@ -39,9 +39,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/users/delete/5
         public async Task<ActionResult> Delete(string id)
         {
+            var loggedInUserId = Utilities.GetUserId(User);
             var user = await Server.Instance.Users.GetUserAsync(id);
             ViewData.Model = user;
-            ViewData["ownAccount"] = User.Identity.Name == user.Name;
+            ViewData["ownAccount"] = loggedInUserId == user.Id;
             ViewData["galleriesCount"] = await Server.Instance.Users.GetUserGalleryCountAsync(user);
             ViewData["commentsCount"] = await Server.Instance.Users.GetUserCommentCountAsync(user);
             return View();
