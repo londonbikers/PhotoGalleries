@@ -6,9 +6,10 @@
     var gallery = (Gallery)ViewData["gallery"];
 }
 
-<h1>Edit</h1>
-
-<h4>Image</h4>
+<h1>Edit Image</h1>
+<div>
+    <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
+</div>
 <hr />
 
 @if (!string.IsNullOrEmpty(error))
@@ -19,24 +20,9 @@
 }
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" />
-                <span asp-validation-for="Id" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="GalleryId" class="control-label"></label>
-                <input asp-for="GalleryId" class="form-control" />
-                <span asp-validation-for="GalleryId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Position" class="control-label"></label>
-                <input asp-for="Position" class="form-control" />
-                <span asp-validation-for="Position" class="text-danger"></span>
-            </div>
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
@@ -44,7 +30,7 @@
             </div>
             <div class="form-group">
                 <label asp-for="Caption" class="control-label"></label>
-                <input asp-for="Caption" class="form-control" />
+                <textarea class="form-control" rows="3" asp-for="Caption"></textarea>
                 <span asp-validation-for="Caption" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -53,34 +39,28 @@
                 <span asp-validation-for="Credit" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Created" class="control-label"></label>
-                <input asp-for="Created" class="form-control" />
-                <span asp-validation-for="Created" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="CaptureDate" class="control-label"></label>
                 <input asp-for="CaptureDate" class="form-control" />
                 <span asp-validation-for="CaptureDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LegacyNumId" class="control-label"></label>
-                <input asp-for="LegacyNumId" class="form-control" />
-                <span asp-validation-for="LegacyNumId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LegacyGuidId" class="control-label"></label>
-                <input asp-for="LegacyGuidId" class="form-control" />
-                <span asp-validation-for="LegacyGuidId" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </form>
     </div>
-</div>
+    <div class="col">
 
-<div>
-    <a asp-area="Admin" asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
+        <img srcset="
+             /i/@Model.StorageId?h=1600 1600h
+             /i/@Model.StorageId?h=1200 1200h
+             /i/@Model.StorageId?h=800 800h
+             /i/@Model.StorageId?h=400 400h"
+             src="/i/@Model.StorageId?h=400"
+             style="display: inline; padding-right: 10px; padding-bottom: 10px;"
+             alt="@Model.Name"
+             height="400" />
+
+    </div>
 </div>
 
 @section Scripts {
