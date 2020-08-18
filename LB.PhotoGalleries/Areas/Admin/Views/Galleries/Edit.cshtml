@@ -91,7 +91,7 @@
                 </dd>
             }
 
-            @if (Model.LegacyGuidId != Guid.Empty)
+            @if (Model.LegacyGuidId.HasValue && Model.LegacyGuidId != Guid.Empty)
             {
                 <dt class="col-sm-10">
                     @Html.DisplayNameFor(model => model.LegacyGuidId)
