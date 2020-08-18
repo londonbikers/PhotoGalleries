@@ -59,6 +59,43 @@
              style="display: inline; padding-right: 10px; padding-bottom: 10px;"
              alt="@Model.Name"
              height="400" />
+        
+        <dl class="row">
+            <dt class="col-sm-10">
+                @Html.DisplayNameFor(model => model.Created)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Created)
+            </dd>
+
+            <dt class="col-sm-10">
+                Number of comments
+            </dt>
+            <dd class="col-sm-10">
+                @Model.Comments.Count
+            </dd>
+
+            @if (Model.LegacyNumId > 0)
+            {
+                <dt class="col-sm-10">
+                    @Html.DisplayNameFor(model => model.LegacyNumId)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.LegacyNumId)
+                </dd>
+            }
+
+            @if (Model.LegacyGuidId.HasValue && Model.LegacyGuidId != Guid.Empty)
+            {
+                <dt class="col-sm-10">
+                    @Html.DisplayNameFor(model => model.LegacyGuidId)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.LegacyGuidId)
+                </dd>
+            }
+
+        </dl>
 
     </div>
 </div>

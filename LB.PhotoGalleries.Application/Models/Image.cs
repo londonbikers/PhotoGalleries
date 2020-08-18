@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace LB.PhotoGalleries.Application.Models
 {
@@ -42,11 +43,13 @@ namespace LB.PhotoGalleries.Application.Models
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
+        [DisplayName("Legacy Number ID")]
         public int? LegacyNumId { get; set; }
         /// <summary>
         /// The guid id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
+        [DisplayName("Legacy Guid ID")]
         public Guid? LegacyGuidId { get; set; }
         public List<Comment> Comments { get; set; }
         /// <summary>
