@@ -7,16 +7,17 @@ namespace LB.PhotoGalleries.Application.Models
     public class Image
     {
         #region accessors
-        /// <summary>
-        /// Will be the unique identifier of the image file in storage.
-        /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
         public string GalleryId { get; set; }
         /// <summary>
+        /// The unique identifier for the blob in Azure Blob storage.
+        /// </summary>
+        public string StorageId { get; set; }
+        /// <summary>
         /// The position of the image in the gallery.
         /// </summary>
-        public int Position { get; set; }
+        public int? Position { get; set; }
         /// <summary>
         /// Descriptive name for the photo to be shown to users.
         /// </summary>
@@ -36,17 +37,17 @@ namespace LB.PhotoGalleries.Application.Models
         /// <summary>
         /// When the photo was originally taken.
         /// </summary>
-        public DateTime CaptureDate { get; set; }
+        public DateTime? CaptureDate { get; set; }
         /// <summary>
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
-        public int LegacyNumId { get; set; }
+        public int? LegacyNumId { get; set; }
         /// <summary>
         /// The guid id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
-        public Guid LegacyGuidId { get; set; }
+        public Guid? LegacyGuidId { get; set; }
         public List<Comment> Comments { get; set; }
         /// <summary>
         /// Tags that define the context of the photo, i.e. what's in it, where it is, etc.
@@ -67,8 +68,9 @@ namespace LB.PhotoGalleries.Application.Models
         public bool IsValid()
         {
             if (string.IsNullOrEmpty(Id) ||
-                string.IsNullOrEmpty(Name) ||
-                string.IsNullOrEmpty(GalleryId))
+                string.IsNullOrEmpty(StorageId) ||
+                string.IsNullOrEmpty(GalleryId) ||
+                string.IsNullOrEmpty(Name))
                 return false;
 
             return true;

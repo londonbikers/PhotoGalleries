@@ -40,9 +40,11 @@ namespace LB.PhotoGalleries.Application.Servers
                     throw new ArgumentNullException(nameof(filename));
 
                 // create the Image object
+                var id = Guid.NewGuid().ToString();
                 var image = new Image
                 {
-                    Id = Guid.NewGuid() + Path.GetExtension(filename).ToLower(),
+                    Id = id,
+                    StorageId = id + Path.GetExtension(filename).ToLower(),
                     Name = Path.GetFileNameWithoutExtension(filename),
                     GalleryId = galleryId
                 };
@@ -53,7 +55,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 // upload the file to storage
                 var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
                 var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-                await blobContainerClient.UploadBlobAsync(image.Id, imageStream);
+                await blobContainerClient.UploadBlobAsync(image.StorageId, imageStream);
                 imageStream.Close();
 
                 // create the database record
@@ -108,6 +110,14 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}");
 
             return images;
+        }
+
+        public async Task<Image> GetImageAsync(string galleryId, string imageId)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
+            Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
+            return response.Resource;
         }
         #endregion
 

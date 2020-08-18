@@ -1,26 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using LB.PhotoGalleries.Application;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
 {
+    [Area("Admin")]
+    [Authorize(Roles = "Administrator,Photographer")]
     public class ImagesController : Controller
     {
-        // GET: /admin/images
-        public ActionResult Index()
-        {
-            return View();
-        }
-
-        // GET: /admin/images/details/5
-        public ActionResult Details(string id)
-        {
-            return View();
-        }
-
-
         // GET: /admin/images/edit/5
-        public ActionResult Edit(string id)
+        public async Task<ActionResult> Edit(string categoryId, string galleryId, string imageId)
         {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            ViewData.Model = image;
+            ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             return View();
         }
 
