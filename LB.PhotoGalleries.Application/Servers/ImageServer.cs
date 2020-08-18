@@ -57,8 +57,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 imageStream.Close();
 
                 // create the database record
-                // work out what the new position should be .. skipping for now. can't think of a way to do this without lot's of queries
-
+                // note: we're not setting position on each image at this point as it's expensive to do in terms of request units and might not ever need to be done
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
