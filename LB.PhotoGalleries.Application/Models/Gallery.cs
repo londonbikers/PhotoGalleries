@@ -37,13 +37,13 @@ namespace LB.PhotoGalleries.Application.Models
         /// Useful for URL conversion/redirects.
         /// </summary>
         [DisplayName("Legacy Number ID")]
-        public int LegacyNumId { get; set; }
+        public int? LegacyNumId { get; set; }
         /// <summary>
         /// The guid id of the gallery when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
         [DisplayName("Legacy Guid ID")]
-        public Guid LegacyGuidId { get; set; }
+        public Guid? LegacyGuidId { get; set; }
         [Required]
         public DateTime Created { get; set; }
         #endregion
