@@ -122,7 +122,8 @@ namespace LB.PhotoGalleries
                     .SetMaxDecodeSize(new FrameSizeLimit(9000, 9000, 60))
                     .SetMaxFrameSize(new FrameSizeLimit(9000, 9000, 60))
                     .SetMaxEncodeSize(new FrameSizeLimit(9000, 9000, 30)))
-                .SetAllowDiskCaching(true));
+                .SetAllowDiskCaching(true)
+                .AddCommandDefault("down.filter", "mitchell"));
 
             app.UseStaticFiles();
             app.UseRouting();
