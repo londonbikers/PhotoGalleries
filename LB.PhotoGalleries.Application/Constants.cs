@@ -8,6 +8,7 @@
         internal static string DatabaseName => "PhotoGalleries";
         internal static string UsersContainerName => "Users";
         internal static string GalleriesContainerName => "Galleries";
+        internal static string ImagesContainerName => "Images";
         internal static string CategoriesContainerName => "Categories";
 
         /// <summary>

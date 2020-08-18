@@ -47,7 +47,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 throw new ArgumentNullException(nameof(user));
 
             // get galleries where the user has been involved in some way (author/comments)
-            const string query = "SELECT * FROM c WHERE c.CreatedByUserId = @userId OR c.Comments.CreatedByUserId = @userId OR c.Images.Comments.CreatedByUserId = @userId";
+            var query = "SELECT * FROM c WHERE c.CreatedByUserId = @userId OR c.Comments.CreatedByUserId = @userId";
             var queryDefinition = new QueryDefinition(query).WithParameter("@userId", user.Id);
             var galleries = await Server.Instance.Galleries.GetGalleriesByQueryAsync(queryDefinition);
 
@@ -62,11 +62,17 @@ namespace LB.PhotoGalleries.Application.Servers
                 foreach (var galleryComment in gallery.Comments.Where(q => q.CreatedByUserId == user.Id))
                     galleryComment.CreatedByUserId = Constants.AnonUserId;
 
-                // remove any references to image comments
-                foreach (var comment in gallery.Images.Values.SelectMany(image => image.Comments.Where(c => c.CreatedByUserId == user.Id)))
+                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+            }
+
+            // go through any comments the user has left against images and anonymise those
+            var images = await Server.Instance.Images.GetImagesUserHasCommentedOnAsync(user.Id);
+            foreach (var image in images)
+            {
+                foreach (var comment in image.Comments.Where(c => c.CreatedByUserId == user.Id))
                     comment.CreatedByUserId = Constants.AnonUserId;
 
-                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                await Server.Instance.Images.UpdateImageAsync(image);
             }
 
             // delete the user
@@ -128,8 +134,13 @@ namespace LB.PhotoGalleries.Application.Servers
                 throw new InvalidOperationException("User is null");
 
             const string queryColumnName = "NumOfComments";
-            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId OR c.Images.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-            return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
+            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            var galleryComments = await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
+
+            query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            var imageComments = await Server.Instance.Images.GetImagesScalarByQueryAsync(query, queryColumnName);
+
+            return galleryComments + imageComments;
         }
 
         public string GetUserPartitionKeyFromId(string userId)
