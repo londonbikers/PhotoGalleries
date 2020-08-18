@@ -10,13 +10,14 @@ A website to showcase the https://londonbikers.com photo galleries, both old and
 * Azure CDN
 * ImageFlow (dynamic image resizing - https://www.imageflow.io)
 * Azure Web App hosting
-* Knockout.js
 
 ## Planned features:
 
 * Photo galleries
 * Gallery categories
-* Photo Metadata display
+* Photom metadata display, i.e. camera settings
+* Tag extraction from metadata
+* Tag generation via Azure Cognitive Services
 * Discourse API integration to allow cross-posting onto londonbikers.com
 * Photo user comments
 * Gallery user comments
