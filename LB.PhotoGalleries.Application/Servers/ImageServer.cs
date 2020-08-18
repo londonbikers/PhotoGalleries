@@ -28,38 +28,47 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="filename">The original filename provided by the client.</param>
         public async Task CreateImageAsync(string galleryId, Stream imageStream, string filename)
         {
-            if (string.IsNullOrEmpty(galleryId))
-                throw new ArgumentNullException(nameof(galleryId));
-
-            if (imageStream == null)
-                throw new ArgumentNullException(nameof(imageStream));
-
-            if (string.IsNullOrEmpty(filename))
-                throw new ArgumentNullException(nameof(filename));
-
-            // create the Image object
-            var image = new Image
+            try
             {
-                Id = Guid.NewGuid() + Path.GetExtension(filename).ToLower(),
-                Name = Path.GetFileNameWithoutExtension(filename),
-                GalleryId = galleryId
-            };
+                if (string.IsNullOrEmpty(galleryId))
+                    throw new ArgumentNullException(nameof(galleryId));
 
-            if (!image.IsValid())
-                throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
+                if (imageStream == null)
+                    throw new ArgumentNullException(nameof(imageStream));
 
-            // upload the file to storage
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            await blobContainerClient.UploadBlobAsync(image.Id, imageStream);
-            imageStream.Close();
+                if (string.IsNullOrEmpty(filename))
+                    throw new ArgumentNullException(nameof(filename));
 
-            // create the database record
-            // work out what the new position should be .. skipping for now. can't think of a way to do this without lot's of queries
+                // create the Image object
+                var image = new Image
+                {
+                    Id = Guid.NewGuid() + Path.GetExtension(filename).ToLower(),
+                    Name = Path.GetFileNameWithoutExtension(filename),
+                    GalleryId = galleryId
+                };
 
-            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
-            var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
+                if (!image.IsValid())
+                    throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
+
+                // upload the file to storage
+                var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+                var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+                await blobContainerClient.UploadBlobAsync(image.Id, imageStream);
+                imageStream.Close();
+
+                // create the database record
+                // work out what the new position should be .. skipping for now. can't think of a way to do this without lot's of queries
+
+                var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+                var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
+                Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
+            }
+            catch
+            {
+                // make sure we release valuable server resources in the event of a problem creating the image
+                imageStream?.Close();
+                throw;
+            }
         }
 
         /// <summary>
