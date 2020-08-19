@@ -3,8 +3,9 @@
 @{
     ViewData["Title"] = "Edit Image";
     var error = (string)ViewData["error"];
+    var success = (string)ViewData["success"];
     var gallery = (Gallery)ViewData["gallery"];
-    var tags = (string) ViewData["tags"];
+    var tags = (string)ViewData["tags"];
 }
 
 @section Styles {
@@ -21,6 +22,13 @@
 {
     <div class="alert alert-danger" role="alert">
         @error
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success" role="alert">
+        @success
     </div>
 }
 
@@ -107,7 +115,7 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
-    
+
     <script type="text/javascript">
         $(document).ready(function () {
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.

@@ -11,7 +11,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
     [Authorize(Roles = "Administrator,Photographer")]
     public class ImagesController : Controller
     {
-        // GET: /admin/images/edit/5
+        // GET: /admin/images/edit/5/5/7
         public async Task<ActionResult> Edit(string categoryId, string galleryId, string imageId)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
@@ -21,19 +21,31 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
-        // POST: /admin/images/edit/5
+        // POST: /admin/images/edit/5/6/7
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(string id, IFormCollection collection)
+        public async Task<ActionResult> Edit(string categoryId, string galleryId, string imageId, IFormCollection collection)
         {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            ViewData.Model = image;
+            ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                image.Name = collection["Name"];
+                image.Caption = collection["Caption"];
+                image.Tags.Clear();
+                image.Tags.AddRange(collection["tagsCsv"].ToString().Split(','));
+                ViewData["tags"] = string.Join(',', image.Tags);
+                await Server.Instance.Images.UpdateImageAsync(image);
+                ViewData["success"] = "Image updated!";
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                ViewData["error"] = ex.Message;
             }
+
+            return View();
         }
 
         // GET: /admin/images/delete/5
