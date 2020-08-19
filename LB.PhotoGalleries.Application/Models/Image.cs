@@ -38,7 +38,7 @@ namespace LB.PhotoGalleries.Application.Models
         /// <summary>
         /// When the photo was originally taken.
         /// </summary>
-        [DisplayName("Capture Date")]
+        [DisplayName("Capture date")]
         public DateTime? CaptureDate { get; set; }
         /// <summary>
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.

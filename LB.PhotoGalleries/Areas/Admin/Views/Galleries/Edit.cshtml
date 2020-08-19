@@ -125,9 +125,9 @@
 {
     <a asp-area="Admin" asp-controller="Images" asp-action="Edit" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" asp-route-imageId="@image.Id">
         <img srcset="
-             /i/@image.StorageId?w=800&h=800&mode=crop 800w
-             /i/@image.StorageId?w=600&h=600&mode=crop 600w
-             /i/@image.StorageId?w=400&h=400&mode=crop 400w
+             /i/@image.StorageId?w=800&h=800&mode=crop 800w,
+             /i/@image.StorageId?w=600&h=600&mode=crop 600w,
+             /i/@image.StorageId?w=400&h=400&mode=crop 400w,
              /i/@image.StorageId?w=200&h=200&mode=crop 200w"
              src="/i/@image.StorageId?w=200&h=200&mode=crop"
              style="display: inline; padding-right: 10px; padding-bottom: 10px;"
@@ -140,7 +140,7 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
-    <script src="~/lib/dropzone/dist/dropzone.js"></script>
+    <script src="~/lib/dropzone/dist/min/dropzone.min.js"></script>
 
     <script type="text/javascript">
         $(document).ready(function () {

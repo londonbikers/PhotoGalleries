@@ -17,6 +17,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             ViewData.Model = image;
             ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            ViewData["tags"] = string.Join(',', image.Tags);
             return View();
         }
 
