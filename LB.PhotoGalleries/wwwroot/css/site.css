@@ -80,3 +80,12 @@ body {
 .image-border {
     border: 1px solid #ddd;
 }
+
+.grid-square {
+    width: 202px;
+    height: 202px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}

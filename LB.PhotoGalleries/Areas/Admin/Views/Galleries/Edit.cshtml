@@ -1,5 +1,6 @@
 ﻿@using LB.PhotoGalleries.Application
 @using LB.PhotoGalleries.Application.Models
+@using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Gallery
 @{
     ViewData["Title"] = "Edit Gallery";
@@ -128,34 +129,43 @@
 <h2>Images</h2>
 <p>Count: @images.Count</p>
 
-@foreach (var image in images.OrderBy(i => i.Position))
-{
-    <a asp-area="Admin" asp-controller="Images" asp-action="Edit" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" asp-route-imageId="@image.Id">
-        <img srcset="
-             /i/@image.StorageId?w=800&h=800&mode=crop 800w,
-             /i/@image.StorageId?w=600&h=600&mode=crop 600w,
-             /i/@image.StorageId?w=400&h=400&mode=crop 400w,
-             /i/@image.StorageId?w=200&h=200&mode=crop 200w"
-             src="/i/@image.StorageId?w=200&h=200&mode=crop"
-             style="display: inline; padding-right: 10px; padding-bottom: 10px;"
-             alt="@image.Name"
-             width="200"
-             height="200" />
-    </a>
-}
+<div class="row">
+    <div class="col" data-bind="sortable: {foreach: Images}"><div class="grid-square"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(StorageId)}" width="200" height="200" /></a></div></div>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script src="~/lib/dropzone/dist/min/dropzone.min.js"></script>
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+    <script src="~/lib/sortable/dist/Sortable.min.js"></script>
+    <script src="~/lib/knockout-sortable/dist/knockout-sortable.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(function () {
+        var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.Name, i.StorageId})));
+
+        function GetThumbnailUrl(storageId) {
+            var scaledSize = 200 * window.devicePixelRatio;
+            return `/i/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+        }
+
+        function GetImageEditUrl(imageId) {
+            return `../../../images/edit/@Model.CategoryId/@Model.Id/${imageId}`;
+        }
+
+        function ViewModel() {
+            // parse the images from a json blob
+            this.Images = ko.observableArray(payload);
+        }
+
+        $(document).ready(function() {
             Dropzone.options.uploader = {
                 paramName: "file",
                 maxFilesize: 50,
                 acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif"
             };
+
+            ko.applyBindings(new ViewModel());
         });
     </script>
 }
