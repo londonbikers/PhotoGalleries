@@ -84,6 +84,21 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Request charge: " + response.RequestCharge);
         }
+        
+        /// <summary>
+        /// Permanently deletes the gallery and all images including all image files in storage.
+        /// </summary>
+        public async Task DeleteGalleryAsync(Gallery gallery)
+        {
+            // delete all images docs and files. can't be done in bulk unfortunately.
+            foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id))
+                await Server.Instance.Images.DeleteImageAsync(image);
+
+            // delete the gallery doc
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var response = await container.DeleteItemAsync<Gallery>(gallery.Id, new PartitionKey(gallery.CategoryId));
+            Debug.WriteLine("GalleryServer.DeleteGalleryAsync: Request charge: " + response.RequestCharge);
+        }
         #endregion
 
         #region internal methods
