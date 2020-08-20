@@ -5,7 +5,7 @@
     ViewData["Title"] = "Edit Gallery";
     var error = (string)ViewData["error"];
     var images = (List<Image>)ViewData["images"];
-    var isAuthorisedToEdit = (bool) ViewData["isAuthorisedToEdit"];
+    var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
 }
 
 @section Styles {
@@ -61,6 +61,9 @@
             @if (isAuthorisedToEdit)
             {
                 <div class="form-group">
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-pk="@Model.CategoryId" asp-route-id="@Model.Id">
+                        Delete
+                    </a>
                     <input type="submit" value="Save" class="btn btn-primary" />
                 </div>
             }

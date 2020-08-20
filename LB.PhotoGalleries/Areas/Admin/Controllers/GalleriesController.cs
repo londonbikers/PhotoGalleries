@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
@@ -47,7 +48,6 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // GET: /admin/galleries/edit/5/6
         public async Task<ActionResult> Edit(string pk, string id)
         {
-            
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
             var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             ViewData.Model = gallery;
@@ -57,7 +57,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
-        // POST: /admin/galleries/edit/5
+        // POST: /admin/galleries/edit/5/6
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(string pk, string id, Gallery gallery)
@@ -108,24 +108,50 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return Ok();
         }
 
-        // GET: /admin/galleries/delete/5
-        public ActionResult Delete(string pk, string id)
+        // GET: /admin/galleries/delete/5/6
+        public async Task<ActionResult> Delete(string pk, string id)
         {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            ViewData.Model = gallery;
+            ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
+            ViewData["username"] = createdByUser.Name;
+            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
+            ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             return View();
         }
 
-        // POST: /admin/galleries/delete/5
+        // POST: /admin/galleries/delete/5/6
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(string pk, string id, IFormCollection collection)
+        public async Task<ActionResult> Delete(string pk, string id, IFormCollection collection)
         {
+            // set the view up in case we have to error out to it
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            ViewData.Model = gallery;
+            ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
+            ViewData["username"] = createdByUser.Name;
+            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
+            ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+
             try
             {
-                // todo: ensure deletion can only be performed by administrators or creators of the gallery
+                // check the user is authorised to delete the gallery
+                if (!User.IsInRole("Administrator") && gallery.CreatedByUserId != Utilities.GetUserId(User))
+                {
+                    ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
+                    return View();
+                }
+
+                await Server.Instance.Galleries.DeleteGalleryAsync(pk, id);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }

@@ -88,8 +88,10 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Permanently deletes the gallery and all images including all image files in storage.
         /// </summary>
-        public async Task DeleteGalleryAsync(Gallery gallery)
+        public async Task DeleteGalleryAsync(string categoryId, string galleryId)
         {
+            var gallery = await GetGalleryAsync(categoryId, galleryId);
+
             // delete all images docs and files. can't be done in bulk unfortunately.
             foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id))
                 await Server.Instance.Images.DeleteImageAsync(image);

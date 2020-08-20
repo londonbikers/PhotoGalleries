@@ -1,0 +1,93 @@
+﻿@using LB.PhotoGalleries.Application.Models
+@model LB.PhotoGalleries.Application.Models.Gallery
+@{
+    ViewData["Title"] = "Delete Gallery";
+    var error = (string)ViewData["error"];
+    var category = (Category) ViewData["category"];
+    var createdByUser = (User) ViewData["createdByUser"];
+    var isAuthorisedToEdit = (bool) ViewData["isAuthorisedToEdit"];
+}
+
+<h1>Delete Gallery</h1>
+<h3>Are you sure you want to delete this?</h3>
+<a asp-action="Index">Back to List</a>
+
+<div>
+    <hr />
+    
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger" role="alert">
+            @error
+        </div>
+    }
+
+    <dl class="row">
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.Id)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Id)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.CategoryId)
+        </dt>
+        <dd class = "col-sm-10">
+            <a asp-action="Edit" asp-controller="Categories" asp-route-id="@category.Id">@category.Name</a>
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.Description)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.Active)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Active)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.CreatedByUserId)
+        </dt>
+        <dd class = "col-sm-10">
+            <a asp-action="Details" asp-controller="Users" asp-route-id="@createdByUser.Id">@createdByUser.Name</a>
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.LegacyNumId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.LegacyNumId)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.LegacyGuidId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.LegacyGuidId)
+        </dd>
+        <dt class = "col-sm-10">
+            @Html.DisplayNameFor(model => model.Created)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Created)
+        </dd>
+    </dl>
+    
+    <p>
+        Warning: Deleting this gallery will result in all images and their files being permanently deleted. There will be no way to restore the gallery or images once deleted.
+    </p>
+    
+    @if (isAuthorisedToEdit)
+    {
+        <form asp-action="Delete">
+            <input type="submit" value="Delete" class="btn btn-danger" />
+        </form>
+    }
+    
+</div>
