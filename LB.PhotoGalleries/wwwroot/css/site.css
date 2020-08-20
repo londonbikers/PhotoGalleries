@@ -76,3 +76,7 @@ body {
     border: 2px #ccc dashed;
     border-radius: 5px;
 }
+
+.image-border {
+    border: 1px solid #ddd;
+}

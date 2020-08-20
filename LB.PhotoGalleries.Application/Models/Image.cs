@@ -10,10 +10,12 @@ namespace LB.PhotoGalleries.Application.Models
         #region accessors
         [JsonProperty("id")]
         public string Id { get; set; }
+        [DisplayName("Gallery Id")]
         public string GalleryId { get; set; }
         /// <summary>
         /// The unique identifier for the blob in Azure Blob storage.
         /// </summary>
+        [DisplayName("Storage Id")]
         public string StorageId { get; set; }
         /// <summary>
         /// The position of the image in the gallery.
@@ -44,13 +46,13 @@ namespace LB.PhotoGalleries.Application.Models
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
-        [DisplayName("Legacy Number ID")]
+        [DisplayName("Legacy Number Id")]
         public int? LegacyNumId { get; set; }
         /// <summary>
         /// The guid id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
-        [DisplayName("Legacy Guid ID")]
+        [DisplayName("Legacy Guid Id")]
         public Guid? LegacyGuidId { get; set; }
         public List<Comment> Comments { get; set; }
         /// <summary>

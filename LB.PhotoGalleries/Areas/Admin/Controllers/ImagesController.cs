@@ -49,15 +49,18 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
 
         // GET: /admin/images/delete/5
-        public ActionResult Delete(string id)
+        public async Task<ActionResult> Delete(string categoryId, string galleryId, string imageId)
         {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            ViewData.Model = image;
+            ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             return View();
         }
 
         // POST: /admin/images/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(string id, IFormCollection collection)
+        public ActionResult Delete(string categoryId, string galleryId, string imageId, IFormCollection collection)
         {
             try
             {

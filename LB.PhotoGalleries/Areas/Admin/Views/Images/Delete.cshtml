@@ -1,0 +1,75 @@
+﻿@model LB.PhotoGalleries.Application.Models.Image
+@using LB.PhotoGalleries.Application.Models
+@{
+    ViewData["Title"] = "Delete Image";
+    var error = (string)ViewData["error"];
+    var gallery = (Gallery)ViewData["gallery"];
+}
+
+<h1>Delete Image</h1>
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
+</div>
+<hr />
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+<div class="row">
+
+    <div class="col">
+
+        <ul>
+            <li><b>@Html.DisplayNameFor(model => model.Id)</b>: @Html.DisplayFor(model => model.Id)</li>
+            <li><b>@Html.DisplayNameFor(model => model.GalleryId)</b>: @Html.DisplayFor(model => model.GalleryId)</li>
+            <li><b>@Html.DisplayNameFor(model => model.StorageId)</b>: @Html.DisplayFor(model => model.StorageId)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Position)</b>: @Html.DisplayFor(model => model.Position)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Name)</b>: @Html.DisplayFor(model => model.Name)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Caption)</b>: @Html.DisplayNameFor(model => model.Caption)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Credit)</b>: @Html.DisplayFor(model => model.Credit)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Created)</b>: @Html.DisplayFor(model => model.Created)</li>
+            <li><b>@Html.DisplayNameFor(model => model.CaptureDate)</b>: @Html.DisplayFor(model => model.CaptureDate)</li>
+            <li><b>@Html.DisplayNameFor(model => model.LegacyNumId)</b>: @Html.DisplayFor(model => model.LegacyNumId)</li>
+            <li><b>@Html.DisplayNameFor(model => model.LegacyGuidId)</b>: @Html.DisplayFor(model => model.LegacyGuidId)</li>
+            <li><b>Tags</b>: 
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="badge badge-info">@tag</span>
+                }
+            </li>
+        </ul>
+        
+        <p>
+            Please note that this will result in the image file being deleted and cannot be undone. 
+            Make sure you have an offline copy beforehand if you want to keep this image.
+        </p>
+        
+        <form asp-action="Delete">
+            <input type="submit" value="Delete" class="btn btn-danger" />
+        </form>
+
+    </div>
+    <div class="col">
+
+        <img id="preview-image" alt="@Model.Name" width="550" style="margin-bottom: 20px;" class="image-border" />
+
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
+            var scaledWidth = 550 * window.devicePixelRatio;
+            $("#preview-image").attr('src', '/i/@Model.StorageId?w=' + scaledWidth);
+        });
+    </script>
+}
