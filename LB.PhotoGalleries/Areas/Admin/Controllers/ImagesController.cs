@@ -19,7 +19,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
             ViewData["tags"] = string.Join(',', image.Tags);
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId);
             return View();
         }
 
@@ -32,12 +32,12 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId);
 
             try
             {
                 // check that the user is authorised to edit the image, i.e. they're an administrator or the creator of the gallery
-                if (!User.IsInRole("Administrator") && gallery.CreatedByUserId != Utilities.GetUserId(User))
+                if (!(bool)ViewData["isAuthorisedToEdit"])
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this image. You did not create the gallery.";
                     return View();
@@ -81,7 +81,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             try
             {
                 // check that the user is authorised to delete the image, i.e. they're an administrator or the creator of the gallery
-                if (!User.IsInRole("Administrator") && gallery.CreatedByUserId != Utilities.GetUserId(User))
+                if (!Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to delete this image. You did not create this gallery.";
                     return View();

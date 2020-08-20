@@ -21,5 +21,26 @@ namespace LB.PhotoGalleries
         {
             return Guid.NewGuid().ToString();
         }
+
+        /// <summary>
+        /// Determines if a user is authorised to edit or delete a photos object.
+        /// </summary>
+        public static bool IsUserAuthorisedToEdit(ClaimsPrincipal user, string objectCreatedByUserId)
+        {
+            // users must be an administrator or have created the object to edit (and delete) a photos object
+            if (user.IsInRole(Roles.Administrator.ToString()))
+                return true;
+
+            if (GetUserId(user) == objectCreatedByUserId)
+                return true;
+
+            return false;
+        }
+    }
+
+    public enum Roles
+    {
+        Administrator,
+        Photographer
     }
 }

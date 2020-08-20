@@ -53,7 +53,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, createdByUser.Id);
             return View();
         }
 
@@ -69,7 +69,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             try
             {
                 // check that the user is authorised to edit the gallery, i.e. they're an administrator or the creator of the gallery
-                if (!User.IsInRole("Administrator") && appGallery.CreatedByUserId != Utilities.GetUserId(User))
+                if (!Utilities.IsUserAuthorisedToEdit(User, appGallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
                     return View();
@@ -116,7 +116,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
             ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             return View();
@@ -140,7 +140,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             try
             {
                 // check the user is authorised to delete the gallery
-                if (!User.IsInRole("Administrator") && gallery.CreatedByUserId != Utilities.GetUserId(User))
+                if (!Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
                     return View();
