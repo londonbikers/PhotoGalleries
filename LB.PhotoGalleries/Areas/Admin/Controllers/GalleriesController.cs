@@ -53,6 +53,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
+            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
             return View();
         }
 
@@ -67,6 +68,13 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
 
             try
             {
+                // check that the user is authorised to edit the gallery, i.e. they're an administrator or the creator of the gallery
+                if (!User.IsInRole("Administrator") && appGallery.CreatedByUserId != Utilities.GetUserId(User))
+                {
+                    ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
+                    return View();
+                }
+
                 // map attributes from form gallery to one retrieved from the app server
                 appGallery.Name = gallery.Name;
                 appGallery.Description = gallery.Description;

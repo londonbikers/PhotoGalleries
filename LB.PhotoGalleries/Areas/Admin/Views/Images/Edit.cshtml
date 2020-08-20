@@ -6,6 +6,7 @@
     var success = (string)ViewData["success"];
     var gallery = (Gallery)ViewData["gallery"];
     var tags = (string)ViewData["tags"];
+    var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
 }
 
 @section Styles {
@@ -62,14 +63,17 @@
                 <input type="text" name="tagsCsv" id="tagsCsv" data-role="tagsinput" value="@tags" />
                 <small class="form-text text-muted">Please enter comma separated values.</small>
             </div>
-            <div class="form-group">
-                
-                <a class="btn btn-danger" asp-action="Delete" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@Model.GalleryId" asp-route-imageId="@Model.Id">
-                    Delete
-                </a>
 
-                <input type="submit" value="Save" class="btn btn-primary"/>
-            </div>
+            @if (isAuthorisedToEdit)
+            {
+                <div class="form-group">
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@Model.GalleryId" asp-route-imageId="@Model.Id">
+                        Delete
+                    </a>
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                </div>
+            }
+
         </form>
     </div>
     <div class="col">
