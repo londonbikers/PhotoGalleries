@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Application.Servers;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
 {
