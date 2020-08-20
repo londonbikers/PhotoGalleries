@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Application.Servers;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
 {
@@ -60,14 +61,29 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         // POST: /admin/images/delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(string categoryId, string galleryId, string imageId, IFormCollection collection)
+        public async Task<ActionResult> Delete(string categoryId, string galleryId, string imageId, IFormCollection collection)
         {
+            var userId = Utilities.GetUserId(User);
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            ViewData.Model = image;
+            ViewData["gallery"] = gallery;
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                // check that the user is authorised to delete the image, i.e. they're an administrator or the creator of the gallery
+                if (!User.IsInRole("Administrator") && gallery.CreatedByUserId != userId)
+                {
+                    ViewData["error"] = "Sorry, you are not authorised to delete this image. You did not create this gallery.";
+                    return View();
+                }
+
+                await Server.Instance.Images.DeleteImageAsync(image);
+                return RedirectToAction("Edit", "Galleries", new { pk = categoryId, id = galleryId });
             }
-            catch
+            catch (Exception ex)
             {
+                ViewData["error"] = ex.Message;
                 return View();
             }
         }

@@ -119,6 +119,20 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
             return response.Resource;
         }
+
+        public async Task DeleteImageAsync(Image image)
+        {
+            // delete the original image from storage (any other resized caches will auto-expire and be deleted)
+            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var blobResponse = await blobContainerClient.DeleteBlobAsync(image.StorageId);
+            Debug.WriteLine($"ImageServer:DeleteImageAsync: Blob delete response: {blobResponse.Status} - {blobResponse.ReasonPhrase}");
+
+            // finally, delete the database record
+            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var response = await container.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
+            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {response.RequestCharge}");
+        }
         #endregion
 
         #region internal methods
