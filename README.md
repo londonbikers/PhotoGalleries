@@ -25,7 +25,11 @@ A website to showcase the https://londonbikers.com photo galleries, both old and
 
 Photos will need migrating from both our archive and the current LB photos website.
 
-## Website Structure
+## Development approach:
+
+Due to limited development resources/time, the focus will be on quick development, implementing things as simply as possible and adding sophistication as and when needed. i.e. please don't judge the code for it not being at enterprise level just yet :)
+
+## Website Structure:
 
 | path | description |
 |---|---|
