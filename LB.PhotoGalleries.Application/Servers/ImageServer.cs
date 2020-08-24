@@ -1,12 +1,20 @@
 ﻿using Azure.Storage.Blobs;
 using LB.PhotoGalleries.Application.Models;
+using MetadataExtractor;
+using MetadataExtractor.Formats.Exif;
+using MetadataExtractor.Formats.Exif.Makernotes;
+using MetadataExtractor.Formats.Iptc;
+using MetadataExtractor.Formats.Jpeg;
+using MetadataExtractor.Formats.Png;
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Directory = MetadataExtractor.Directory;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -50,6 +58,8 @@ namespace LB.PhotoGalleries.Application.Servers
                     Name = Path.GetFileNameWithoutExtension(filename),
                     GalleryId = galleryId
                 };
+
+                ParseAndAssignImageMetadata(image, imageStream);
 
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
@@ -228,6 +238,303 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}");
 
             return users;
+        }
+
+        /// <summary>
+        /// Images contain metadata that describes the photo to varying degrees. This method extracts the metadata
+        /// and parses out the most interesting pieces we're interested in and assigns it to the image object so we can
+        /// present the information to the user and use it to help with searches.
+        /// </summary>
+        /// <param name="image">The Image object to assign the metadata to.</param>
+        /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
+        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream)
+        {
+            var directories = ImageMetadataReader.ReadMetadata(imageStream);
+
+            // debug info
+            // ----------------------------------------------------------------------------------
+            Debug.WriteLine("-------------------------------------------------");
+            Debug.WriteLine("");
+            foreach (var directory in directories)
+            {
+                // Each directory stores values in tags
+                foreach (var tag in directory.Tags)
+                    Debug.WriteLine(tag);
+
+                // Each directory may also contain error messages
+                foreach (var error in directory.Errors)
+                    Debug.WriteLine("ERROR: " + error);
+            }
+            Debug.WriteLine("");
+            Debug.WriteLine("-------------------------------------------------");
+            // ----------------------------------------------------------------------------------
+
+            image.Metadata.TakenDate = GetImageDateTaken(directories);
+
+            var size = GetImageDimensions(directories);
+            if (size.HasValue && !size.Value.IsEmpty)
+            {
+                image.Metadata.Width = size.Value.Width;
+                image.Metadata.Height = size.Value.Height;
+            }
+
+            var iso = GetImageIso(directories);
+            if (iso.HasValue)
+                image.Metadata.Iso = iso.Value;
+
+            var credit = GetImageCredit(directories);
+            if (!string.IsNullOrEmpty(credit))
+                image.Credit = credit;
+
+            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
+            if (exifIfd0Directory != null)
+            {
+                var make = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMake);
+                if (make != null)
+                    image.Metadata.CameraMake = make.Description;
+
+                var model = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagModel);
+                if (model != null)
+                    image.Metadata.CameraModel = model.Description;
+
+                var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
+                if (imageDescription != null)
+                    image.Caption = imageDescription.Description;
+            }
+
+            var exifSubIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (exifSubIfdDirectory != null)
+            {
+                var exposureTime = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureTime);
+                if (exposureTime != null)
+                    image.Metadata.ExposureTime = exposureTime.Description;
+
+                var aperture = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagAperture);
+                if (aperture != null)
+                    image.Metadata.Aperture = aperture.Description;
+
+                var exposureBias = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureBias);
+                if (exposureBias != null)
+                    image.Metadata.ExposureBias = exposureBias.Description;
+
+                var meteringMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMeteringMode);
+                if (meteringMode != null)
+                    image.Metadata.MeteringMode = meteringMode.Description;
+
+                var flash = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFlash);
+                if (flash != null)
+                    image.Metadata.Flash = flash.Description;
+
+                var focalLength = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFocalLength);
+                if (focalLength != null)
+                    image.Metadata.FocalLength = focalLength.Description;
+
+                var lensMake = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensMake);
+                if (lensMake != null)
+                    image.Metadata.LensMake = lensMake.Description;
+
+                var lensModel = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensModel);
+                if (lensModel != null)
+                    image.Metadata.LensModel = lensModel.Description;
+
+                var whiteBalance = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalance);
+                if (whiteBalance != null)
+                    image.Metadata.WhiteBalance = whiteBalance.Description;
+
+                var whiteBalanceMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalanceMode);
+                if (whiteBalanceMode != null)
+                    image.Metadata.WhiteBalanceMode = whiteBalanceMode.Description;
+            }
+
+            var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
+            var location = gpsDirectory?.GetGeoLocation();
+            if (location != null)
+            {
+                image.Metadata.LocationLatitude = location.Latitude;
+                image.Metadata.LocationLongitude = location.Longitude;
+            }
+
+            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
+            if (iptcDirectory != null)
+            {
+                var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
+                if (objectName != null)
+                    image.Name = objectName.Description;
+
+                var keywords = iptcDirectory.GetKeywords();
+                if (keywords != null)
+                    image.Tags.AddRange(keywords);
+            }
+
+            // wind the stream back to allow other code to work with the stream
+            imageStream.Position = 0;
+        }
+
+        /// <summary>
+        /// Attempts to extract and parse image date capture information from image metadata.
+        /// </summary>
+        /// <param name="directories">Metadata directories extracted from the image stream.</param>
+        private static DateTime? GetImageDateTaken(IEnumerable<Directory> directories)
+        {
+            // obtain the Exif SubIFD directory
+            var directory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (directory == null)
+                return null;
+
+            // query the tag's value
+            if (directory.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out var dateTime))
+                return dateTime;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Attempts to extract image width and height information from image metadata.
+        /// </summary>
+        /// <param name="directories">Metadata directories extracted from the image stream.</param>
+        public static Size? GetImageDimensions(IEnumerable<Directory> directories)
+        {
+            var size = new Size();
+
+            // try and get dimensions from EXIF data first
+            var enumerable = directories as Directory[] ?? directories.ToArray();
+            var exifSubIfdDirectory = enumerable.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (exifSubIfdDirectory != null)
+            {
+                var width = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageWidth);
+                if (width != null && !string.IsNullOrEmpty(width.Description))
+                {
+                    // values can contain strings, i.e. "1024 pixels" so snip those off
+                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
+                }
+
+                var height = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageHeight);
+                if (height != null && !string.IsNullOrEmpty(height.Description))
+                {
+                    // values can contain strings, i.e. "768 pixels" so snip those off
+                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
+                }
+
+                if (!size.IsEmpty)
+                    return size;
+            }
+
+            // no luck, try the JPEG data next
+            var jpegDirectory = enumerable.OfType<JpegDirectory>().FirstOrDefault();
+            if (jpegDirectory != null)
+            {
+                var width = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageWidth);
+                if (width != null && !string.IsNullOrEmpty(width.Description))
+                {
+                    // values can contain strings, i.e. "1024 pixels" so snip those off
+                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
+                }
+
+                var height = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageHeight);
+                if (height != null && !string.IsNullOrEmpty(height.Description))
+                {
+                    // values can contain strings, i.e. "768 pixels" so snip those off
+                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
+                }
+
+                return size;
+            }
+
+            // no luck, try the PNG data next
+            var pngDirectory = enumerable.OfType<PngDirectory>().FirstOrDefault();
+            if (pngDirectory != null)
+            {
+                var width = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageWidth);
+                if (width != null && !string.IsNullOrEmpty(width.Description))
+                {
+                    // values can contain strings, i.e. "1024 pixels" so snip those off
+                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
+                }
+
+                var height = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageHeight);
+                if (height != null && !string.IsNullOrEmpty(height.Description))
+                {
+                    // values can contain strings, i.e. "768 pixels" so snip those off
+                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
+                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
+                }
+
+                return size;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Attempts to extract image iso information from image metadata.
+        /// </summary>
+        /// <param name="directories">Metadata directories extracted from the image stream.</param>
+        public static int? GetImageIso(IEnumerable<Directory> directories)
+        {
+            int iso;
+            var exifSubIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (exifSubIfdDirectory != null)
+            {
+                var isoTag = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagIsoEquivalent);
+                if (isoTag != null)
+                {
+                    var validIso = int.TryParse(isoTag.Description, out iso);
+                    if (validIso)
+                        return iso;
+
+                    Debug.WriteLine($"ImageServer.GetImageIso: ExifSubIfdDirectory iso tag value wasn't an int: '{isoTag.Description}'");
+                }
+            }
+
+            var nikonDirectory = directories.OfType<NikonType2MakernoteDirectory>().FirstOrDefault();
+            if (nikonDirectory != null)
+            {
+                var isoTag = nikonDirectory.Tags.SingleOrDefault(t => t.Type == NikonType2MakernoteDirectory.TagIso1);
+                if (isoTag != null)
+                {
+                    var isoTagProcessed = isoTag.Description;
+                    if (isoTagProcessed.StartsWith("ISO "))
+                        isoTagProcessed = isoTag.Description.Split(' ')[1];
+
+                    var validIso = int.TryParse(isoTagProcessed, out iso);
+                    if (validIso)
+                        return iso;
+
+                    Debug.WriteLine($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Attempts to extract image credit information from image metadata.
+        /// </summary>
+        /// <param name="directories">Metadata directories extracted from the image stream.</param>
+        public static string GetImageCredit(IEnumerable<Directory> directories)
+        {
+            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
+            if (exifIfd0Directory != null)
+            {
+                var creditTag = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagCopyright);
+                if (creditTag != null && !string.IsNullOrEmpty(creditTag.Description))
+                    return creditTag.Description;
+            }
+
+            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
+            if (iptcDirectory != null)
+            {
+                var creditTag = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCredit);
+                if (creditTag != null && !string.IsNullOrEmpty(creditTag.Description))
+                    return creditTag.Description;
+            }
+
+            return null;
         }
         #endregion
     }

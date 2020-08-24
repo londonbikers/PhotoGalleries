@@ -38,11 +38,6 @@ namespace LB.PhotoGalleries.Application.Models
         /// </summary>
         public DateTime Created { get; set; }
         /// <summary>
-        /// When the photo was originally taken.
-        /// </summary>
-        [DisplayName("Capture date")]
-        public DateTime? CaptureDate { get; set; }
-        /// <summary>
         /// The numeric id of the image when it was stored in the old londonbikers_v5 database.
         /// Useful for URL conversion/redirects.
         /// </summary>
@@ -59,6 +54,8 @@ namespace LB.PhotoGalleries.Application.Models
         /// Tags that define the context of the photo, i.e. what's in it, where it is, etc.
         /// </summary>
         public List<string> Tags { get; set; }
+
+        public Metadata Metadata { get; set; }
         #endregion
         
         #region constructors
@@ -67,6 +64,7 @@ namespace LB.PhotoGalleries.Application.Models
             Created = DateTime.Now;
             Comments = new List<Comment>();
             Tags = new List<string>();
+            Metadata = new Metadata();
         }
         #endregion
 
@@ -82,5 +80,31 @@ namespace LB.PhotoGalleries.Application.Models
             return true;
         }
         #endregion
+    }
+
+    /// <summary>
+    /// Store the most popular metadata in the document with the image.
+    /// The full metadata is always available by reading the original file from storage.
+    /// </summary>
+    public class Metadata
+    {
+        public int? Width { get; set; }
+        public int? Height { get; set; }
+        public string CameraMake { get; set; }
+        public string CameraModel { get; set; }
+        public string ExposureTime { get; set; }
+        public int? Iso { get; set; }
+        public DateTime? TakenDate { get; set; }
+        public string Aperture { get; set; }
+        public string ExposureBias { get; set; }
+        public string MeteringMode { get; set; }
+        public string Flash { get; set; }
+        public string FocalLength { get; set; }
+        public string WhiteBalance { get; set; }
+        public string WhiteBalanceMode { get; set; }
+        public string LensMake { get; set; }
+        public string LensModel { get; set; }
+        public double? LocationLatitude { get; set; }
+        public double? LocationLongitude { get; set; }
     }
 }
