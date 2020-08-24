@@ -15,7 +15,6 @@ namespace LB.PhotoGalleries.Application.Servers
         #region constructors
         internal ImageServer()
         {
-
         }
         #endregion
 
