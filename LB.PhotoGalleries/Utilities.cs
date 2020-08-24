@@ -1,4 +1,7 @@
-﻿using System;
+﻿using LB.PhotoGalleries.Application.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 
 namespace LB.PhotoGalleries
@@ -35,6 +38,17 @@ namespace LB.PhotoGalleries
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Orders images by position if set, or when they were created if not.
+        /// </summary>
+        public static IOrderedEnumerable<Image> OrderImages(List<Image> images)
+        {
+            if (images.Any(i => i.Position.HasValue))
+                return images.OrderBy(i => i.Position.Value);
+
+            return images.OrderBy(i => i.Created);
         }
     }
 
