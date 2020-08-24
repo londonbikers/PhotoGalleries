@@ -123,9 +123,8 @@ namespace LB.PhotoGalleries.Application.Servers
             if (user == null)
                 throw new InvalidOperationException("User is null");
 
-            const string queryColumnName = "NumOfGalleries";
-            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-            return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
+            var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            return await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query);
         }
 
         public async Task<int> GetUserCommentCountAsync(User user)
@@ -133,13 +132,10 @@ namespace LB.PhotoGalleries.Application.Servers
             if (user == null)
                 throw new InvalidOperationException("User is null");
 
-            const string queryColumnName = "NumOfComments";
-            var query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-            var galleryComments = await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query, queryColumnName);
-
-            query = new QueryDefinition($"SELECT COUNT(0) AS {queryColumnName} FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-            var imageComments = await Server.Instance.Images.GetImagesScalarByQueryAsync(query, queryColumnName);
-
+            var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            var galleryComments = await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query);
+            query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
+            var imageComments = await Server.Instance.Images.GetImagesScalarByQueryAsync(query);
             return galleryComments + imageComments;
         }
 

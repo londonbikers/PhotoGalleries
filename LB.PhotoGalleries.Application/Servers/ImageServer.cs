@@ -1,11 +1,11 @@
 ﻿using Azure.Storage.Blobs;
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -40,6 +40,9 @@ namespace LB.PhotoGalleries.Application.Servers
                     throw new ArgumentNullException(nameof(filename));
 
                 // create the Image object
+                // note: we don't set a position as there's no easy way to do this at this point. instead
+                // we let the clients order by created date initially and then when/if a photographer orders the photos
+                // then the position attribute is used to order images.
                 var id = Guid.NewGuid().ToString();
                 var image = new Image
                 {
@@ -59,7 +62,6 @@ namespace LB.PhotoGalleries.Application.Servers
                 imageStream.Close();
 
                 // create the database record
-                // note: we're not setting position on each image at this point as it's expensive to do in terms of request units and might not ever need to be done
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
@@ -133,6 +135,51 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
             Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {response.RequestCharge}");
         }
+
+        /// <summary>
+        /// Re-orders gallery image positions so that an image is at a new position.
+        /// </summary>
+        public async Task UpdateImagePositionAsync(string galleryId, string imageId, int position)
+        {
+            var images = await GetGalleryImagesAsync(galleryId);
+
+            // if images have not been ordered before, they will have no position set and the client
+            // will be ordering images by when the images were created, so the first thing we need to do
+            // is order the images like that, then re-order the images to what the user wishes.
+
+            var hadToPerformInitialOrdering = false;
+            if (!images.Any(i => i.Position.HasValue))
+            {
+                images = images.OrderBy(i => i.Created).ToList();
+                for (var i = 0; i < images.Count; i++)
+                    images[i].Position = i;
+
+                hadToPerformInitialOrdering = true;
+            }
+
+            // now we can re-order the images
+            // cut out the image being ordered first then bump up a position each image from where our image will go
+            var imageBeingOrdered = images.Single(i => i.Id == imageId);
+            images.RemoveAll(i => i.Id == imageId);
+
+            var newPosition = position + 1;
+            foreach (var image in images.Where(image => image.Position >= position))
+            {
+                image.Position = newPosition;
+                newPosition = newPosition + 1;
+            }
+
+            // now set the desired image with the desired position and add it back in to the list
+            imageBeingOrdered.Position = position;
+            images.Add(imageBeingOrdered);
+
+            // now write the new positions back to the database
+            // we have an opportunity to introduce some efficiency, i.e. if we are moving an image from the back to the middle then
+            // we don't need to re-order images at the start. this will save on db interactions.
+            var imagesToUpdate = hadToPerformInitialOrdering ? images : images.Where(i => i.Position >= position);
+            foreach (var image in imagesToUpdate)
+                await UpdateImageAsync(image);
+        }
         #endregion
 
         #region internal methods
@@ -143,7 +190,7 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetImagesByQueryAsync(queryDefinition);
         }
 
-        internal async Task<int> GetImagesScalarByQueryAsync(QueryDefinition queryDefinition, string queryColumnName)
+        internal async Task<int> GetImagesScalarByQueryAsync(QueryDefinition queryDefinition)
         {
             if (queryDefinition == null)
                 throw new InvalidOperationException("queryDefinition is null");
@@ -151,17 +198,15 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var result = container.GetItemQueryIterator<object>(queryDefinition);
 
-            var count = 0;
+            const int count = 0;
             if (!result.HasMoreResults)
                 return count;
 
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Query: {queryDefinition.QueryText}");
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}");
-            foreach (JObject item in resultSet)
-                count = (int)item[queryColumnName];
 
-            return count;
+            return Convert.ToInt32(resultSet.Resource.First());
         }
         #endregion
 

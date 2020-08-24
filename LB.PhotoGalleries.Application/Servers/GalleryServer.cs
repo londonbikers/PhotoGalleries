@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -104,7 +105,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region internal methods
-        internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition, string queryColumnName)
+        internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition)
         {
             if (queryDefinition == null)
                 throw new InvalidOperationException("queryDefinition is null");
@@ -119,10 +120,8 @@ namespace LB.PhotoGalleries.Application.Servers
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine("UserServer.GetGalleriesScalarByQueryAsync: Query: " + queryDefinition.QueryText);
             Debug.WriteLine("UserServer.GetGalleriesScalarByQueryAsync: Request charge: " + resultSet.RequestCharge);
-            foreach (JObject item in resultSet)
-                count = (int)item[queryColumnName];
 
-            return count;
+            return Convert.ToInt32(resultSet.Resource.First());
         }
 
         internal async Task<List<GalleryStub>> GetGalleryStubsByQueryAsync(QueryDefinition queryDefinition)

@@ -130,10 +130,11 @@
 <p>Count: @images.Count</p>
 
 <div class="row">
-    <div class="col" data-bind="sortable: {foreach: Images}"><div class="grid-square"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(StorageId)}" width="200" height="200" /></a></div></div>
+    <div class="col" data-bind="sortable: {foreach: Images, options: {onEnd: OnImageMoved}}"><div class="grid-square" data-bind="attr: {id: 'gi-'+Id}"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(StorageId)}" width="200" height="200" /></a></div></div>
 </div>
 
-@section Scripts {
+@section Scripts
+{
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script src="~/lib/dropzone/dist/min/dropzone.min.js"></script>
@@ -145,13 +146,30 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid 
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.Name, i.StorageId})));
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
+        var galleryId = '@Model.Id';
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(storageId) {
             var scaledSize = 200 * window.devicePixelRatio;
             return `/i/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+        }
+
+        function OnImageMoved(evt) {
+            console.log("an image was re-ordered!");
+
+            var imageBeingMovedId = evt.item.id.substring(3);
+            var imageBeingMovedNewPosition = evt.newIndex;
+
+            // send new position to api...
+            $.post(`/api/images/SetPosition?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
+                .done(function() {
+                    console.log("image ordering post-back done!");
+                })
+                .fail(function() {
+                    console.log("oh no, something went wrong with ordering post-back!");
+                });
         }
 
         function GetImageEditUrl(imageId) {
