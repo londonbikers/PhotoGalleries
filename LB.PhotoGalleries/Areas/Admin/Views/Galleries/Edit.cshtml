@@ -167,8 +167,10 @@
                 .done(function() {
                     console.log("image ordering post-back done!");
                 })
-                .fail(function() {
+                .fail(function () {
+                    // returning false on OnImageMoved() is meant to cancel the move, but it doesn't seem to work
                     console.log("oh no, something went wrong with ordering post-back!");
+                    return false;
                 });
         }
 
