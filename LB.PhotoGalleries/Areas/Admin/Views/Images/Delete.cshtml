@@ -4,6 +4,7 @@
     ViewData["Title"] = "Delete Image";
     var error = (string)ViewData["error"];
     var gallery = (Gallery)ViewData["gallery"];
+    var mapsKey = (string)ViewData["mapsKey"];
 }
 
 <h1>Delete Image</h1>
@@ -56,6 +57,69 @@
     <div class="col">
 
         <img id="preview-image" alt="@Model.Name" width="550" style="margin-bottom: 20px;" class="image-border" />
+
+        <h3>Metadata</h3>
+        
+        <ul>
+            @if (Model.Metadata.TakenDate.HasValue)
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.TakenDate)</b>: @Html.DisplayFor(model => model.Metadata.TakenDate)</li>
+            }
+            @if (Model.Metadata.Width.HasValue)
+            {
+                <li><b>Original Size</b>: @Html.DisplayFor(model => model.Metadata.Width) x @Html.DisplayFor(model => model.Metadata.Height)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.CameraMake))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.CameraMake)</b>: @Html.DisplayFor(model => model.Metadata.CameraMake)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.CameraModel))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.CameraModel)</b>: @Html.DisplayFor(model => model.Metadata.CameraModel)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.LensMake))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.LensMake)</b>: @Html.DisplayFor(model => model.Metadata.LensMake)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.LensModel)</b>: @Html.DisplayFor(model => model.Metadata.LensModel)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.Aperture)</b>: @Html.DisplayFor(model => model.Metadata.Aperture)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.ExposureTime))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.ExposureTime)</b>: @Html.DisplayFor(model => model.Metadata.ExposureTime)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.ExposureBias))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.ExposureBias)</b>: @Html.DisplayFor(model => model.Metadata.ExposureBias)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.MeteringMode))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.MeteringMode)</b>: @Html.DisplayFor(model => model.Metadata.MeteringMode)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.Flash))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.Flash)</b>: @Html.DisplayFor(model => model.Metadata.Flash)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.FocalLength))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.FocalLength)</b>: @Html.DisplayFor(model => model.Metadata.FocalLength)</li>
+            }
+        </ul>
+
+        @if (Model.Metadata.LocationLatitude.HasValue)
+        {
+            <b>Where</b>
+            <iframe width="550"
+                    height="450"
+                    frameborder="0" style="border: solid 1px #ccc"
+                    src="https://www.google.com/maps/embed/v1/view?key=@mapsKey&center=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&zoom=18" allowfullscreen>
+            </iframe>
+        }
 
     </div>
 

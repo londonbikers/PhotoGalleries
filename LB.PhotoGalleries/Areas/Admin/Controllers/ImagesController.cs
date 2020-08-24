@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Configuration;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
 {
@@ -11,6 +13,17 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
     [Authorize(Roles = "Administrator,Photographer")]
     public class ImagesController : Controller
     {
+        #region members
+        private readonly IConfiguration _configuration;
+        #endregion
+
+        #region constructors
+        public ImagesController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        #endregion
+
         // GET: /admin/images/edit/5/5/7
         public async Task<ActionResult> Edit(string categoryId, string galleryId, string imageId)
         {
@@ -20,6 +33,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData["gallery"] = gallery;
             ViewData["tags"] = string.Join(',', image.Tags);
             ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId);
+            ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
             return View();
         }
 
@@ -33,6 +47,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
             ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, gallery.CreatedByUserId);
+            ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
 
             try
             {
@@ -65,6 +80,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             ViewData.Model = image;
             ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
             return View();
         }
 
@@ -77,6 +93,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
+            ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
 
             try
             {

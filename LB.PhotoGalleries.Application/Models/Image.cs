@@ -90,21 +90,34 @@ namespace LB.PhotoGalleries.Application.Models
     {
         public int? Width { get; set; }
         public int? Height { get; set; }
+        [DisplayName("Camera Make")]
         public string CameraMake { get; set; }
+        [DisplayName("Camera Model")]
         public string CameraModel { get; set; }
+        [DisplayName("Exposure Time")]
         public string ExposureTime { get; set; }
         public int? Iso { get; set; }
+        [DisplayName("Taken Date")]
         public DateTime? TakenDate { get; set; }
         public string Aperture { get; set; }
+        [DisplayName("Exposure Bias")]
         public string ExposureBias { get; set; }
+        [DisplayName("Metering Mode")]
         public string MeteringMode { get; set; }
         public string Flash { get; set; }
+        [DisplayName("Focal Length")]
         public string FocalLength { get; set; }
+        [DisplayName("White Balance")]
         public string WhiteBalance { get; set; }
+        [DisplayName("White Balance Mode")]
         public string WhiteBalanceMode { get; set; }
+        [DisplayName("Lens Make")]
         public string LensMake { get; set; }
+        [DisplayName("Lens Model")]
         public string LensModel { get; set; }
+        [DisplayName("Location Latitude")]
         public double? LocationLatitude { get; set; }
+        [DisplayName("Location Longitude")]
         public double? LocationLongitude { get; set; }
     }
 }
