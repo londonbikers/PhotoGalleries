@@ -97,6 +97,10 @@
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.ExposureBias)</b>: @Html.DisplayFor(model => model.Metadata.ExposureBias)</li>
             }
+            @if (Model.Metadata.Iso.HasValue)
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.Iso)</b>: @Html.DisplayFor(model => model.Metadata.Iso.Value)</li>
+            }
             @if (!string.IsNullOrEmpty(Model.Metadata.MeteringMode))
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.MeteringMode)</b>: @Html.DisplayFor(model => model.Metadata.MeteringMode)</li>
