@@ -90,12 +90,13 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = appGallery;
             ViewData["username"] = createdByUser.Name;
             ViewData["images"] = images;
+            ViewData["isAuthorisedToEdit"] = Utilities.IsUserAuthorisedToEdit(User, createdByUser.Id);
 
             return View();
         }
         
         [HttpPost]
-        public async Task<IActionResult> Upload(string id, IFormFile file)
+        public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)
         {
             // store the file in cloud storage and post-process
             // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
@@ -104,7 +105,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return NoContent();
 
             var stream = file.OpenReadStream();
-            await Server.Instance.Images.CreateImageAsync(id, stream, file.FileName);
+            await Server.Instance.Images.CreateImageAsync(categoryId, galleryId, stream, file.FileName);
             return Ok();
         }
 

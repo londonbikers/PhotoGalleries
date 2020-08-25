@@ -28,13 +28,15 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region public methods
+
         /// <summary>
         /// Stores an uploaded file in the storage system and adds a supporting Image object to the database.
         /// </summary>
+        /// <param name="galleryCategoryId">The id for the category the gallery resides in, which the image resides in.</param>
         /// <param name="galleryId">The gallery this image is going to be contained within.</param>
         /// <param name="imageStream">The stream for the uploaded image file.</param>
         /// <param name="filename">The original filename provided by the client.</param>
-        public async Task CreateImageAsync(string galleryId, Stream imageStream, string filename)
+        public async Task CreateImageAsync(string galleryCategoryId, string galleryId, Stream imageStream, string filename)
         {
             try
             {
@@ -57,6 +59,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     Id = id,
                     StorageId = id + Path.GetExtension(filename).ToLower(),
                     Name = Path.GetFileNameWithoutExtension(filename),
+                    GalleryCategoryId = galleryCategoryId,
                     GalleryId = galleryId
                 };
 
@@ -75,6 +78,14 @@ namespace LB.PhotoGalleries.Application.Servers
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
+
+                // was this the first image? set the gallery thumbnail using this image if so
+                var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCategoryId, galleryId);
+                if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
+                {
+                    gallery.ThumbnailStorageId = image.StorageId;
+                    await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                }
             }
             catch
             {
@@ -135,7 +146,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Causes an Image to be permanently deleted from storage and database. Will also result in some images being re-ordered to avoid holes in positions.
         /// </summary>
-        public async Task DeleteImageAsync(Image image)
+        public async Task DeleteImageAsync(Image image, bool performReordering = true)
         {
             // delete the original image from storage (any other resized caches will auto-expire and be deleted)
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
@@ -153,39 +164,27 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {response.RequestCharge}");
 
             // if necessary, re-order photos down-position from where the deleted photo used to be
-            if (position.HasValue)
+            if (position.HasValue && performReordering)
             {
+                var originalPosition = position.Value;
                 Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
 
                 // get the ids of images that have a position down from where our deleted image used to be
-                const string query = "SELECT c.id FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position";
-                var queryDefinition = new QueryDefinition(query);
-                queryDefinition.WithParameter("@galleryId", galleryId);
-                queryDefinition.WithParameter("@position", position.Value);
-                var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
-                double charge = 0;
-                var ids = new List<string>();
+                var queryDefinition = new QueryDefinition("SELECT c.id AS Id, c.GalleryId AS PartitionKey FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position ORDER BY c.Position")
+                    .WithParameter("@galleryId", galleryId)
+                    .WithParameter("@position", position.Value);
 
-                while (queryResult.HasMoreResults)
+                var ids = await Server.Instance.Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+                Image newThumbnailImage = null;
+
+                for (var index = 0; index < ids.Count; index++)
                 {
-                    var results = await queryResult.ReadNextAsync();
-
-                    // I really dislike this method of getting all object ids. There's got to be a cleaner way?
-                    // ReSharper disable once LoopCanBeConvertedToQuery - Resharper simplifies this incorrectly, results in a compilation error
-                    foreach (var jObject in results)
-                        foreach (var kvp in jObject)
-                            ids.Add((string)kvp.Value);
-
-                    charge += results.RequestCharge;
-                }
-
-                Debug.WriteLine($"ImageServer.DeleteImageAsync: Found {ids.Count} image ids for re-ordering");
-                Debug.WriteLine($"ImageServer.DeleteImageAsync: Total request charge for getting affected image ids: {charge}");
-
-                foreach (var id in ids)
-                {
+                    var id = ids[index].Id;
                     var affectedImage = await GetImageAsync(galleryId, id);
-                    
+
+                    if (index == 0 && originalPosition == 0)
+                        newThumbnailImage = affectedImage;
+
                     // this check shouldn't be required as if one image has a position then all should
                     // but life experience suggests it's best to be sure.
                     if (affectedImage.Position == null)
@@ -194,6 +193,15 @@ namespace LB.PhotoGalleries.Application.Servers
                     affectedImage.Position = position;
                     await UpdateImageAsync(affectedImage);
                     position += 1;
+                }
+
+                // update the gallery thumbnail if we deleted the first image
+                if (originalPosition == 0 && newThumbnailImage != null)
+                {
+                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
+                    var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
+                    gallery.ThumbnailStorageId = newThumbnailImage.StorageId;
+                    await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
                 }
             }
         }
@@ -228,7 +236,7 @@ namespace LB.PhotoGalleries.Application.Servers
             foreach (var image in images.Where(image => image.Position >= position))
             {
                 image.Position = newPosition;
-                newPosition = newPosition + 1;
+                newPosition += 1;
             }
 
             // now set the desired image with the desired position and add it back in to the list
@@ -241,6 +249,14 @@ namespace LB.PhotoGalleries.Application.Servers
             var imagesToUpdate = hadToPerformInitialOrdering ? images : images.Where(i => i.Position >= position);
             foreach (var image in imagesToUpdate)
                 await UpdateImageAsync(image);
+
+            if (position == 0)
+            {
+                Debug.WriteLine("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
+                var gallery = await Server.Instance.Galleries.GetGalleryAsync(imageBeingOrdered.GalleryCategoryId, imageBeingOrdered.GalleryId);
+                gallery.ThumbnailStorageId = imageBeingOrdered.StorageId;
+                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+            }
         }
         #endregion
 
@@ -292,7 +308,9 @@ namespace LB.PhotoGalleries.Application.Servers
 
             return users;
         }
+        #endregion
 
+        #region metadata parsing methods
         /// <summary>
         /// Images contain metadata that describes the photo to varying degrees. This method extracts the metadata
         /// and parses out the most interesting pieces we're interested in and assigns it to the image object so we can
@@ -306,20 +324,20 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // debug info
             // ----------------------------------------------------------------------------------
-            Debug.WriteLine("-------------------------------------------------");
-            Debug.WriteLine("");
-            foreach (var directory in directories)
-            {
-                // Each directory stores values in tags
-                foreach (var tag in directory.Tags)
-                    Debug.WriteLine(tag);
+            //Debug.WriteLine("-------------------------------------------------");
+            //Debug.WriteLine("");
+            //foreach (var directory in directories)
+            //{
+            //    // Each directory stores values in tags
+            //    foreach (var tag in directory.Tags)
+            //        Debug.WriteLine(tag);
 
-                // Each directory may also contain error messages
-                foreach (var error in directory.Errors)
-                    Debug.WriteLine("ERROR: " + error);
-            }
-            Debug.WriteLine("");
-            Debug.WriteLine("-------------------------------------------------");
+            //    // Each directory may also contain error messages
+            //    foreach (var error in directory.Errors)
+            //        Debug.WriteLine("ERROR: " + error);
+            //}
+            //Debug.WriteLine("");
+            //Debug.WriteLine("-------------------------------------------------");
             // ----------------------------------------------------------------------------------
 
             image.Metadata.TakenDate = GetImageDateTaken(directories);

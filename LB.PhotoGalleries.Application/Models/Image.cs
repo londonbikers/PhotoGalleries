@@ -10,6 +10,8 @@ namespace LB.PhotoGalleries.Application.Models
         #region accessors
         [JsonProperty("id")]
         public string Id { get; set; }
+        [DisplayName("Gallery Category Id")]
+        public string GalleryCategoryId { get; set; }
         [DisplayName("Gallery Id")]
         public string GalleryId { get; set; }
         /// <summary>
@@ -74,6 +76,7 @@ namespace LB.PhotoGalleries.Application.Models
             if (string.IsNullOrEmpty(Id) ||
                 string.IsNullOrEmpty(StorageId) ||
                 string.IsNullOrEmpty(GalleryId) ||
+                string.IsNullOrEmpty(GalleryCategoryId) ||
                 string.IsNullOrEmpty(Name))
                 return false;
 

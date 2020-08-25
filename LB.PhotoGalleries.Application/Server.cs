@@ -30,6 +30,7 @@ namespace LB.PhotoGalleries.Application
         internal IConfiguration Configuration { get; set; }
         internal CosmosClient CosmosClient { get; set; }
         internal Database Database { get; set; }
+        internal Utilities Utilities { get; set; }
         #endregion
 
         #region constructors
@@ -40,7 +41,8 @@ namespace LB.PhotoGalleries.Application
                 Categories = new CategoryServer(),
                 Galleries = new GalleryServer(),
                 Images = new ImageServer(),
-                Users = new UserServer()
+                Users = new UserServer(),
+                Utilities = new Utilities()
             };
         }
         #endregion

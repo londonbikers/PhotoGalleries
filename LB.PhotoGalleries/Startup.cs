@@ -143,6 +143,12 @@ namespace LB.PhotoGalleries
                     name: "Admin",
                     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute(
+                    name: "category",
+                    pattern: "c/{name}", new { controller="Categories", action="Details"});
+                endpoints.MapControllerRoute(
+                    name: "gallery",
+                    pattern: "g/{categoryId}/{galleryId}/{name}", new { controller = "Galleries", action = "Details" });
+                endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });

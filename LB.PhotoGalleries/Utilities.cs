@@ -50,6 +50,22 @@ namespace LB.PhotoGalleries
 
             return images.OrderBy(i => i.Created);
         }
+
+        /// <summary>
+        /// Encodes text we want to use as a URL parameter. Provides a simpler and more aesthetically pleasing encode than traditional Url Encode functions.
+        /// </summary>
+        public static string EncodeParamForUrl(string parameter)
+        {
+            return parameter.Replace("-", "_").Replace(" ", "-").ToLower();
+        }
+
+        /// <summary>
+        /// Turns encoded parameters back into usable text. Will not undo lower-casing.
+        /// </summary>
+        public static string DecodeParameterFromUrl(string parameter)
+        {
+            return parameter.Replace("-", " ").Replace("_", "-");
+        }
     }
 
     public enum Roles

@@ -4,10 +4,10 @@ using System;
 namespace LB.PhotoGalleries.Application.Models
 {
     /// <summary>
-    /// A downsized version of the Gallery model. Used for displaying the gallery in indexes and other
+    /// A downsized version of the Gallery model. Used in the admin area for displaying the gallery in indexes and other
     /// places where only a few details are needed about the gallery, rather the the whole, heavy object.
     /// </summary>
-    public class GalleryStub
+    public class GalleryAdminStub
     {
         #region accessors
         [JsonProperty("id")]

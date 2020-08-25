@@ -1,8 +1,81 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@using LB.PhotoGalleries.Application
+@using LB.PhotoGalleries.Application.Models
+@using Newtonsoft.Json
+@{ ViewData["Title"] = "Home";
+    var galleries = (List<Gallery>)ViewData["galleries"]; }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <p>
+        Welcome to over @(DateTime.Now.Year - 2004) years of <a href="https://londonbikers.com/">londonbikers.com</a> photos.
+        Here you can find tens of thousands of our community, motorcycle and racing photos from MotoGP, World Superbikes, British Superbikes and Motorcross with coveted paddock, pitlane and grid access since that we've been publishing since very start of LB.
+    </p>
+
+    <p><b>Categories</b></p>
+
+    <div class="row mb-3">
+        <div class="col">
+            @foreach (var category in Server.Instance.Categories.Categories)
+            {
+                <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)" class="btn btn-sm btn-outline-primary" role="button">@category.Name</a>
+            }
+        </div>
+    </div>
+
+    <p><b>Latest Galleries</b></p>
 </div>
+
+<div class="row" data-bind="foreach: Galleries">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <img data-bind="attr: {title: Name, src: GetThumbnailUrl(ThumbnailStorageId)}" width="348" height="228" />
+            <div class="card-body">
+                <p class="card-text" data-bind="text: Name"></p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+                    </div>
+                    <small class="text-muted">9 mins</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+
+    <script type="text/javascript">
+
+        // convert the big image documents into a new lightweight object to aid with rendering the image grid
+        // and convert to json so the Knockout script can parse it and use it.
+        var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Select(g => new { g.CategoryId, g.Id, g.Name, g.ThumbnailStorageId })));
+
+        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
+        // this ensures images are as crisp as they can be for each client device.
+        function GetThumbnailUrl(storageId) {
+            var scaledWidth = 348 * window.devicePixelRatio;
+            var scaledHeight = 225 * window.devicePixelRatio;
+            return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+        }
+
+        function GetGalleryUrl(categoryId, galleryId, name) {
+            var encodedName = EncodeParamForUrl(name);
+            return `/g/${categoryId}/${galleryId}/${encodedName}`;
+        }
+
+        // the view model that knockout uses to bind data to the html
+        function ViewModel() {
+            // parse the images from a json blob
+            this.Galleries = ko.observableArray(payload);
+        }
+
+        $(document).ready(function() {
+            ko.applyBindings(new ViewModel());
+        });
+    </script>
+}

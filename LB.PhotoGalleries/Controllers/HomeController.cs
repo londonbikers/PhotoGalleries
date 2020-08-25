@@ -1,11 +1,12 @@
-﻿using System.Diagnostics;
-using System.Threading.Tasks;
+﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers
 {
@@ -18,8 +19,9 @@ namespace LB.PhotoGalleries.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            ViewData["galleries"] = await Server.Instance.Galleries.GetLatestActiveGalleriesAsync(10);
             return View();
         }
 

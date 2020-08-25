@@ -1,6 +1,5 @@
 ﻿using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -43,7 +42,7 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetGalleryByQueryAsync(queryDefinition);
         }
 
-        public async Task<List<GalleryStub>> GetLatestGalleriesAsync(int maxResults)
+        public async Task<List<GalleryAdminStub>> GetLatestGalleriesAsync(int maxResults)
         {
             // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
             if (maxResults > 100)
@@ -53,10 +52,26 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetGalleryStubsByQueryAsync(queryDefinition);
         }
 
+        public async Task<List<Gallery>> GetLatestActiveGalleriesAsync(int maxResults)
+        {
+            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
+            if (maxResults > 100)
+                maxResults = 100;
+
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.id AS Id, c.CategoryId AS PartitionKey FROM c WHERE c.Active = true ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            var databaseIds = await Server.Instance.Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+            var galleries = new List<Gallery>();
+
+            foreach (var databaseId in databaseIds)
+                galleries.Add(await GetGalleryAsync(databaseId.PartitionKey, databaseId.Id));
+
+            return galleries;
+        }
+
         /// <summary>
         /// Performs a search for galleries with a given search term in their name.
         /// </summary>
-        public async Task<List<GalleryStub>> SearchForGalleriesAsync(string searchString, int maxResults)
+        public async Task<List<GalleryAdminStub>> SearchForGalleriesAsync(string searchString, int maxResults)
         {
             // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
             if (maxResults > 100)
@@ -95,7 +110,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // delete all images docs and files. can't be done in bulk unfortunately.
             foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id))
-                await Server.Instance.Images.DeleteImageAsync(image);
+                await Server.Instance.Images.DeleteImageAsync(image, false);
 
             // delete the gallery doc
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
@@ -124,11 +139,11 @@ namespace LB.PhotoGalleries.Application.Servers
             return Convert.ToInt32(resultSet.Resource.First());
         }
 
-        internal async Task<List<GalleryStub>> GetGalleryStubsByQueryAsync(QueryDefinition queryDefinition)
+        internal async Task<List<GalleryAdminStub>> GetGalleryStubsByQueryAsync(QueryDefinition queryDefinition)
         {
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
-            var queryResult = container.GetItemQueryIterator<GalleryStub>(queryDefinition);
-            var galleryStubs = new List<GalleryStub>();
+            var queryResult = container.GetItemQueryIterator<GalleryAdminStub>(queryDefinition);
+            var galleryStubs = new List<GalleryAdminStub>();
             double charge = 0;
 
             while (queryResult.HasMoreResults)
