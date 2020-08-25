@@ -81,6 +81,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 appGallery.Active = gallery.Active;
              
                 await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(appGallery);
+                ViewData["success"] = "Gallery updated!";
             }
             catch (Exception ex)
             {
