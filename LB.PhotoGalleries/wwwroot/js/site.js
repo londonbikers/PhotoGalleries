@@ -5,5 +5,5 @@
 // is not guaranteed to be reversible so best used just for aesthetic reasons.
 function EncodeParamForUrl(parameter)
 {
-    return parameter.replace("-", "_").replace(" ", "-").toLowerCase();
+    return parameter.replace(/-/g, "_").replace(/ /g, "-").replace(/\(/g, "").replace(/\)/g, "").toLowerCase();
 }
