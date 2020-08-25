@@ -21,7 +21,7 @@ namespace LB.PhotoGalleries.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewData["galleries"] = await Server.Instance.Galleries.GetLatestActiveGalleriesAsync(10);
+            ViewData["galleries"] = await Server.Instance.Galleries.GetLatestActiveGalleriesAsync(12);
             return View();
         }
 
