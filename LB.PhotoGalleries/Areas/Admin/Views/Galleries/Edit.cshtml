@@ -192,13 +192,20 @@
             this.Images = ko.observableArray(payload);
         }
 
-        $(document).ready(function() {
-            Dropzone.options.uploader = {
-                paramName: "file",
-                maxFilesize: 50,
-                acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif"
-            };
+        // configure the uploader
+        Dropzone.options.uploader = {
+            paramName: "file",
+            maxFilesize: 50,
+            acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif",
+            init: function() {
+                this.on("queuecomplete", function () {
+                    // the uploads are done, refresh the page so we clear down the uploader and show the new images properly
+                    location.reload();
+                });
+            }
+        };
 
+        $(document).ready(function () {
             ko.applyBindings(new ViewModel());
         });
     </script>
