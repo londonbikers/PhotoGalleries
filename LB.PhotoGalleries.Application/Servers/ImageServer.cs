@@ -157,7 +157,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
 
-                // get the ids of images that have a position down from where our delete image used to be
+                // get the ids of images that have a position down from where our deleted image used to be
                 const string query = "SELECT c.id FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position";
                 var queryDefinition = new QueryDefinition(query);
                 queryDefinition.WithParameter("@galleryId", galleryId);
@@ -171,7 +171,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     var results = await queryResult.ReadNextAsync();
 
                     // I really dislike this method of getting all object ids. There's got to be a cleaner way?
-                    // ReSharper disable once LoopCanBeConvertedToQuery - Resharper simplifies this incorrectly, compilation error results
+                    // ReSharper disable once LoopCanBeConvertedToQuery - Resharper simplifies this incorrectly, results in a compilation error
                     foreach (var jObject in results)
                         foreach (var kvp in jObject)
                             ids.Add((string)kvp.Value);
