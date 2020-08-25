@@ -7,6 +7,7 @@ using MetadataExtractor.Formats.Iptc;
 using MetadataExtractor.Formats.Jpeg;
 using MetadataExtractor.Formats.Png;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -131,6 +132,9 @@ namespace LB.PhotoGalleries.Application.Servers
             return response.Resource;
         }
 
+        /// <summary>
+        /// Causes an Image to be permanently deleted from storage and database. Will also result in some images being re-ordered to avoid holes in positions.
+        /// </summary>
         public async Task DeleteImageAsync(Image image)
         {
             // delete the original image from storage (any other resized caches will auto-expire and be deleted)
@@ -139,10 +143,59 @@ namespace LB.PhotoGalleries.Application.Servers
             var blobResponse = await blobContainerClient.DeleteBlobAsync(image.StorageId);
             Debug.WriteLine($"ImageServer:DeleteImageAsync: Blob delete response: {blobResponse.Status} - {blobResponse.ReasonPhrase}");
 
+            // make note of the image position and gallery id as we might have to re-order photos
+            var position = image.Position;
+            var galleryId = image.GalleryId;
+
             // finally, delete the database record
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var response = await container.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
             Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {response.RequestCharge}");
+
+            // if necessary, re-order photos down-position from where the deleted photo used to be
+            if (position.HasValue)
+            {
+                Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
+
+                // get the ids of images that have a position down from where our delete image used to be
+                const string query = "SELECT c.id FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position";
+                var queryDefinition = new QueryDefinition(query);
+                queryDefinition.WithParameter("@galleryId", galleryId);
+                queryDefinition.WithParameter("@position", position.Value);
+                var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
+                double charge = 0;
+                var ids = new List<string>();
+
+                while (queryResult.HasMoreResults)
+                {
+                    var results = await queryResult.ReadNextAsync();
+
+                    // I really dislike this method of getting all object ids. There's got to be a cleaner way?
+                    // ReSharper disable once LoopCanBeConvertedToQuery - Resharper simplifies this incorrectly, compilation error results
+                    foreach (var jObject in results)
+                        foreach (var kvp in jObject)
+                            ids.Add((string)kvp.Value);
+
+                    charge += results.RequestCharge;
+                }
+
+                Debug.WriteLine($"ImageServer.DeleteImageAsync: Found {ids.Count} image ids for re-ordering");
+                Debug.WriteLine($"ImageServer.DeleteImageAsync: Total request charge for getting affected image ids: {charge}");
+
+                foreach (var id in ids)
+                {
+                    var affectedImage = await GetImageAsync(galleryId, id);
+                    
+                    // this check shouldn't be required as if one image has a position then all should
+                    // but life experience suggests it's best to be sure.
+                    if (affectedImage.Position == null)
+                        continue;
+
+                    affectedImage.Position = position;
+                    await UpdateImageAsync(affectedImage);
+                    position += 1;
+                }
+            }
         }
 
         /// <summary>
