@@ -5,5 +5,12 @@
 // is not guaranteed to be reversible so best used just for aesthetic reasons.
 function EncodeParamForUrl(parameter)
 {
-    return parameter.replace(/-/g, "_").replace(/ /g, "-").replace(/\(/g, "").replace(/\)/g, "").toLowerCase();
+    // remove some characters
+    parameter = parameter.replace(/\(|\)/g, "");
+
+    // replace others with hyphens
+    parameter = parameter.replace(/-| |\./g, "-");
+
+    // then just lower case it
+    return parameter.toLowerCase();
 }
