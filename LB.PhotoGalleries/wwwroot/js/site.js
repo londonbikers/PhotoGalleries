@@ -9,7 +9,13 @@ function EncodeParamForUrl(parameter)
     parameter = parameter.replace(/\(|\)/g, "");
 
     // replace others with hyphens
-    parameter = parameter.replace(/-| |\./g, "-");
+    parameter = parameter.replace(/-| |\.|_/g, "-");
+
+    // make sure we haven't doubled up hyphens
+    parameter = parameter.replace(/-{2,}/g, "-");
+
+    // make sure we don't have any leading or trailing hyphens either
+    parameter = parameter.replace(/^-|-$/g, "");
 
     // then just lower case it
     return parameter.toLowerCase();
