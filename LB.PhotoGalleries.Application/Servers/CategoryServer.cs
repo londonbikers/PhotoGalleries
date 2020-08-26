@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -61,8 +62,12 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Created category? " + createdItem);
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Request charge: " + response.RequestCharge);
 
-            // add the category to the cache if it's already initialised
-            _categories?.Add(category);
+            // update the categories cache (remove first if this is an edit scenario)
+            if (Categories != null)
+            {
+                Categories.RemoveAll(c => c.Id == category.Id);
+                Categories.Add(category);
+            }
         }
 
         /// <summary>
