@@ -7,7 +7,7 @@
     ViewData["Title"] = ViewData.Model.Name;
     var images = (List<Image>) ViewData["images"];
     var user = (User) ViewData["user"];
-    var megapixels = $"{(int) ViewData["megapixels"]:n0}";
+    var megapixels = (int)ViewData["megapixels"];
 }
 
 <div class="text-center">
@@ -17,7 +17,15 @@
     <hr />
     <div class="row mb-3">
         <div class="col">
-            <small class="text-muted">Created @ViewData.Model.Created.ToShortDateString() - by @user.Name - @images.Count photos (@megapixels megapixels)</small>
+            <small class="text-muted">
+                Created @ViewData.Model.Created.ToShortDateString() - by @user.Name - @images.Count photos
+
+                @if (megapixels > 1)
+                {
+                    <text>(@($"{megapixels:n0}") megapixels)</text>
+                }
+
+            </small>
         </div>
     </div>
 
