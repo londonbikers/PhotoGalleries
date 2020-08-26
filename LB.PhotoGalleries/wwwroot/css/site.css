@@ -89,3 +89,12 @@ body {
     margin-right: 5px;
     margin-bottom: 5px;
 }
+
+.grid-square-med {
+    width: 282px;
+    height: 282px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
