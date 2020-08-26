@@ -1,4 +1,7 @@
-﻿@using LB.PhotoGalleries.Application
+﻿@using System
+@using System.Collections.Generic
+@using System.Linq
+@using LB.PhotoGalleries.Application
 @using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @{ ViewData["Title"] = "Home";
@@ -42,8 +45,6 @@
 
 @section Scripts
 {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
     <script type="text/javascript">
