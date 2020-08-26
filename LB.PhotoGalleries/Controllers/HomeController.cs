@@ -37,6 +37,17 @@ namespace LB.PhotoGalleries.Controllers
         }
 
         /// <summary>
+        /// Signs the user in by redirecting them to our IDP.
+        /// </summary>
+        [Authorize]
+        public IActionResult SignIn()
+        {
+            // by this point the user will be logged in and we can redirect them back to the homepage for now.
+            // in the future we might want to redirect the back to a particular page, so we'll need to add a local redirect URL parameter we can pick up on
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
         /// Signs the user out. If the user access another page that requires authorisation then they'll be asked to authenticate again.
         /// </summary>
         [Authorize]
