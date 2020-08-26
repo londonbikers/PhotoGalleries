@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using LB.PhotoGalleries.Application;
+﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Application.Models;
 
 namespace LB.PhotoGalleries.Controllers
 {
@@ -21,8 +21,7 @@ namespace LB.PhotoGalleries.Controllers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             if (gallery == null)
                 return RedirectToAction("Index");
-
-
+            
             ViewData["images"] = Utilities.OrderImages(await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id)).ToList();
             ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             ViewData.Model = gallery;
