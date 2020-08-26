@@ -49,7 +49,7 @@
 
     <script type="text/javascript">
 
-        // convert the big image documents into a new lightweight object to aid with rendering the image grid
+        // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Select(g => new { g.CategoryId, g.Id, g.Name, g.ThumbnailStorageId, CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name })));
 
