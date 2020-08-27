@@ -1,84 +1,71 @@
-﻿@model LB.PhotoGalleries.Application.Models.Image
-
+﻿@using LB.PhotoGalleries.Application
+@using Newtonsoft.Json
+@using System.Linq
+@model LB.PhotoGalleries.Application.Models.Image
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = ViewData.Model.Name;
 }
 
-<h1>Details</h1>
+<img data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth), width: GetImageWidth(Image.Width, Image.Height, ImageContainerWidth), height: GetImageHeight(Image.Width, Image.Height, ImageContainerWidth)}" />
 
-<div>
-    <h4>Image</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Id)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.GalleryCategoryId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.GalleryCategoryId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.GalleryId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.GalleryId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StorageId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StorageId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Position)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Position)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Caption)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Caption)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Credit)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Credit)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Created)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Created)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LegacyNumId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LegacyNumId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LegacyGuidId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LegacyGuidId)
-        </dd>
-    </dl>
-</div>
-<div>
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
-    <a asp-action="Index">Back to List</a>
-</div>
+@section Scripts
+{
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+
+    <script type="text/javascript">
+
+        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
+        // this ensures images are as crisp as they can be for each client device.
+        function GetImageUrl(storageId, width, height, imageContainerWidth) {
+            if (width > height) {
+                var scaledWidth = Math.round(imageContainerWidth * window.devicePixelRatio);
+                return `/i/${storageId}?w=${scaledWidth}`;
+            } else {
+                // crude, needs setting to the available space in the viewport (minus header and any underneath we want to remain visible)
+                var scaledHeight = Math.round(imageContainerWidth * window.devicePixelRatio);
+                return `/i/${storageId}}?h=${scaledHeight}`;
+            }
+        }
+
+        function GetImageWidth(width, height, imageContainerWidth) {
+            if (width > height) {
+                return imageContainerWidth;
+            }
+            return null;
+        }
+
+        function GetImageHeight(width, height, imageContainerWidth) {
+            if (height > width) {
+                // needs changing to available height in viewport
+                return imageContainerWidth;
+            }
+            return null;
+        }
+
+        // the view model that knockout uses to bind data to the html
+        function ViewModel() {
+            // parse the image from a json blob
+            this.Image = @Html.Raw(JsonConvert.SerializeObject(new { ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name }));;
+
+            // for some reason innerWidth() is not incorporating padding, so we need to deduct that ourselves
+            var container = $(".container")
+            var paddingLeft = container.css('padding-left');
+            paddingLeft = paddingLeft.substring(0, paddingLeft.length - 2);
+            var paddingRight = container.css('padding-right');
+            paddingRight = paddingRight.substring(0, paddingRight.length - 2);
+            this.ImageContainerWidth = container.innerWidth() - paddingLeft - paddingRight;
+
+            // using fixed values, because html/javascript gives me the stress when trying to dynamically determine this.
+            // fixed values are for header and footer.
+            this.ImageContainerHeight = $("html").innerHeight() - 50 - 30;
+
+            console.log("image width: " + this.Image.Width);
+            console.log("image height: " + this.Image.Height);
+            console.log("ImageContainerHeight: " + this.ImageContainerHeight);
+        }
+
+        $(document).ready(function() {
+            ko.applyBindings(new ViewModel());
+        });
+    </script>
+}

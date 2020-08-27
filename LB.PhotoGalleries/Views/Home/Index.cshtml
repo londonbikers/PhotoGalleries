@@ -56,8 +56,8 @@
         // for high-dpi displays we need to request a larger image than the space we intend to view it in.
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(storageId) {
-            var scaledWidth = 348 * window.devicePixelRatio;
-            var scaledHeight = 225 * window.devicePixelRatio;
+            var scaledWidth = Math.round(348 * window.devicePixelRatio);
+            var scaledHeight = Math.round(225 * window.devicePixelRatio);
             return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
         }
 

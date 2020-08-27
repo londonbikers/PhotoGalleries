@@ -1,6 +1,6 @@
-﻿using System.Linq;
-using LB.PhotoGalleries.Application;
+﻿using LB.PhotoGalleries.Application;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers
