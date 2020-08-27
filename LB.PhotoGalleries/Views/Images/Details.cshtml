@@ -1,54 +1,56 @@
-﻿@using LB.PhotoGalleries.Application
-@using Newtonsoft.Json
-@using System.Linq
+﻿@using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Image
 @{
     ViewData["Title"] = ViewData.Model.Name;
 }
 
-<img data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth), width: GetImageWidth(Image.Width, Image.Height, ImageContainerWidth), height: GetImageHeight(Image.Width, Image.Height, ImageContainerWidth)}" />
+<img data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageWidth(Image.Width, Image.Height, ImageContainerWidth), height: GetImageHeight(Image.Width, Image.Height, ImageContainerHeight)}" />
 
 @section Scripts
 {
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
-    <script type="text/javascript">
+    <script language="javascript">
 
-        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
-        // this ensures images are as crisp as they can be for each client device.
-        function GetImageUrl(storageId, width, height, imageContainerWidth) {
+        function GetImageUrl(storageId, width, height, imageContainerWidth, imageContainerHeight) {
             if (width > height) {
                 var scaledWidth = Math.round(imageContainerWidth * window.devicePixelRatio);
+                console.log("GetImageUrl() - chosen landscape");
                 return `/i/${storageId}?w=${scaledWidth}`;
-            } else {
-                // crude, needs setting to the available space in the viewport (minus header and any underneath we want to remain visible)
-                var scaledHeight = Math.round(imageContainerWidth * window.devicePixelRatio);
-                return `/i/${storageId}}?h=${scaledHeight}`;
             }
+
+            var scaledHeight = Math.round(imageContainerHeight * window.devicePixelRatio);
+            console.log("GetImageUrl() - chosen portrait");
+            return `/i/${storageId}?h=${scaledHeight}`;
         }
 
         function GetImageWidth(width, height, imageContainerWidth) {
             if (width > height) {
+                console.log("GetImageWidth() - chosen landscape");
                 return imageContainerWidth;
             }
+
+            console.log("GetImageWidth() - null");
             return null;
         }
 
-        function GetImageHeight(width, height, imageContainerWidth) {
+        function GetImageHeight(width, height, imageContainerHeight) {
             if (height > width) {
-                // needs changing to available height in viewport
-                return imageContainerWidth;
+                console.log("GetImageHeight() - chosen portrait");
+                return imageContainerHeight;
             }
+
+            console.log("GetImageHeight() - null");
             return null;
         }
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
             // parse the image from a json blob
-            this.Image = @Html.Raw(JsonConvert.SerializeObject(new { ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name }));;
+            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));;
 
             // for some reason innerWidth() is not incorporating padding, so we need to deduct that ourselves
-            var container = $(".container")
+            var container = $(".container");
             var paddingLeft = container.css('padding-left');
             paddingLeft = paddingLeft.substring(0, paddingLeft.length - 2);
             var paddingRight = container.css('padding-right');
@@ -67,5 +69,6 @@
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
         });
+
     </script>
 }
