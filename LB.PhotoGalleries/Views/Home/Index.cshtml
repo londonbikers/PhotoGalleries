@@ -56,11 +56,8 @@
         // for high-dpi displays we need to request a larger image than the space we intend to view it in.
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(storageId, element) {
-
             var cardInnerWidth = $(element).parent().parent().innerWidth();
             var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
-
-
             var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
             var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
             return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
