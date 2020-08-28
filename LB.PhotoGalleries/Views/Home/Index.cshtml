@@ -2,8 +2,12 @@
 @using LB.PhotoGalleries.Application
 @using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
-@{ ViewData["Title"] = "Home";
-    var galleries = (List<Gallery>)ViewData["galleries"]; }
+@{ 
+    ViewData["Title"] = "Home";
+    var galleries = (List<Gallery>)ViewData["galleries"];
+    var cardImageWidth = 410;
+    var cardImageHeight = 270;
+}
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
@@ -29,7 +33,7 @@
 <div class="row" data-bind="foreach: Galleries">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
-            <a data-bind="attr: {href: GetGalleryUrl(CategoryId, Id, Name)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(ThumbnailStorageId)}" width="348" height="228" /></a>
+            <a data-bind="attr: { href: GetGalleryUrl(CategoryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(ThumbnailStorageId, $element) }" class="img-fluid" /></a>
             <div class="card-body">
                 <p class="card-text" data-bind="text: Name"></p>
                 <div class="d-flex justify-content-between align-items-center">
@@ -53,9 +57,14 @@
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in.
         // this ensures images are as crisp as they can be for each client device.
-        function GetThumbnailUrl(storageId) {
-            var scaledWidth = Math.round(348 * window.devicePixelRatio);
-            var scaledHeight = Math.round(225 * window.devicePixelRatio);
+        function GetThumbnailUrl(storageId, element) {
+
+            var cardInnerWidth = $(element).parent().parent().innerWidth();
+            var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
+
+
+            var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
+            var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
             return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
         }
 
