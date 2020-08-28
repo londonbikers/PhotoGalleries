@@ -1,5 +1,9 @@
 ﻿@{
-    var containerClass = (string) ViewData["containerClass"] ?? "container";
+    var containerClass = "container";
+    if (ViewData["useContainer"] != null && !(bool) ViewData["useContainer"])
+    {
+        containerClass = string.Empty;
+    }
 }
 
 <!DOCTYPE html>

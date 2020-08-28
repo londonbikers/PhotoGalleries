@@ -106,3 +106,9 @@ body {
     margin-right: auto;
     margin-left: auto;
 }
+
+.image-other-container {
+    max-width: 1140px;
+    padding: 0 15px 0;
+    text-align: center !important;
+}
