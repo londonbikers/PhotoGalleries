@@ -2,9 +2,12 @@
 @model LB.PhotoGalleries.Application.Models.Image
 @{
     ViewData["Title"] = ViewData.Model.Name;
+    ViewData["containerClass"] = "container-max";
 }
 
-<img data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageWidth(Image.Width, Image.Height, ImageContainerWidth), height: GetImageHeight(Image.Width, Image.Height, ImageContainerHeight)}" />
+<div class="text-center">
+    <img data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).height}" />
+</div>
 
 @section Scripts
 {
@@ -12,57 +15,84 @@
 
     <script language="javascript">
 
-        function GetImageUrl(storageId, width, height, imageContainerWidth, imageContainerHeight) {
-            if (width > height) {
-                var scaledWidth = Math.round(imageContainerWidth * window.devicePixelRatio);
-                console.log("GetImageUrl() - chosen landscape");
-                return `/i/${storageId}?w=${scaledWidth}`;
-            }
-
-            var scaledHeight = Math.round(imageContainerHeight * window.devicePixelRatio);
-            console.log("GetImageUrl() - chosen portrait");
-            return `/i/${storageId}?h=${scaledHeight}`;
+        function GetImageUrl(storageId, imageWidth, imageHeight, imageContainerWidth, imageContainerHeight) {
+            var dims = GetDpiScaledImageDimensions(imageWidth, imageHeight, imageContainerWidth, imageContainerHeight);
+            return `/i/${storageId}?w=${dims.width}&h=${dims.height}`;
         }
 
-        function GetImageWidth(width, height, imageContainerWidth) {
-            if (width > height) {
-                console.log("GetImageWidth() - chosen landscape");
-                return imageContainerWidth;
+        function GetImageDimensions(imageWidth, imageHeight, imageContainerWidth, imageContainerHeight) {
+
+            // work out what size the original image would need to be to fit into the container space and return the width.
+            // do not incorporate dpi-scaling as this is just for use on the IMG width attribute.
+
+            // if the image is smaller than the container then just return the image size
+            if (imageWidth <= imageContainerWidth && imageHeight <= imageContainerHeight) {
+                console.log("source image is smaller than container, returning source image dimensions");
+                return { width: imageWidth, height: imageHeight };
             }
 
-            console.log("GetImageWidth() - null");
-            return null;
+            var widthRatio = imageWidth / imageContainerWidth;
+            var heightFits = imageHeight / widthRatio <= imageContainerHeight;
+
+            var heightRatio = imageHeight / imageContainerHeight;
+            var widthFits = imageWidth / heightRatio <= imageContainerWidth;
+
+            var width = 0;
+            var height = 0;
+
+            if (widthFits && !heightFits) {
+
+                // resize by available height
+                width = Math.round(imageWidth / heightRatio);
+                height = imageContainerHeight;
+                console.log("GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
+                
+
+            } else if (heightFits && !widthFits) {
+
+                // resize by available width
+                width = imageContainerWidth;
+                height = Math.round(imageHeight / widthRatio);
+                console.log("GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
+
+            } else {
+                // both fit. err?
+                console.log("GetImageDimensions(): both dims fit. not sure what to do?");
+            }
+
+            return { width: width, height: height };
         }
 
-        function GetImageHeight(width, height, imageContainerHeight) {
-            if (height > width) {
-                console.log("GetImageHeight() - chosen portrait");
-                return imageContainerHeight;
-            }
-
-            console.log("GetImageHeight() - null");
-            return null;
+        function GetDpiScaledImageDimensions(imageWidth, imageHeight, imageContainerWidth, imageContainerHeight) {
+            var dims = GetImageDimensions(imageWidth, imageHeight, imageContainerWidth, imageContainerHeight);
+            var ratio = window.devicePixelRatio;
+            //var ratio = 1; 
+            dims.width = Math.ceil(dims.width * ratio);
+            dims.height = Math.ceil(dims.height * ratio);
+            return dims;
         }
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
+
             // parse the image from a json blob
-            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));;
+            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
 
-            // for some reason innerWidth() is not incorporating padding, so we need to deduct that ourselves
-            var container = $(".container");
-            var paddingLeft = container.css('padding-left');
-            paddingLeft = paddingLeft.substring(0, paddingLeft.length - 2);
-            var paddingRight = container.css('padding-right');
-            paddingRight = paddingRight.substring(0, paddingRight.length - 2);
-            this.ImageContainerWidth = container.innerWidth() - paddingLeft - paddingRight;
+            console.log("window.devicePixelRatio: " + window.devicePixelRatio);
+            console.log("original image width: " + this.Image.Width);
+            console.log("original image height: " + this.Image.Height);
 
-            // using fixed values, because html/javascript gives me the stress when trying to dynamically determine this.
-            // fixed values are for header and footer.
-            this.ImageContainerHeight = $("html").innerHeight() - 50 - 30;
+            this.ImageContainerWidth = $(".container-max").innerWidth();
+            console.log("ImageContainerWidth: " + this.ImageContainerWidth);
 
-            console.log("image width: " + this.Image.Width);
-            console.log("image height: " + this.Image.Height);
+            var pageHeight = $("html").innerHeight();
+            var mainPositionTop = $("main").position().top;
+            var usableHeight = Math.floor(pageHeight - mainPositionTop - 10);
+
+            //console.log("pageHeight: " + pageHeight);
+            //console.log("mainPositionTop: " + mainPositionTop);
+            console.log("usableHeight: " + usableHeight);
+            this.ImageContainerHeight = usableHeight;
             console.log("ImageContainerHeight: " + this.ImageContainerHeight);
         }
 
