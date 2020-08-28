@@ -1,5 +1,4 @@
-﻿@using System.Collections.Generic
-@using System.Linq
+﻿@using System.Linq
 @using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Gallery
@@ -31,7 +30,7 @@
     </div>
 
     <div class="row">
-        <div class="col" data-bind="foreach: Images"><div class="grid-square-med"><a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(StorageId) }" width="@thumbnailSize" height="@thumbnailSize" /></a></div></div>
+        <div class="col" data-bind="foreach: Images"><div class="grid-square-med rounded"><a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(StorageId) }" width="@thumbnailSize" height="@thumbnailSize" /></a></div></div>
     </div>
 
     <div class="row">
