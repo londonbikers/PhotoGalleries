@@ -7,7 +7,6 @@ using MetadataExtractor.Formats.Iptc;
 using MetadataExtractor.Formats.Jpeg;
 using MetadataExtractor.Formats.Png;
 using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -354,22 +353,25 @@ namespace LB.PhotoGalleries.Application.Servers
                 image.Metadata.Iso = iso.Value;
 
             var credit = GetImageCredit(directories);
-            if (!string.IsNullOrEmpty(credit))
+            if (credit.HasValue())
                 image.Credit = credit;
 
             var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
             if (exifIfd0Directory != null)
             {
                 var make = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMake);
-                if (make != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (make != null && make.Description.HasValue())
                     image.Metadata.CameraMake = make.Description;
 
                 var model = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagModel);
-                if (model != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (model != null && model.Description.HasValue())
                     image.Metadata.CameraModel = model.Description;
 
                 var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
-                if (imageDescription != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (imageDescription != null && imageDescription.Description.HasValue())
                     image.Caption = imageDescription.Description;
             }
 
@@ -377,43 +379,53 @@ namespace LB.PhotoGalleries.Application.Servers
             if (exifSubIfdDirectory != null)
             {
                 var exposureTime = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureTime);
-                if (exposureTime != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (exposureTime != null && exposureTime.Description.HasValue())
                     image.Metadata.ExposureTime = exposureTime.Description;
 
                 var aperture = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagAperture);
-                if (aperture != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (aperture != null && aperture.Description.HasValue())
                     image.Metadata.Aperture = aperture.Description;
 
                 var exposureBias = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureBias);
-                if (exposureBias != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (exposureBias != null && exposureBias.Description.HasValue())
                     image.Metadata.ExposureBias = exposureBias.Description;
 
                 var meteringMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMeteringMode);
-                if (meteringMode != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (meteringMode != null && meteringMode.Description.HasValue())
                     image.Metadata.MeteringMode = meteringMode.Description;
 
                 var flash = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFlash);
-                if (flash != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (flash != null && flash.Description.HasValue())
                     image.Metadata.Flash = flash.Description;
 
                 var focalLength = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFocalLength);
-                if (focalLength != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (focalLength != null && focalLength.Description.HasValue())
                     image.Metadata.FocalLength = focalLength.Description;
 
                 var lensMake = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensMake);
-                if (lensMake != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (lensMake != null && lensMake.Description.HasValue())
                     image.Metadata.LensMake = lensMake.Description;
 
                 var lensModel = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensModel);
-                if (lensModel != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (lensModel != null && lensModel.Description.HasValue())
                     image.Metadata.LensModel = lensModel.Description;
 
                 var whiteBalance = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalance);
-                if (whiteBalance != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (whiteBalance != null && whiteBalance.Description.HasValue())
                     image.Metadata.WhiteBalance = whiteBalance.Description;
 
                 var whiteBalanceMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalanceMode);
-                if (whiteBalanceMode != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (whiteBalanceMode != null && whiteBalanceMode.Description.HasValue())
                     image.Metadata.WhiteBalanceMode = whiteBalanceMode.Description;
             }
 
@@ -429,12 +441,15 @@ namespace LB.PhotoGalleries.Application.Servers
             if (iptcDirectory != null)
             {
                 var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
-                if (objectName != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (objectName != null && objectName.Description.HasValue())
                     image.Name = objectName.Description;
 
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)
-                    image.Tags.AddRange(keywords);
+                    foreach (var keyword in keywords)
+                        if (keyword.HasValue())
+                            image.Tags.Add(keyword);
             }
 
             // wind the stream back to allow other code to work with the stream
@@ -473,7 +488,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (exifSubIfdDirectory != null)
             {
                 var width = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageWidth);
-                if (width != null && !string.IsNullOrEmpty(width.Description))
+                if (width != null && width.Description.HasValue())
                 {
                     // values can contain strings, i.e. "1024 pixels" so snip those off
                     var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
@@ -481,7 +496,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
 
                 var height = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageHeight);
-                if (height != null && !string.IsNullOrEmpty(height.Description))
+                if (height != null && height.Description.HasValue())
                 {
                     // values can contain strings, i.e. "768 pixels" so snip those off
                     var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
@@ -497,7 +512,8 @@ namespace LB.PhotoGalleries.Application.Servers
             if (jpegDirectory != null)
             {
                 var width = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageWidth);
-                if (width != null && !string.IsNullOrEmpty(width.Description))
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (width != null && width.Description.HasValue())
                 {
                     // values can contain strings, i.e. "1024 pixels" so snip those off
                     var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
@@ -505,7 +521,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
 
                 var height = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageHeight);
-                if (height != null && !string.IsNullOrEmpty(height.Description))
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (height != null && height.Description.HasValue())
                 {
                     // values can contain strings, i.e. "768 pixels" so snip those off
                     var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
@@ -520,6 +537,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (pngDirectory != null)
             {
                 var width = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageWidth);
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (width != null && !string.IsNullOrEmpty(width.Description))
                 {
                     // values can contain strings, i.e. "1024 pixels" so snip those off
@@ -528,6 +546,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
 
                 var height = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageHeight);
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (height != null && !string.IsNullOrEmpty(height.Description))
                 {
                     // values can contain strings, i.e. "768 pixels" so snip those off
@@ -548,11 +567,13 @@ namespace LB.PhotoGalleries.Application.Servers
         public static int? GetImageIso(IEnumerable<Directory> directories)
         {
             int iso;
-            var exifSubIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            var enumerable = directories as Directory[] ?? directories.ToArray();
+            var exifSubIfdDirectory = enumerable.OfType<ExifSubIfdDirectory>().FirstOrDefault();
             if (exifSubIfdDirectory != null)
             {
                 var isoTag = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagIsoEquivalent);
-                if (isoTag != null)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (isoTag != null && isoTag.Description.HasValue())
                 {
                     var validIso = int.TryParse(isoTag.Description, out iso);
                     if (validIso)
@@ -562,22 +583,24 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
             }
 
-            var nikonDirectory = directories.OfType<NikonType2MakernoteDirectory>().FirstOrDefault();
+            var nikonDirectory = enumerable.OfType<NikonType2MakernoteDirectory>().FirstOrDefault();
+            // ReSharper disable once InvertIf
             if (nikonDirectory != null)
             {
                 var isoTag = nikonDirectory.Tags.SingleOrDefault(t => t.Type == NikonType2MakernoteDirectory.TagIso1);
-                if (isoTag != null)
-                {
-                    var isoTagProcessed = isoTag.Description;
-                    if (isoTagProcessed.StartsWith("ISO "))
-                        isoTagProcessed = isoTag.Description.Split(' ')[1];
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (isoTag == null || !isoTag.Description.HasValue()) 
+                    return null;
 
-                    var validIso = int.TryParse(isoTagProcessed, out iso);
-                    if (validIso)
-                        return iso;
+                var isoTagProcessed = isoTag.Description;
+                if (isoTagProcessed.StartsWith("ISO "))
+                    isoTagProcessed = isoTag.Description.Split(' ')[1];
 
-                    Debug.WriteLine($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
-                }
+                var validIso = int.TryParse(isoTagProcessed, out iso);
+                if (validIso)
+                    return iso;
+
+                Debug.WriteLine($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
             }
 
             return null;
@@ -589,19 +612,22 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="directories">Metadata directories extracted from the image stream.</param>
         public static string GetImageCredit(IEnumerable<Directory> directories)
         {
-            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
+            var enumerable = directories as Directory[] ?? directories.ToArray();
+            var exifIfd0Directory = enumerable.OfType<ExifIfd0Directory>().FirstOrDefault();
             if (exifIfd0Directory != null)
             {
                 var creditTag = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagCopyright);
-                if (creditTag != null && !string.IsNullOrEmpty(creditTag.Description))
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (creditTag != null && creditTag.Description.HasValue())
                     return creditTag.Description;
             }
 
-            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
+            var iptcDirectory = enumerable.OfType<IptcDirectory>().FirstOrDefault();
             if (iptcDirectory != null)
             {
                 var creditTag = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCredit);
-                if (creditTag != null && !string.IsNullOrEmpty(creditTag.Description))
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                if (creditTag != null && creditTag.Description.HasValue())
                     return creditTag.Description;
             }
 
