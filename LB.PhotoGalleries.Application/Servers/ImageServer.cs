@@ -447,9 +447,14 @@ namespace LB.PhotoGalleries.Application.Servers
 
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)
+                {
                     foreach (var keyword in keywords)
-                        if (keyword.HasValue())
-                            image.Tags.Add(keyword);
+                    {
+                        // make sure we don't add duplicate keywords
+                        if (keyword.HasValue() && !image.Tags.Any(t => t.Equals(keyword, StringComparison.CurrentCultureIgnoreCase)))
+                            image.Tags.Add(keyword.ToLower());
+                    }
+                }
             }
 
             // wind the stream back to allow other code to work with the stream
@@ -589,7 +594,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var isoTag = nikonDirectory.Tags.SingleOrDefault(t => t.Type == NikonType2MakernoteDirectory.TagIso1);
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (isoTag == null || !isoTag.Description.HasValue()) 
+                if (isoTag == null || !isoTag.Description.HasValue())
                     return null;
 
                 var isoTagProcessed = isoTag.Description;
