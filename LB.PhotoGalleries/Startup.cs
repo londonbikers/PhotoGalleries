@@ -1,3 +1,5 @@
+using System;
+using System.Drawing;
 using Azure.Storage.Blobs;
 using Imageflow.Fluent;
 using Imageflow.Server;
@@ -15,6 +17,8 @@ using Microsoft.Extensions.Hosting;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace LB.PhotoGalleries
 {
@@ -123,7 +127,33 @@ namespace LB.PhotoGalleries
                     .SetMaxFrameSize(new FrameSizeLimit(10000, 10000, 60))
                     .SetMaxEncodeSize(new FrameSizeLimit(10000, 10000, 30)))
                 .SetAllowDiskCaching(true)
-                .AddCommandDefault("down.filter", "mitchell"));
+                .AddCommandDefault("down.filter", "mitchell")
+                .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
+                .AddWatermarkingHandler("/i", args => {
+                    var modeSpecified = args.Query.ContainsKey("mode");
+                    var size = new Size();
+                    if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
+                        size.Width = wParam;
+                    else if (args.Query.ContainsKey("width") && int.TryParse(args.Query["width"], out var widthParam))
+                        size.Width = widthParam;
+                    if (args.Query.ContainsKey("h") && int.TryParse(args.Query["h"], out var hParam))
+                        size.Height = hParam;
+                    else if (args.Query.ContainsKey("height") && int.TryParse(args.Query["height"], out var heightParam))
+                        size.Width = heightParam;
+
+                    var imageSizeRequiresWatermark = size.Width < 1 || size.Height < 1 || (size.Width > 1000 || size.Height > 1000);
+                    var referer = args.Context.Request.GetTypedHeaders().Referer;
+                    var isLocalReferer = referer != null && referer.Host.Equals(args.Context.Request.Host.Host, StringComparison.CurrentCultureIgnoreCase);
+
+                    if (!modeSpecified || !isLocalReferer || imageSizeRequiresWatermark)
+                    {
+                        args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/londonbikers-logo-trans.png",
+                            new WatermarkOptions()
+                                .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, 12, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
+                                .SetOpacity(1f)
+                                .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
+                    }
+                }));
 
             app.UseStaticFiles();
             app.UseRouting();
@@ -144,7 +174,7 @@ namespace LB.PhotoGalleries
                     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute(
                     name: "Category",
-                    pattern: "c/{name}", new { controller="Categories", action="Details"});
+                    pattern: "c/{name}", new { controller = "Categories", action = "Details" });
                 endpoints.MapControllerRoute(
                     name: "Gallery",
                     pattern: "g/{categoryId}/{galleryId}/{name}", new { controller = "Galleries", action = "Details" });
