@@ -147,10 +147,10 @@ namespace LB.PhotoGalleries
 
                     if (!modeSpecified || !isLocalReferer || imageSizeRequiresWatermark)
                     {
-                        args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/londonbikers-logo-trans.png",
+                        args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
                             new WatermarkOptions()
                                 .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, 12, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
-                                .SetOpacity(1f)
+                                .SetOpacity(0.7f)
                                 .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
                     }
                 }));
