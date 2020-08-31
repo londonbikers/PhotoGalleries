@@ -6,6 +6,8 @@
     ViewData["useContainer"] = false;
     var gallery = (Gallery)ViewData["gallery"];
     var category = (Category)ViewData["category"];
+    var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
+    var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
 }
 
 <div class="container-max text-center">
@@ -48,6 +50,73 @@
             </div>
         }
     </div>
+    
+    
+    @if (settingsToShow || cameraToShow)
+    {
+        <div class="info-box-trans mt-3">
+        
+            <div class="row">
+                @if (settingsToShow)
+                {
+                    <div class="col">
+                        <small>
+                            Settings
+                            <br/>
+                            @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
+                            {
+                                @Model.Metadata.Aperture
+                                <text>-</text>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.Metadata.ExposureTime))
+                            {
+                                @Model.Metadata.ExposureTime
+                                <text>-</text>
+                            }
+
+                            @if (Model.Metadata.Iso.HasValue)
+                            {
+                                <text>iso @Model.Metadata.Iso</text>
+                            }
+
+                            <br/><a href="#">More details</a>
+                        </small>
+                    </div>
+                }
+                
+                @if (cameraToShow)
+                {
+                    <div class="col">
+                        <small>
+                            Camera
+                            <br/>
+
+                            @if (!string.IsNullOrEmpty(Model.Metadata.CameraModel))
+                            {
+                                @Model.Metadata.CameraModel
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
+                            {
+                                <br/>
+                                @Model.Metadata.LensMake
+
+                                if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
+                                {
+                                    <text> @Model.Metadata.LensModel</text>
+                                }
+                            }
+
+                        </small>
+                    </div>
+                }
+                
+            </div>
+
+        </div>
+    }
+    
     
     <div class="row">
         <div class="col">
