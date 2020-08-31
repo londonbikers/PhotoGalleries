@@ -8,34 +8,52 @@
     var category = (Category)ViewData["category"];
 }
 
-<div class="container mb-3 text-center">
-    <small><a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> / <a asp-controller="Galleries" asp-action="Details" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@gallery.Id" asp-route-name="@Utilities.EncodeParamForUrl(gallery.Name)">@gallery.Name</a></small>
-</div>
-
 <div class="container-max text-center">
     <img class="rounded" data-bind="attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).height}" />
 </div>
 
 <div class="container mt-3 text-center">
+    
+    <div class="info-box">
+        <h6>@Model.Name</h6>
+        <div>
+            <small>Shown in: <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> / <a asp-controller="Galleries" asp-action="Details" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@gallery.Id" asp-route-name="@Utilities.EncodeParamForUrl(gallery.Name)">@gallery.Name</a></small>
+        </div>
 
-    <b>@Model.Name</b>
-    @if (!string.IsNullOrEmpty(Model.Caption))
-    {
-        <p>@Model.Caption</p>
-    }
+        @if (!string.IsNullOrEmpty(Model.Caption))
+        {
+            <p>@Model.Caption</p>
+        }
 
-    @if (!string.IsNullOrEmpty(Model.Credit))
-    {
-        <p>
-            <small>
-                @if (!Model.Credit.Contains('©'))
+        @if (!string.IsNullOrEmpty(Model.Credit))
+        {
+            <div>
+                <small>
+                    @if (!Model.Credit.Contains('©'))
+                    {
+                        <text>Credit: </text>
+                    }
+                    @Model.Credit
+                </small>
+            </div>
+        }
+        
+        @if (Model.Tags.Count > 0)
+        {
+            <div>
+                @foreach (var tag in Model.Tags)
                 {
-                    <text>Credit: </text>
+                    <span class="badge badge-dark">@tag</span>
                 }
-                @Model.Credit
-            </small>
-        </p>
-    }
+            </div>
+        }
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            &nbsp;
+        </div>
+    </div>
 
 </div>
 

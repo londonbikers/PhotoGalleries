@@ -112,3 +112,10 @@ body {
     padding: 0 15px 0;
     text-align: center !important;
 }
+
+.info-box {
+    background-color: #fafafa;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
