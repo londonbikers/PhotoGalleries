@@ -66,6 +66,35 @@ namespace LB.PhotoGalleries
         {
             return parameter.Replace("-", " ").Replace("_", "-");
         }
+
+        /// <summary>
+        /// Returns the name and model of the camera used to take a photo, if metadata allows.
+        /// Attempts to de-duplicate manufacturer name from model name.
+        /// </summary>
+        public static string GetCameraName(Image image)
+        {
+            if (string.IsNullOrEmpty(image.Metadata.CameraMake) && string.IsNullOrEmpty(image.Metadata.CameraModel))
+                return null;
+
+            if (string.IsNullOrEmpty(image.Metadata.CameraModel) && !string.IsNullOrEmpty(image.Metadata.CameraMake))
+                return image.Metadata.CameraMake;
+
+            if (string.IsNullOrEmpty(image.Metadata.CameraMake) && !string.IsNullOrEmpty(image.Metadata.CameraModel))
+                return image.Metadata.CameraModel;
+
+            // got make and model info, try and de-dupe any mention of manufacturer from model
+            // if the make is in the model, don't return the make
+            if (image.Metadata.CameraModel.Contains(image.Metadata.CameraMake, StringComparison.CurrentCultureIgnoreCase))
+                return image.Metadata.CameraModel;
+
+            // sometimes the manufacturer is a long-form version of the one in the model so try and fish those out...
+            var manufacturerWords = image.Metadata.CameraMake.Split(' ');
+            if (manufacturerWords.Any(word => image.Metadata.CameraModel.Contains(word, StringComparison.CurrentCultureIgnoreCase)))
+                return image.Metadata.CameraModel;
+
+            // camera make doesn't seem to duplicate model so return both
+            return image.Metadata.CameraMake + " " + image.Metadata.CameraModel;
+        }
     }
 
     public enum Roles

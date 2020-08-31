@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,6 +8,17 @@ namespace LB.PhotoGalleries.Controllers
 {
     public class ImagesController : Controller
     {
+        #region members
+        private readonly IConfiguration _configuration;
+        #endregion
+
+        #region constructors
+        public ImagesController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        #endregion
+
         // GET: /gi
         public ActionResult Index()
         {
@@ -23,6 +35,7 @@ namespace LB.PhotoGalleries.Controllers
             ViewData.Model = image;
             ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(c => c.Id == image.GalleryCategoryId);
+            ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
 
             return View();
         }

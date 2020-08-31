@@ -8,6 +8,9 @@
     var category = (Category)ViewData["category"];
     var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
     var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
+    var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
+    var mapsKey = (string)ViewData["mapsKey"];
+    var cameraInfo = Utilities.GetCameraName(Model);
 }
 
 <div class="container-max text-center">
@@ -24,7 +27,7 @@
 
         @if (!string.IsNullOrEmpty(Model.Caption))
         {
-            <p>@Model.Caption</p>
+            <div>@Model.Caption</div>
         }
 
         @if (!string.IsNullOrEmpty(Model.Credit))
@@ -61,7 +64,7 @@
                 {
                     <div class="col">
                         <small>
-                            Settings
+                            <b class="text-muted">Settings</b>
                             <br/>
                             @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
                             {
@@ -89,12 +92,12 @@
                 {
                     <div class="col">
                         <small>
-                            Camera
+                            <b class="text-muted">Camera</b>
                             <br/>
 
-                            @if (!string.IsNullOrEmpty(Model.Metadata.CameraModel))
+                            @if (!string.IsNullOrEmpty(cameraInfo))
                             {
-                                @Model.Metadata.CameraModel
+                                @cameraInfo
                             }
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
@@ -112,11 +115,18 @@
                     </div>
                 }
                 
+                @if (locationToShow)
+                {
+                    <div class="col">
+                        <small><b class="text-muted">Location</b></small><br />
+                        <a href="https://www.google.com/maps/search/?api=1&query=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value" target="_blank"><img class="rounded" src="https://maps.googleapis.com/maps/api/staticmap?&zoom=13&size=50x50&maptype=roadmap&markers=size:tiny|@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&key=@mapsKey" /></a>
+                    </div>
+                }
+
             </div>
 
         </div>
     }
-    
     
     <div class="row">
         <div class="col">
