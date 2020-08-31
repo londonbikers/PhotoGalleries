@@ -18,7 +18,7 @@
 </div>
 
 <div class="container mt-3 text-center">
-    
+
     <div class="info-box">
         <h6>@Model.Name</h6>
         <div>
@@ -42,7 +42,7 @@
                 </small>
             </div>
         }
-        
+
         @if (Model.Tags.Count > 0)
         {
             <div>
@@ -53,29 +53,31 @@
             </div>
         }
     </div>
-    
-    
+
+
     @if (settingsToShow || cameraToShow)
     {
         <div class="info-box-trans mt-3">
-        
+
             <div class="row">
                 @if (settingsToShow)
                 {
                     <div class="col">
-                        <small>
-                            <b class="text-muted">Settings</b>
-                            <br/>
+                        <small><b class="text-muted">Settings</b></small>
+                        <br />
+
+                        <div class="text-uppercase text-small">
+
                             @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
                             {
                                 @Model.Metadata.Aperture
-                                <text>-</text>
+                                <text>&nbsp;&nbsp;&nbsp;</text>
                             }
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.ExposureTime))
                             {
                                 @Model.Metadata.ExposureTime
-                                <text>-</text>
+                                <text>&nbsp;&nbsp;&nbsp;</text>
                             }
 
                             @if (Model.Metadata.Iso.HasValue)
@@ -83,17 +85,19 @@
                                 <text>iso @Model.Metadata.Iso</text>
                             }
 
-                            <br/><a href="#">More details</a>
-                        </small>
+                        </div>
+
+                        <small><a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">Show more</a></small>
+                        
                     </div>
                 }
-                
+
                 @if (cameraToShow)
                 {
                     <div class="col">
                         <small>
                             <b class="text-muted">Camera</b>
-                            <br/>
+                            <br />
 
                             @if (!string.IsNullOrEmpty(cameraInfo))
                             {
@@ -102,7 +106,7 @@
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
                             {
-                                <br/>
+                                <br />
                                 @Model.Metadata.LensMake
 
                                 if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
@@ -114,7 +118,7 @@
                         </small>
                     </div>
                 }
-                
+
                 @if (locationToShow)
                 {
                     <div class="col">
@@ -127,13 +131,65 @@
 
         </div>
     }
-    
+
     <div class="row">
         <div class="col">
             &nbsp;
         </div>
     </div>
 
+</div>
+
+<div class="modal fade" id="metadataModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">More Deets</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <dl class="row">
+                    @if (Model.Metadata.TakenDate.HasValue)
+                    {
+                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.TakenDate)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.TakenDate)</dd>
+                    }
+                    @if (Model.Metadata.Width.HasValue && Model.Metadata.Height.HasValue)
+                    {
+                        <dt class="col-sm-4">Original Dimensions</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.Width) x @Html.DisplayFor(model => model.Metadata.Height)</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Metadata.ExposureBias))
+                    {
+                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.ExposureBias)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.ExposureBias)</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Metadata.MeteringMode))
+                    {
+                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.MeteringMode)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.MeteringMode)</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Metadata.Flash))
+                    {
+                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.Flash)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.Flash)</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Metadata.FocalLength))
+                    {
+                        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.FocalLength)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.FocalLength)</dd>
+                    }
+                </dl>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts
