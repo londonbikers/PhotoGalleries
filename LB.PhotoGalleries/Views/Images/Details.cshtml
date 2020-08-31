@@ -87,7 +87,7 @@
 
                         </div>
 
-                        <small><a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">Show more</a></small>
+                        <small><a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">show more info</a></small>
                         
                     </div>
                 }
@@ -118,14 +118,6 @@
                         </small>
                     </div>
                 }
-
-                @*@if (locationToShow)
-                {
-                    <div class="col">
-                        <small><b class="text-muted">Location</b></small><br />
-                        <a href="https://www.google.com/maps/search/?api=1&query=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value" target="_blank" title="View location"><img class="rounded image-border" src="https://maps.googleapis.com/maps/api/staticmap?&zoom=13&size=50x50&maptype=roadmap&markers=size:tiny|@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&key=@mapsKey" /></a>
-                    </div>
-                }*@
 
             </div>
 
