@@ -70,19 +70,17 @@
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
                             {
-                                @Model.Metadata.Aperture
-                                <text>&nbsp;&nbsp;&nbsp;</text>
+                                <div class="setting-box">@Model.Metadata.Aperture</div>
                             }
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.ExposureTime))
                             {
-                                @Model.Metadata.ExposureTime
-                                <text>&nbsp;&nbsp;&nbsp;</text>
+                                <div class="setting-box">@Model.Metadata.ExposureTime</div>
                             }
 
                             @if (Model.Metadata.Iso.HasValue)
                             {
-                                <text>iso @Model.Metadata.Iso</text>
+                                <div class="setting-box">iso @Model.Metadata.Iso</div>
                             }
 
                         </div>
