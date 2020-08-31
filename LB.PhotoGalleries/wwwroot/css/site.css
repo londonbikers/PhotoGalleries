@@ -120,7 +120,8 @@ body {
     padding: 10px;
 }
 
-.info-box-trans {
+.settings-box {
+    background-color: #fafafa;
     border-radius: 5px;
     border: 1px solid #ddd;
     padding: 5px 10px;

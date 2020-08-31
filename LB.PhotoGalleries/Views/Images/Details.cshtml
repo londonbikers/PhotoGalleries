@@ -57,7 +57,7 @@
 
     @if (settingsToShow || cameraToShow)
     {
-        <div class="info-box-trans mt-3">
+        <div class="settings-box mt-3">
 
             <div class="row">
                 @if (settingsToShow)
@@ -119,13 +119,13 @@
                     </div>
                 }
 
-                @if (locationToShow)
+                @*@if (locationToShow)
                 {
                     <div class="col">
                         <small><b class="text-muted">Location</b></small><br />
-                        <a href="https://www.google.com/maps/search/?api=1&query=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value" target="_blank"><img class="rounded" src="https://maps.googleapis.com/maps/api/staticmap?&zoom=13&size=50x50&maptype=roadmap&markers=size:tiny|@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&key=@mapsKey" /></a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value" target="_blank" title="View location"><img class="rounded image-border" src="https://maps.googleapis.com/maps/api/staticmap?&zoom=13&size=50x50&maptype=roadmap&markers=size:tiny|@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&key=@mapsKey" /></a>
                     </div>
-                }
+                }*@
 
             </div>
 
@@ -150,7 +150,7 @@
                 </button>
             </div>
             <div class="modal-body">
-
+                
                 <dl class="row">
                     @if (Model.Metadata.TakenDate.HasValue)
                     {
@@ -182,7 +182,14 @@
                         <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.FocalLength)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.FocalLength)</dd>
                     }
+                    
                 </dl>
+                
+                @if (locationToShow)
+                {
+                    <b>Location</b><br />
+                    <a href="https://www.google.com/maps/search/?api=1&query=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value" target="_blank" title="View location"><img class="rounded image-border" src="https://maps.googleapis.com/maps/api/staticmap?&zoom=13&size=250x150&maptype=roadmap&markers=size:tiny|@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&key=@mapsKey" /></a>
+                }
 
             </div>
             <div class="modal-footer">
