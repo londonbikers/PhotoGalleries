@@ -1,5 +1,3 @@
-using System;
-using System.Drawing;
 using Azure.Storage.Blobs;
 using Imageflow.Fluent;
 using Imageflow.Server;
@@ -10,15 +8,16 @@ using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
+using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace LB.PhotoGalleries
 {
