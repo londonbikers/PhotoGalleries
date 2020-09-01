@@ -201,6 +201,7 @@ body {
 #photo-overlay-left {
     /*text-align: left !important;*/
     background-color: green;
+    cursor: pointer;
 }
 #photo-left-nav-box {
     position: absolute;
@@ -231,6 +232,7 @@ body {
 #photo-overlay-right {
     /*text-align: left !important;*/
     background-color: coral;
+    cursor: pointer;
 }
 #photo-right-nav-box {
     position: absolute;
