@@ -67,7 +67,7 @@ namespace LB.PhotoGalleries.Application
             CosmosClient = new CosmosClient(Configuration["CosmosDB:Uri"], Configuration["CosmosDB:PrimaryKey"]);
 
             // create the CosmosDB database if it doesn't already exist
-            var response = await CosmosClient.CreateDatabaseIfNotExistsAsync(Constants.DatabaseName);
+            var response = await CosmosClient.CreateDatabaseIfNotExistsAsync(Constants.DatabaseName, ThroughputProperties.CreateManualThroughput(400));
             var createdDatabase = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("Server.InitialiseDatabaseAsync: Created database? " + createdDatabase);
 
