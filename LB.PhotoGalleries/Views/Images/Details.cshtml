@@ -16,7 +16,43 @@
 }
 
 <div class="container-max text-center">
-    <img data-bind="class: GetImageClass(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).height}" />
+    
+    <div id="photo-wrapper">
+        <img data-bind="class: GetImageClass(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), attr: {title: Image.Name, src: GetImageUrl(Image.StorageId, Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image.Width, Image.Height, ImageContainerWidth, ImageContainerHeight).height}"/>
+        <div id="photo-overlay" class="photo-overlay-full-frame">
+            
+            <div class="row photo-overlay-full-frame">
+                <div class="col" id="photo-overlay-left">
+                    
+                    <div id="photo-left-nav-box">
+                        <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-left-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.5 8.5a.5.5 0 0 0 0-1H5.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L5.707 8.5H11.5z"/>
+                        </svg>
+                    </div>
+
+                </div>
+                <div class="col" id="photo-overlay-middle">
+                    
+                    <div id="photo-middle-box">
+                        scroll down for more
+                    </div>
+
+                </div>
+                <div class="col" id="photo-overlay-right">
+                    
+                    <div id="photo-right-nav-box">
+                        <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-right-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm2.5 8.5a.5.5 0 0 1 0-1h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5z"/>
+                        </svg>
+                    </div>
+
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+
 </div>
 
 <div class="container mt-3 text-center">
