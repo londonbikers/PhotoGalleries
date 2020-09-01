@@ -63,10 +63,10 @@
                 @if (settingsToShow)
                 {
                     <div class="col">
-                        <small><b class="text-muted">Settings</b></small>
+                        <b>Settings</b>
                         <br />
 
-                        <div class="text-uppercase text-small">
+                        <div class="text-uppercase">
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
                             {
@@ -85,7 +85,7 @@
 
                         </div>
 
-                        <small><a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">show more info</a></small>
+                        <a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">show more info</a>
                         
                     </div>
                 }
@@ -93,27 +93,25 @@
                 @if (cameraToShow)
                 {
                     <div class="col">
-                        <small>
-                            <b class="text-muted">Camera</b>
+                        <b>Camera</b>
+                        <br />
+
+                        @if (!string.IsNullOrEmpty(cameraInfo))
+                        {
+                            @cameraInfo
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
+                        {
                             <br />
+                            @Model.Metadata.LensMake
 
-                            @if (!string.IsNullOrEmpty(cameraInfo))
+                            if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
                             {
-                                @cameraInfo
+                                <text> @Model.Metadata.LensModel</text>
                             }
+                        }
 
-                            @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
-                            {
-                                <br />
-                                @Model.Metadata.LensMake
-
-                                if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
-                                {
-                                    <text> @Model.Metadata.LensModel</text>
-                                }
-                            }
-
-                        </small>
                     </div>
                 }
 

@@ -125,11 +125,20 @@ body {
     color: #fff;
     border-radius: 5px;
     padding: 5px 10px;
+    font-size: 80%;
 }
-.settings-box a {
-    color: #ccc;
-}
-
+    .settings-box a {
+        color: #ccc;
+    }
+    .settings-box b {
+        color: #888;
+    }
+    .settings-box div.col:first-of-type {
+        padding-right: 5px;
+    }
+    .settings-box div.col:last-of-type {
+        padding-left: 5px;
+    }
 
 .text-left {
     text-align: left;
@@ -146,5 +155,5 @@ body {
     display: inline-block;
     margin: 1px;
     border-radius: 5px;
-    font-size: 80%;
+    font-size: 90%;
 }
