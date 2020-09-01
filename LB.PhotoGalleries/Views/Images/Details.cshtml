@@ -11,6 +11,8 @@
     var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
     var mapsKey = (string)ViewData["mapsKey"];
     var cameraInfo = Utilities.GetCameraName(Model);
+    var previousImage = (Image)ViewData["previousImage"];
+    var nextImage = (Image)ViewData["nextImage"];
 }
 
 <div class="container-max text-center">
@@ -39,7 +41,7 @@
                 }
             </div>
         }
-        
+
         @if (!string.IsNullOrEmpty(Model.Credit))
         {
             <div>
@@ -86,7 +88,7 @@
                         </div>
 
                         <a href="javascript:void(0);" data-toggle="modal" data-target="#metadataModal">show more info</a>
-                        
+
                     </div>
                 }
 
@@ -137,7 +139,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                
+
                 <dl class="row">
                     @if (Model.Metadata.TakenDate.HasValue)
                     {
@@ -169,9 +171,9 @@
                         <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.FocalLength)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.FocalLength)</dd>
                     }
-                    
+
                 </dl>
-                
+
                 @if (locationToShow)
                 {
                     <b>Location</b><br />
@@ -222,7 +224,8 @@
                 // resize by available height
                 width = Math.round(imageWidth / heightRatio);
                 height = imageContainerHeight;
-                console.log("GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
+                console.log(
+                    "GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
 
 
             } else if (heightFits && !widthFits) {
@@ -230,7 +233,8 @@
                 // resize by available width
                 width = imageContainerWidth;
                 height = Math.round(imageHeight / widthRatio);
-                console.log("GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
+                console.log(
+                    "GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
 
             } else {
                 // both fit. err?
@@ -286,6 +290,30 @@
 
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
+
+            // handle keyboard navigation of images
+            $(document).keydown(function(e) {
+                // make sure we're not in focus of something that receives keyboard entry, i.e. comments post box
+                // to come...
+
+                if (e.keyCode === 37) {
+                    // navigate to previous photo
+                    @if (previousImage != null) {
+                        <text>NavigateToImage('@previousImage.GalleryId', '@previousImage.Id', '@previousImage.Name');</text>
+                    } else {
+                        <text>console.log("no previous image to nav to");</text>
+                    }
+                }
+
+                if (e.keyCode === 39) {
+                    // navigate to next photo
+                    @if (nextImage != null) {
+                        <text>NavigateToImage('@nextImage.GalleryId', '@nextImage.Id', '@nextImage.Name');</text>
+                    } else {
+                        <text>console.log("no next image to nav to");</text>
+                    }
+                }
+            });
         });
 
     </script>

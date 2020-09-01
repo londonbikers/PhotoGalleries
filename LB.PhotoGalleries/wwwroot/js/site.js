@@ -20,3 +20,7 @@ function EncodeParamForUrl(parameter)
     // then just lower case it
     return parameter.toLowerCase();
 }
+
+function NavigateToImage(galleryId, imageId, name) {
+    window.location.href = `/gi/${galleryId}/${imageId}/${EncodeParamForUrl(name)}`;
+}

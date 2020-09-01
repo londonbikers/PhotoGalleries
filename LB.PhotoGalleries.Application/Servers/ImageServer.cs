@@ -27,7 +27,6 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region public methods
-
         /// <summary>
         /// Stores an uploaded file in the storage system and adds a supporting Image object to the database.
         /// </summary>
@@ -136,6 +135,12 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<Image> GetImageAsync(string galleryId, string imageId)
         {
+            if (string.IsNullOrEmpty(galleryId) || string.IsNullOrEmpty(imageId))
+            {
+                Debug.WriteLine("ImageServer:GetImageAsync: some args were null, returning null");
+                return null;
+            }
+
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
             Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
@@ -257,6 +262,42 @@ namespace LB.PhotoGalleries.Application.Servers
                 await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
             }
         }
+
+        /// <summary>
+        /// Attempts to return the image previous to a given image in terms of the order they are shown in their gallery. May return null.
+        /// </summary>
+        public async Task<Image> GetPreviousImageInGalleryAsync(Image currentImage)
+        {
+            // choose the right query - not all galleries will have had their images ordered. fall back to image creation date for unordered galleries
+            var query = currentImage.Position.HasValue
+                ? new QueryDefinition("SELECT TOP 1 VALUE c.id FROM c WHERE c.GalleryId = @galleryId AND c.Position < @position ORDER BY c.Position DESC")
+                    .WithParameter("@galleryId", currentImage.GalleryId)
+                    .WithParameter("@position", currentImage.Position.Value)
+                : new QueryDefinition("SELECT TOP 1 VALUE c.id FROM c WHERE c.GalleryId = @galleryId AND c.Created < @created ORDER BY c.Created DESC")
+                    .WithParameter("@galleryId", currentImage.GalleryId)
+                    .WithParameter("@created", currentImage.Created);
+
+            var id = await GetImageIdByQueryAsync(query);
+            return await GetImageAsync(currentImage.GalleryId, id);
+        }
+
+        /// <summary>
+        /// Attempts to return the image after to a given image in terms of the order they are shown in their gallery. May return null.
+        /// </summary>
+        public async Task<Image> GetNextImageInGalleryAsync(Image currentImage)
+        {
+            // choose the right query - not all galleries will have had their images ordered. fall back to image creation date for unordered galleries
+            var query = currentImage.Position.HasValue
+                ? new QueryDefinition("SELECT TOP 1 VALUE c.id FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position ORDER BY c.Position")
+                    .WithParameter("@galleryId", currentImage.GalleryId)
+                    .WithParameter("@position", currentImage.Position.Value)
+                : new QueryDefinition("SELECT TOP 1 VALUE c.id FROM c WHERE c.GalleryId = @galleryId AND c.Created > @created ORDER BY c.Created")
+                    .WithParameter("@galleryId", currentImage.GalleryId)
+                    .WithParameter("@created", currentImage.Created);
+
+            var id = await GetImageIdByQueryAsync(query);
+            return await GetImageAsync(currentImage.GalleryId, id);
+        }
         #endregion
 
         #region internal methods
@@ -306,6 +347,28 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}");
 
             return users;
+        }
+        
+        /// <summary>
+        /// Retrieves the ID of an image via a query you provide.
+        /// </summary>
+        /// <param name="queryDefinition">The query text must use the VALUE keyword to return just a singular (scalar) value.</param>
+        private static async Task<string> GetImageIdByQueryAsync(QueryDefinition queryDefinition)
+        {
+            if (queryDefinition == null)
+                throw new InvalidOperationException("queryDefinition is null");
+
+            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var result = container.GetItemQueryIterator<object>(queryDefinition);
+
+            if (!result.HasMoreResults)
+                return null;
+
+            var resultSet = await result.ReadNextAsync();
+            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Query: {queryDefinition.QueryText}");
+            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}");
+
+            return (string) resultSet.Resource.FirstOrDefault();
         }
         #endregion
 
