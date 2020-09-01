@@ -30,6 +30,16 @@
             <div>@Model.Caption</div>
         }
 
+        @if (Model.Tags.Count > 0)
+        {
+            <div>
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="badge badge-secondary">@tag</span>
+                }
+            </div>
+        }
+        
         @if (!string.IsNullOrEmpty(Model.Credit))
         {
             <div>
@@ -40,16 +50,6 @@
                     }
                     @Model.Credit
                 </small>
-            </div>
-        }
-
-        @if (Model.Tags.Count > 0)
-        {
-            <div>
-                @foreach (var tag in Model.Tags)
-                {
-                    <span class="badge badge-secondary">@tag</span>
-                }
             </div>
         }
     </div>

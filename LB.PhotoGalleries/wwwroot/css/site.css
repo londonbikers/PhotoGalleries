@@ -119,6 +119,13 @@ body {
     border: 1px solid #ddd;
     padding: 10px;
 }
+    .info-box .badge {
+        font-size: 80%;
+        padding: 5px;
+        margin: 1px;
+        background-color: #ccc;
+        color: #666;
+    }
 
 .settings-box {
     background-color: #333;
