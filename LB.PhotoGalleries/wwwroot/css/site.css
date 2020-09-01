@@ -190,7 +190,6 @@ body {
 #photo-overlay {
     opacity: 0;
     transition: .5s ease;
-/*    background-color: #008CBA;*/
     border-radius: 5px;
     color: #fff;
 }
@@ -198,10 +197,6 @@ body {
         margin: 0;
     }
 
-#photo-overlay-left {
-/*    background-color: green;*/
-    cursor: pointer;
-}
 #photo-left-nav-box {
     position: absolute;
     top: 50%;
@@ -219,17 +214,17 @@ body {
     padding-bottom: 5px;
     text-transform: uppercase;
     font-size: 80%;
+    background-color: rgba(0,0,0,0.4);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
-#photo-overlay-right {
-}
-
-#photo-overlay-right {
-/*    background-color: coral;*/
-    cursor: pointer;
-}
 #photo-right-nav-box {
     position: absolute;
     top: 50%;
     right: 15px;
+}
+
+.pointer {
+    cursor: pointer;
 }

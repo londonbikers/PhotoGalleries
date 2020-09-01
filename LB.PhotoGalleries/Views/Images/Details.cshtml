@@ -13,6 +13,8 @@
     var cameraInfo = Utilities.GetCameraName(Model);
     var previousImage = (Image)ViewData["previousImage"];
     var nextImage = (Image)ViewData["nextImage"];
+    var photoLeftColClass = previousImage != null ? "class=\"col pointer\"" : "class=\"col\"";
+    var photoRightColClass = nextImage != null ? "class=\"col pointer\"" : "class=\"col\"";
 }
 
 <div class="container-max text-center">
@@ -22,7 +24,7 @@
         <div id="photo-overlay" class="photo-overlay-full-frame">
             
             <div class="row photo-overlay-full-frame">
-                <div class="col" id="photo-overlay-left">
+                <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">
                     
                     @if (previousImage != null)
                     {
@@ -41,7 +43,7 @@
                     </div>
 
                 </div>
-                <div class="col" id="photo-overlay-right">
+                <div @Html.Raw(photoRightColClass) id="photo-overlay-right">
                     
                     @if (nextImage != null)
                     {
