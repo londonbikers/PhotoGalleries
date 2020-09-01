@@ -22,7 +22,7 @@
     <div class="info-box">
         <h6>@Model.Name</h6>
         <div>
-            <small><a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> / <a asp-controller="Galleries" asp-action="Details" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@gallery.Id" asp-route-name="@Utilities.EncodeParamForUrl(gallery.Name)">@gallery.Name</a></small>
+            <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> / <a asp-controller="Galleries" asp-action="Details" asp-route-categoryId="@gallery.CategoryId" asp-route-galleryId="@gallery.Id" asp-route-name="@Utilities.EncodeParamForUrl(gallery.Name)">@gallery.Name</a>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.Caption))
@@ -114,7 +114,6 @@
 
                     </div>
                 }
-
             </div>
 
         </div>
