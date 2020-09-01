@@ -139,6 +139,8 @@ body {
     }
     .settings-box b {
         color: #888;
+        text-transform: uppercase;
+        font-size: 90%;
     }
     .settings-box div.col:first-of-type {
         padding-right: 5px;
