@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,12 +27,13 @@ namespace LB.PhotoGalleries.Controllers
             ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             ViewData.Model = gallery;
 
-            var megapixels = 0;
+            long pixels = 0;
             foreach (var image in (List<Image>) ViewData["images"])
                 if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
-                    megapixels += image.Metadata.Width.Value * image.Metadata.Height.Value;
+                    pixels += image.Metadata.Width.Value * image.Metadata.Height.Value;
 
-            ViewData["megapixels"] = megapixels / 1000000;
+            var megapixels = Convert.ToInt32(pixels / 1000000);
+            ViewData["megapixels"] = megapixels;
             return View();
         }
     }
