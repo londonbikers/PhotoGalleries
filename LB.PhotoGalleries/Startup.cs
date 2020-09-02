@@ -146,9 +146,11 @@ namespace LB.PhotoGalleries
 
                     if (!modeSpecified || !isLocalReferer || imageSizeRequiresWatermark)
                     {
+                        // the watermark needs to be a bit bigger when displayed on portrait format images
+                        var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
                         args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
                             new WatermarkOptions()
-                                .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, 12, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
+                                .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
                                 .SetOpacity(1f)
                                 .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
                     }
