@@ -82,6 +82,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
                 {
                     gallery.ThumbnailStorageId = image.StorageId;
+                    Debug.WriteLine("ImageServer.CreateImageAsync: First image, setting gallery thumbnail");
                     await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
                 }
             }
@@ -202,7 +203,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 // update the gallery thumbnail if we deleted the first image
                 if (originalPosition == 0 && newThumbnailImage != null)
                 {
-                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
+                    Debug.WriteLine("ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
                     var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
                     gallery.ThumbnailStorageId = newThumbnailImage.StorageId;
                     await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
