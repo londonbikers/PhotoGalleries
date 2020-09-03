@@ -122,9 +122,9 @@ namespace LB.PhotoGalleries
             // ImageFlow says: the last argument to FrameSizeLimit() is the maximum number of megapixels
             app.UseImageflow(new ImageflowMiddlewareOptions()
                 .SetJobSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(10000, 10000, 60))
-                    .SetMaxFrameSize(new FrameSizeLimit(10000, 10000, 60))
-                    .SetMaxEncodeSize(new FrameSizeLimit(10000, 10000, 30)))
+                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
                 .SetAllowDiskCaching(true)
                 .AddCommandDefault("down.filter", "mitchell")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
