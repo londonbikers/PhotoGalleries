@@ -1,30 +1,24 @@
 ﻿@using System.Linq
+@using LB.PhotoGalleries.Application
 @using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Gallery
 @{
     ViewData["Title"] = ViewData.Model.Name;
+    var category = Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId);
     var images = (List<Image>) ViewData["images"];
     var user = (User) ViewData["user"];
-    var megapixels = (int)ViewData["megapixels"];
-    var thumbnailSize = 280;
+    const int thumbnailSize = 280;
 }
 
 <div class="text-center">
     <h1 class="display-4">@ViewData.Model.Name</h1>
-    <p>@ViewData.Model.Description</p>
-    
+    <div>@ViewData.Model.Description</div>
     <hr />
     <div class="row mb-3">
         <div class="col">
             <small class="text-muted">
-                Created @ViewData.Model.Created.ToShortDateString() - by @user.Name - @images.Count photos
-
-                @if (megapixels > 1)
-                {
-                    <text>(@($"{megapixels:n0}") megapixels)</text>
-                }
-
+                Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> - Created @ViewData.Model.Created.ToShortDateString() - by @user.Name - @images.Count photos
             </small>
         </div>
     </div>
