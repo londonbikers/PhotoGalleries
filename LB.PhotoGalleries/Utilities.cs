@@ -56,11 +56,15 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static string EncodeParamForUrl(string parameter)
         {
-            return parameter.Replace("-", "_").Replace(" ", "-").ToLower();
+            return parameter
+                .Replace("-", "_")
+                .Replace(" ", "-")
+                .Replace("/","-")
+                .ToLower();
         }
 
         /// <summary>
-        /// Turns encoded parameters back into usable text. Will not undo lower-casing.
+        /// Attempts to turn encoded parameters back into usable text. Will not undo lower-casing.
         /// </summary>
         public static string DecodeParameterFromUrl(string parameter)
         {

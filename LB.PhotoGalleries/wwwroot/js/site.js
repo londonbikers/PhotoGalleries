@@ -9,7 +9,7 @@ function EncodeParamForUrl(parameter)
     parameter = parameter.replace(/\(|\)/g, "");
 
     // replace others with hyphens
-    parameter = parameter.replace(/-| |\.|_/g, "-");
+    parameter = parameter.replace(/-| |\.|_|\//g, "-");
 
     // make sure we haven't doubled up hyphens
     parameter = parameter.replace(/-{2,}/g, "-");
