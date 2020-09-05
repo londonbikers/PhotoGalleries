@@ -361,23 +361,13 @@
         function ViewModel() {
 
             // parse the image from a json blob
-            this.Image =
-                @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
-
-            //console.log("window.devicePixelRatio: " + window.devicePixelRatio);
-            //console.log("original image width: " + this.Image.Width);
-            //console.log("original image height: " + this.Image.Height);
+            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
 
             this.ImageContainerWidth = $(".container-max").innerWidth();
-            //console.log("ImageContainerWidth: " + this.ImageContainerWidth);
-
             var pageHeight = $("html").innerHeight();
             var imageTop = $(".container-max").position().top;
             var usableHeight = Math.floor(pageHeight - imageTop - 10);
-
-            //console.log("usableHeight: " + usableHeight);
             this.ImageContainerHeight = usableHeight;
-            //console.log("ImageContainerHeight: " + this.ImageContainerHeight);
 
             this.createComment = function() {
                 var comment = $("#comment-postbox").val();
@@ -387,9 +377,9 @@
                 }
 
                 $.post('/api/images/comments?galleryId=@Model.GalleryId&imageId=@Model.Id', { comment: comment })
-                    .done(function(response) {
-                        console.log("comment created! refresh page...");
-                        console.log(response);
+                    .done(function() {
+                        // comment created, refresh the page to show new comment
+                        location.reload();
                     })
                     .fail(function() {
                         console.log("something went wrong when creating a comment...");
