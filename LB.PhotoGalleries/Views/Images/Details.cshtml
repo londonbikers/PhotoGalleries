@@ -330,7 +330,7 @@
         }
 
         function GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight) {
-            var dims = GetImageDimensions(image.Width, image.Height, imageContainerWidth, imageContainerHeight);
+            var dims = GetImageDimensions(image, imageContainerWidth, imageContainerHeight);
             var ratio = window.devicePixelRatio;
             dims.width = Math.ceil(dims.width * ratio);
             dims.height = Math.ceil(dims.height * ratio);
