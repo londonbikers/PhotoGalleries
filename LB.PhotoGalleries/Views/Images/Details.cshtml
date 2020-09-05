@@ -176,17 +176,17 @@
         <div class="info-box">
             <form data-bind="submit: createComment">
                 <div class="form-group">
-                    <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..."></textarea>
+                    <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..." required></textarea>
                 </div>
                 <div class="row">
                     <div class="col-9 text-left post-box-bottom-row">
-                        <input class="form-check-input" type="checkbox" value="" id="get-notifications" required checked="checked">
+                        <input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
                         <label class="form-check-label" for="get-notifications">
                             Get notification of replies
                         </label>
                     </div>
                     <div class="col-3 text-right">
-                        <button type="submit" class="btn btn-primary">Post</button>
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
                     </div>
                 </div>
             </form>
@@ -371,12 +371,14 @@
 
             this.createComment = function() {
                 var comment = $("#comment-postbox").val();
+                var receiveNotifications = $("#get-notifications").prop("checked") === true;
+
                 if (comment === '') {
                     console.log("createComment: no comment supplied.");
                     return;
                 }
 
-                $.post('/api/images/comments?galleryId=@Model.GalleryId&imageId=@Model.Id', { comment: comment })
+                $.post('/api/images/comments?galleryId=@Model.GalleryId&imageId=@Model.Id', { comment: comment, receiveNotifications: receiveNotifications })
                     .done(function() {
                         // comment created, refresh the page to show new comment
                         location.reload();

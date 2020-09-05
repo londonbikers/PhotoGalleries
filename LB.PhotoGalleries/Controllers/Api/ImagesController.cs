@@ -33,6 +33,10 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (string.IsNullOrEmpty(comment) || string.IsNullOrWhiteSpace(comment))
                 return BadRequest("comment missing");
 
+            // todo: implement comment notifications...
+            var receiveNotifications = true; 
+            bool.TryParse(Request.Form["receiveNotifications"], out receiveNotifications);
+
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             var imageComment = new Comment
             {
