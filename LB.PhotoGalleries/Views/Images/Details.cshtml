@@ -360,16 +360,16 @@
             this.ImageContainerWidth = $(".container-max").innerWidth();
 
             var pageHeight = $(window).height();
-            console.log("pageHeight: " + pageHeight);
+            //console.log("pageHeight: " + pageHeight);
 
             var imageTop = $(".container-max").position().top;
-            console.log("imageTop: " + imageTop);
+            //console.log("imageTop: " + imageTop);
 
             var usableHeight = Math.floor(pageHeight - imageTop - 10);
-            console.log("usableHeight: " + usableHeight);
+            //console.log("usableHeight: " + usableHeight);
 
             this.ImageContainerHeight = usableHeight;
-            console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
+            //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
 
             this.createComment = function() {
                 var comment = $("#comment-postbox").val();
