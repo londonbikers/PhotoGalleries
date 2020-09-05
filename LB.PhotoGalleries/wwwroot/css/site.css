@@ -248,3 +248,12 @@ body {
 .text-format {
     white-space: pre-line
 }
+
+.comment-user-pic {
+    float: left;
+    margin-right: 10px;
+}
+
+.no-float {
+    clear: both;
+}
