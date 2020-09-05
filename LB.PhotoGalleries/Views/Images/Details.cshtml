@@ -1,4 +1,5 @@
-﻿@using LB.PhotoGalleries.Application.Models
+﻿@using LB.PhotoGalleries.Application
+@using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Image
 @{
@@ -105,7 +106,6 @@
         }
     </div>
 
-
     @if (settingsToShow || cameraToShow)
     {
         <div class="settings-box mt-3">
@@ -169,10 +169,52 @@
 
         </div>
     }
+    
+    <div class="mt-3 pb-2">
+        <h6>Comments</h6>
+        
+        <div class="info-box">
+            <form data-bind="submit: createComment">
+                <div class="form-group">
+                    <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..."></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-9 text-left post-box-bottom-row">
+                        <input class="form-check-input" type="checkbox" value="" id="get-notifications" required checked="checked">
+                        <label class="form-check-label" for="get-notifications">
+                            Get notification of replies
+                        </label>
+                    </div>
+                    <div class="col-3 text-right">
+                        <button type="submit" class="btn btn-primary">Post</button>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-    <div class="row">
-        <div class="col">
-            &nbsp;
+        <div class="mt-3">
+            
+            @if (Model.Comments.Count == 0)
+            {
+                <p class="lead">
+                    Be the first to leave a comment...
+                </p>
+            }
+
+            @foreach (var comment in Model.Comments)
+            {
+                var user = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
+                <div class="row mb-4 text-left">
+                    <div class="col-1">profile pic</div>
+                    <div class="col-11">
+                        <div class="text-small">
+                            <b>@user.Name</b> <span class="text-muted">- @comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
+                        </div>
+                        <div class="mt-1 text-format">@comment.Text</div>
+                    </div>
+                </div>
+            }
+
         </div>
     </div>
 
@@ -315,28 +357,47 @@
             return "rounded";
         }
 
-        // the view model that knockout uses to bind data to the html
+        // the view model that KnockoutJS uses to bind data and events to the html
         function ViewModel() {
 
             // parse the image from a json blob
-            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
+            this.Image =
+                @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
 
-            console.log("window.devicePixelRatio: " + window.devicePixelRatio);
-            console.log("original image width: " + this.Image.Width);
-            console.log("original image height: " + this.Image.Height);
+            //console.log("window.devicePixelRatio: " + window.devicePixelRatio);
+            //console.log("original image width: " + this.Image.Width);
+            //console.log("original image height: " + this.Image.Height);
 
             this.ImageContainerWidth = $(".container-max").innerWidth();
-            console.log("ImageContainerWidth: " + this.ImageContainerWidth);
+            //console.log("ImageContainerWidth: " + this.ImageContainerWidth);
 
             var pageHeight = $("html").innerHeight();
             var imageTop = $(".container-max").position().top;
             var usableHeight = Math.floor(pageHeight - imageTop - 10);
 
-            console.log("usableHeight: " + usableHeight);
+            //console.log("usableHeight: " + usableHeight);
             this.ImageContainerHeight = usableHeight;
-            console.log("ImageContainerHeight: " + this.ImageContainerHeight);
+            //console.log("ImageContainerHeight: " + this.ImageContainerHeight);
+
+            this.createComment = function() {
+                var comment = $("#comment-postbox").val();
+                if (comment === '') {
+                    console.log("createComment: no comment supplied.");
+                    return;
+                }
+
+                $.post('/api/images/comments?galleryId=@Model.GalleryId&imageId=@Model.Id', { comment: comment })
+                    .done(function(response) {
+                        console.log("comment created! refresh page...");
+                        console.log(response);
+                    })
+                    .fail(function() {
+                        console.log("something went wrong when creating a comment...");
+                    });
+            }
         }
 
+        // jQuery stuff we need to wire up as soon as the dom is ready to be used
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
 
@@ -366,18 +427,24 @@
 
                 if (e.keyCode === 37) {
                     // navigate to previous photo
-                    @if (previousImage != null) {
+                    @if (previousImage != null)
+                    {
                         <text>NavigateToImage('@previousImage.GalleryId', '@previousImage.Id', '@previousImage.Name');</text>
-                    } else {
+                    }
+                    else
+                    {
                         <text>console.log("no previous image to nav to");</text>
                     }
                 }
 
                 if (e.keyCode === 39) {
                     // navigate to next photo
-                    @if (nextImage != null) {
+                    @if (nextImage != null)
+                    {
                         <text>NavigateToImage('@nextImage.GalleryId', '@nextImage.Id', '@nextImage.Name');</text>
-                    } else {
+                    }
+                    else
+                    {
                         <text>console.log("no next image to nav to");</text>
                     }
                 }

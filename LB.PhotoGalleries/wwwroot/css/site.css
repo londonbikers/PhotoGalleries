@@ -239,3 +239,12 @@ body {
 .pointer {
     cursor: pointer;
 }
+
+.post-box-bottom-row {
+    padding-left: 35px;
+}
+
+/* use to render user-supplied text to mitigate xss risk */
+.text-format {
+    white-space: pre-line
+}
