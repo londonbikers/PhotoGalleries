@@ -60,6 +60,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
 
                 image.Name = collection["Name"];
                 image.Caption = collection["Caption"];
+                image.Credit = collection["Credit"];
                 image.Tags.Clear();
                 image.Tags.AddRange(collection["tagsCsv"].ToString().Split(','));
                 ViewData["tags"] = string.Join(',', image.Tags);
