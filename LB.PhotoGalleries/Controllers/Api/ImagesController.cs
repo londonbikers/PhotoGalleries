@@ -2,7 +2,6 @@
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
