@@ -32,7 +32,7 @@ namespace LB.PhotoGalleries.Controllers.Api
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)
         {
-            var comment = Request.Form["comment"];
+            var comment = Request.Form["comment"].FirstOrDefault();
             if (string.IsNullOrEmpty(comment) || string.IsNullOrWhiteSpace(comment))
                 return BadRequest("comment missing");
 
@@ -44,7 +44,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             var imageComment = new Comment
             {
                 CreatedByUserId = Utilities.GetUserId(User),
-                Text = comment
+                Text = comment.Trim()
             };
 
             image.Comments.Add(imageComment);
