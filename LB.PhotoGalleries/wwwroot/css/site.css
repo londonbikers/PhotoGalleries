@@ -261,3 +261,11 @@ body {
 .no-float {
     clear: both;
 }
+
+.image-fade img {
+    opacity: 0.4;
+}
+
+.image-fade img:hover {
+    opacity: 1;
+}

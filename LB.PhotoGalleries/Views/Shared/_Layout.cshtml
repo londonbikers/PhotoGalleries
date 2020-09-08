@@ -67,7 +67,17 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; @DateTime.Now.Year - <a href="https://londonbikers.com/">londonbikers.com</a> - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row">
+                <div class="col">
+                    &copy; @DateTime.Now.Year - <a href="https://londonbikers.com/">londonbikers.com</a> - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+                </div>
+                <div class="col text-right image-fade">
+                    <a href="https://www.facebook.com/LondonBikersDotCom" target="_blank"><img src="/img/facebook.svg" width="25" title="Follow us on Facebook"/></a>
+                    <a href="https://twitter.com/londonbikers" target="_blank"><img src="/img/twitter.svg" width="25" title="Follow us on Twitter"/></a>
+                    <a href="https://www.instagram.com/london.bikers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@london.bikers on Instagram"/></a>
+                    <a href="https://www.instagram.com/lbsnappers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@lbsnappers on Instagram"/></a>
+                </div>
+            </div>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
