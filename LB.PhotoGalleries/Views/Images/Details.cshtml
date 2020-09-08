@@ -197,13 +197,17 @@
                 var user = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
                 <div class="row mb-4 text-left">
                     <div class="col">
-                        <svg class="comment-user-pic" width="34" height="34" viewBox="0 0 16 16" class="bi bi-person-square" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="34" height="34" viewBox="0 0 16 16" class="bi bi-person-square comment-user-pic" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
                             <path fill-rule="evenodd" d="M2 15v-1c0-1 1-4 6-4s6 3 6 4v1H2zm6-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
                         </svg>
                         <div class="text-small">
                             <b>@user.Name</b><br />
                             <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
+                            @if (Utilities.CanUserEditComment(comment, gallery, User))
+                            {
+                                <text>-</text> <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
+                            }
                         </div>
                         <div class="pt-2 text-format no-float">@comment.Text</div>
                     </div>
@@ -225,7 +229,6 @@
                 </button>
             </div>
             <div class="modal-body">
-
                 <dl class="row">
                     @if (Model.Metadata.TakenDate.HasValue)
                     {
@@ -257,7 +260,6 @@
                         <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Metadata.FocalLength)</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(model => model.Metadata.FocalLength)</dd>
                     }
-
                 </dl>
 
                 @if (locationToShow)
@@ -310,14 +312,16 @@
                 // resize by available height
                 width = Math.round(image.Width / heightRatio);
                 height = imageContainerHeight;
-                console.log("GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
+                console.log(
+                    "GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
 
             } else if (heightFits && !widthFits) {
 
                 // resize by available width
                 width = imageContainerWidth;
                 height = Math.round(image.Height / widthRatio);
-                console.log("GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
+                console.log(
+                    "GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
 
             } else {
 
@@ -371,7 +375,8 @@
             this.ImageContainerHeight = usableHeight;
             //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
 
-            this.createComment = function() {
+            this.createComment = function ()
+            {
                 var comment = $("#comment-postbox").val();
                 var receiveNotifications = $("#get-notifications").prop("checked") === true;
 
@@ -388,6 +393,18 @@
                     .fail(function() {
                         console.log("something went wrong when creating a comment...");
                     });
+            }
+
+            this.DeleteComment = function (commentCreated, commentCreatedByUserId) {
+                $.ajax({
+                    url: `/api/images/comments?categoryId=@category.Id&galleryId=@gallery.Id&imageId=@Model.Id&commentCreatedTicks=${commentCreated}&commentCreatedByUserId=${commentCreatedByUserId}`,
+                    type: 'DELETE'
+                }).done(function (response) {
+                    // comment created, refresh the page to show new comment
+                    location.reload();
+                }).fail(function(response) {
+                    console.log("something went wrong when deleting the comment: " + response);
+                });
             }
         }
 

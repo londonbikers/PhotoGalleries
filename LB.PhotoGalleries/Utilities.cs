@@ -28,7 +28,7 @@ namespace LB.PhotoGalleries
         /// <summary>
         /// Determines if a user is authorised to edit or delete a photos object.
         /// </summary>
-        public static bool IsUserAuthorisedToEdit(ClaimsPrincipal user, string objectCreatedByUserId)
+        public static bool CanUserEditObject(ClaimsPrincipal user, string objectCreatedByUserId)
         {
             // users must be an administrator or have created the object to edit (and delete) a photos object
             if (user.IsInRole(Roles.Administrator.ToString()))
@@ -38,6 +38,19 @@ namespace LB.PhotoGalleries
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines if a user can edit/delete a comment against an image or a gallery.
+        /// </summary>
+        /// <param name="comment">The comment to be edited/deleted.</param>
+        /// <param name="gallery">The gallery the comment is made against, or the gallery the image resides in if the comment is against an image.</param>
+        /// <param name="user">The user being tested for authorisation.</param>
+        /// <returns>True if they can edit/delete the comment. Otherwise false.</returns>
+        public static bool CanUserEditComment(Comment comment, Gallery gallery, ClaimsPrincipal user)
+        {
+            var userId = GetUserId(user);
+            return user.IsInRole(Roles.Administrator.ToString()) || gallery.CreatedByUserId == userId || comment.CreatedByUserId == userId;
         }
 
         /// <summary>

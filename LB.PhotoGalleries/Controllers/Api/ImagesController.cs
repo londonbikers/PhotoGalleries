@@ -2,6 +2,9 @@
 using LB.PhotoGalleries.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers.Api
@@ -47,6 +50,32 @@ namespace LB.PhotoGalleries.Controllers.Api
             image.Comments.Add(imageComment);
             await Server.Instance.Images.UpdateImageAsync(image);
             return Accepted();
+        }
+
+        [Authorize]
+        [HttpDelete("/api/images/comments")]
+        public async Task<ActionResult> DeleteComment(string categoryId, string galleryId, string imageId, long commentCreatedTicks, string commentCreatedByUserId)
+        {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            var comment = image.Comments.SingleOrDefault(c => c.CreatedByUserId == commentCreatedByUserId && c.Created.Ticks == commentCreatedTicks);
+
+            if (comment == null)
+            {
+                // comment doesn't exist. maybe it's already been deleted, either way, we're done.
+                return NoContent();
+            }
+
+            if (!Utilities.CanUserEditComment(comment, gallery, User))
+                return BadRequest("Apologies, you're not authorised to do that.");
+
+            var removed = image.Comments.Remove(comment);
+            if (removed)
+                await Server.Instance.Images.UpdateImageAsync(image);
+            else
+                Debug.WriteLine($"ImageController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, imageId={imageId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
+
+            return NoContent();
         }
     }
 }
