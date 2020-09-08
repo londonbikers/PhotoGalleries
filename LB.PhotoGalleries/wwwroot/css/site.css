@@ -249,6 +249,10 @@ body {
     white-space: pre-line
 }
 
+.text-link {
+    /* empty class used to linkify user-supplied content */
+}
+
 .comment-user-pic {
     float: left;
     margin-right: 10px;

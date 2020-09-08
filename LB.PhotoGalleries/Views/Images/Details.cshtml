@@ -70,7 +70,7 @@
 
         @if (!string.IsNullOrEmpty(Model.Caption))
         {
-            <div>@Model.Caption</div>
+            <div class="text-format text-link">@Model.Caption</div>
         }
 
         @if (Model.Tags.Count > 0)
@@ -209,7 +209,7 @@
                                 <text>-</text> <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
                             }
                         </div>
-                        <div class="pt-2 text-format no-float comment-text">@comment.Text</div>
+                        <div class="pt-2 text-format no-float text-link">@comment.Text</div>
                     </div>
                 </div>
             }
@@ -464,7 +464,7 @@
             });
 
             // convert all link text into anchors
-            $(".comment-text").linkify({
+            $(".text-link").linkify({
                 target: "_blank"
             });
         });

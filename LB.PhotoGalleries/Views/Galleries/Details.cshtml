@@ -13,7 +13,7 @@
 
 <div class="text-center">
     <h1 class="display-4">@ViewData.Model.Name</h1>
-    <div>@ViewData.Model.Description</div>
+    <div class="text-format text-link">@ViewData.Model.Description</div>
     <hr />
     <div class="row mb-3">
         <div class="col">
@@ -37,6 +37,8 @@
 @section Scripts
 {
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+    <script src="~/lib/linkify/linkify.min.js"></script>
+    <script src="~/lib/linkify/linkify-jquery.min.js"></script>
 
     <script type="text/javascript">
 
