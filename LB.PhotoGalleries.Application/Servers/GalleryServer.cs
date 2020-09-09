@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -85,7 +84,26 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetGalleryStubsByQueryAsync(queryDefinition);
         }
 
-        public async Task CreateOrUpdateGalleryAsync(Gallery gallery)
+        public async Task UpdateGalleryAsync(Gallery gallery)
+        {
+            if (gallery == null)
+                throw new ArgumentNullException(nameof(gallery));
+
+            if (!gallery.IsValid())
+                throw new InvalidOperationException("Gallery is not valid. Check that all required properties are set");
+
+            // this is a good opportunity to verify that we have the right image count.
+            // we do this as we rely on the client to update image counts after a batch of uploads is complete,
+            // but of course we can't trust that the client will always do this. the user might close the browser mid-upload for example.
+            gallery.ImageCount = await GetGalleryImageCount(gallery);
+
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var partitionKey = new PartitionKey(gallery.CategoryId);
+            var response = await container.ReplaceItemAsync(gallery, gallery.Id, partitionKey);
+            Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Request charge: " + response.RequestCharge);
+        }
+
+        public async Task CreateGalleryAsync(Gallery gallery)
         {
             if (gallery == null)
                 throw new ArgumentNullException(nameof(gallery));
@@ -95,12 +113,10 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var partitionKey = new PartitionKey(gallery.CategoryId);
-            var response = await container.UpsertItemAsync(gallery, partitionKey);
-            var createdItem = response.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Created gallery? " + createdItem);
+            var response = await container.CreateItemAsync(gallery, partitionKey);
             Debug.WriteLine("GalleryServer.CreateOrUpdateGalleryAsync: Request charge: " + response.RequestCharge);
         }
-        
+
         /// <summary>
         /// Permanently deletes the gallery and all images including all image files in storage.
         /// </summary>
@@ -116,6 +132,17 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var response = await container.DeleteItemAsync<Gallery>(gallery.Id, new PartitionKey(gallery.CategoryId));
             Debug.WriteLine("GalleryServer.DeleteGalleryAsync: Request charge: " + response.RequestCharge);
+        }
+
+        /// <summary>
+        /// Updates the count we keep on a gallery for the number of images it contains.
+        /// This avoids having to collect the big image objects from the database every time we just want a simple count of the number of images in the gallery.
+        /// </summary>
+        public async Task UpdateGalleryImageCount(string categoryId, string galleryId)
+        {
+            var gallery = await GetGalleryAsync(categoryId, galleryId);
+            gallery.ImageCount = await GetGalleryImageCount(gallery);
+            await UpdateGalleryAsync(gallery);
         }
         #endregion
 
@@ -198,6 +225,13 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             throw new InvalidOperationException("No gallery found using query: " + queryDefinition.QueryText);
+        }
+
+        private static async Task<int> GetGalleryImageCount(Gallery gallery)
+        {
+            var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM i WHERE i.GalleryId = @galleryId").WithParameter("@galleryId", gallery.Id);
+            var count = await Server.Instance.Images.GetImagesScalarByQueryAsync(query);
+            return count;
         }
         #endregion
     }

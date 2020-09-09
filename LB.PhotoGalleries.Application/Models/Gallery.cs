@@ -54,6 +54,14 @@ namespace LB.PhotoGalleries.Application.Models
         /// </remarks>
         [DisplayName("Thumbnail Storage Id")]
         public string ThumbnailStorageId { get; set; }
+        /// <summary>
+        /// The number of images in this gallery.
+        /// </summary>
+        /// <remarks>
+        /// Needs to be updated on completion of each image upload batch or any gallery update.
+        /// </remarks>
+        [DisplayName("Image Count")]
+        public int ImageCount { get; set; }
         #endregion
 
         #region constructors

@@ -199,7 +199,10 @@
             acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif",
             init: function() {
                 this.on("queuecomplete", function () {
-                    // the uploads are done, refresh the page so we clear down the uploader and show the new images properly
+                    // the uploads are done, tell the server to update the gallery image count
+                    $.post('/api/galleries/update-image-count?categoryId=@Model.CategoryId&galleryId=@Model.Id');
+
+                    // now refresh the page so we clear down the uploader and show the new images properly
                     location.reload();
                 });
             }

@@ -62,7 +62,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 foreach (var galleryComment in gallery.Comments.Where(q => q.CreatedByUserId == user.Id))
                     galleryComment.CreatedByUserId = Constants.AnonUserId;
 
-                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             }
 
             // go through any comments the user has left against images and anonymise those

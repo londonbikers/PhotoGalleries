@@ -36,7 +36,7 @@
                 <p class="card-text" data-bind="text: Name"></p>
                 <div class="d-flex justify-content-between align-items-center">
                     <small data-bind="text: CategoryName" class="text-muted"></small>
-                    @*<small class="text-muted">9 mins</small>*@
+                    <small class="text-muted"><span data-bind="text: ImageCount"></span> photos</small>
                 </div>
             </div>
         </div>
@@ -51,7 +51,15 @@
 
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Select(g => new { g.CategoryId, g.Id, g.Name, g.ThumbnailStorageId, CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name })));
+        var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Select(g => new
+                      {
+                          g.CategoryId, 
+                          g.Id, 
+                          g.Name, 
+                          g.ThumbnailStorageId,
+                          g.ImageCount,
+                          CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name
+                      })));
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in.
         // this ensures images are as crisp as they can be for each client device.

@@ -35,7 +35,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             {
                 gallery.Id = Utilities.CreateNewId();
                 gallery.CreatedByUserId = Utilities.GetUserId(User);
-                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                await Server.Instance.Galleries.CreateGalleryAsync(gallery);
                 return RedirectToAction(nameof(Edit), new { pk = gallery.CategoryId, id = gallery.Id });
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 appGallery.Description = gallery.Description;
                 appGallery.Active = gallery.Active;
              
-                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(appGallery);
+                await Server.Instance.Galleries.UpdateGalleryAsync(appGallery);
                 ViewData["success"] = "Gallery updated!";
             }
             catch (Exception ex)

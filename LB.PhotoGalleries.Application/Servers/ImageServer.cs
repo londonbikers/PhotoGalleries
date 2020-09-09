@@ -83,7 +83,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 {
                     gallery.ThumbnailStorageId = image.StorageId;
                     Debug.WriteLine("ImageServer.CreateImageAsync: First image, setting gallery thumbnail");
-                    await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                    await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
             }
             catch
@@ -206,7 +206,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     Debug.WriteLine("ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
                     var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
                     gallery.ThumbnailStorageId = newThumbnailImage.StorageId;
-                    await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                    await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
             }
         }
@@ -260,7 +260,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 Debug.WriteLine("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(imageBeingOrdered.GalleryCategoryId, imageBeingOrdered.GalleryId);
                 gallery.ThumbnailStorageId = imageBeingOrdered.StorageId;
-                await Server.Instance.Galleries.CreateOrUpdateGalleryAsync(gallery);
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             }
         }
 
