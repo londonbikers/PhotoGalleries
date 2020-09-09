@@ -23,15 +23,10 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row pb-3">
         <div class="col" data-bind="foreach: Images"><div class="grid-square-med rounded"><a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(StorageId) }" width="@thumbnailSize" height="@thumbnailSize" /></a></div></div>
     </div>
 
-    <div class="row">
-        <div class="col">
-            &nbsp;
-        </div>
-    </div>
 </div>
 
 @section Scripts
