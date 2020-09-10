@@ -21,7 +21,7 @@
 <div class="container-max text-center">
 
     <div id="photo-wrapper">
-        <img data-bind="class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight), attr: { title: Image.Name, src: GetImageUrl(Image, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
+        <img class="img-fluid" data-bind="class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight), attr: { title: Image.Name, src: GetImageUrl(Image, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
         <div id="photo-overlay" class="photo-overlay-full-frame">
             <div class="row photo-overlay-full-frame">
                 <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">
@@ -366,18 +366,19 @@
             this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
 
             this.ImageContainerWidth = $(".container-max").innerWidth();
+            console.log("this.ImageContainerWidth: " + this.ImageContainerWidth);
 
             var pageHeight = $(window).height();
-            //console.log("pageHeight: " + pageHeight);
+            console.log("pageHeight: " + pageHeight);
 
             var imageTop = $(".container-max").position().top;
-            //console.log("imageTop: " + imageTop);
+            console.log("imageTop: " + imageTop);
 
             var usableHeight = Math.floor(pageHeight - imageTop - 10);
-            //console.log("usableHeight: " + usableHeight);
+            console.log("usableHeight: " + usableHeight);
 
             this.ImageContainerHeight = usableHeight;
-            //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
+            console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
 
             this.CreateComment = function ()
             {
