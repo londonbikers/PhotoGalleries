@@ -164,10 +164,10 @@
     }
 
     <div class="mt-3 pb-2">
-        <h6>Comments</h6>
+        <h6><img src="/img/comments.svg" width="25" alt="comments icon" /> Comments</h6>
 
         <div class="info-box mt-3">
-            <form data-bind="submit: createComment">
+            <form data-bind="submit: CreateComment">
                 <div class="form-group">
                     <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..." required></textarea>
                 </div>
@@ -379,13 +379,13 @@
             this.ImageContainerHeight = usableHeight;
             //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
 
-            this.createComment = function ()
+            this.CreateComment = function ()
             {
                 var comment = $("#comment-postbox").val();
                 var receiveNotifications = $("#get-notifications").prop("checked") === true;
 
                 if (comment === '') {
-                    console.log("createComment: no comment supplied.");
+                    console.log("CreateComment: no comment supplied.");
                     return;
                 }
 

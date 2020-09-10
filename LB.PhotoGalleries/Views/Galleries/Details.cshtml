@@ -1,13 +1,14 @@
-﻿@using System.Linq
-@using LB.PhotoGalleries.Application
+﻿@using LB.PhotoGalleries.Application
 @using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
+@using System.Linq
 @model LB.PhotoGalleries.Application.Models.Gallery
 @{
     ViewData["Title"] = ViewData.Model.Name;
     var category = Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId);
     var images = (List<Image>) ViewData["images"];
     var user = (User) ViewData["user"];
+    var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
     const int thumbnailSize = 280;
 }
 
@@ -18,13 +19,75 @@
     <div class="row mb-3">
         <div class="col">
             <small class="text-muted">
-                Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a> - Created @ViewData.Model.Created.ToShortDateString() - by @user.Name - @images.Count photos
+                Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a>
+                - Created @ViewData.Model.Created.ToShortDateString()
+                - by @user.Name
+                - @images.Count photos
+                - <img src="/img/comments.svg" width="15" alt="comments icon" /> <a href="#comments">@commentCount<text>comments</text></a>
             </small>
         </div>
     </div>
 
     <div class="row pb-3">
         <div class="col" data-bind="foreach: Images"><div class="grid-square-med rounded"><a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(StorageId) }" width="@thumbnailSize" height="@thumbnailSize" /></a></div></div>
+    </div>
+
+    <div class="mt-3 pb-2">
+        <a id="comments"></a>
+        <h6><img src="/img/comments.svg" width="25" alt="comments icon" /> Comments</h6>
+
+        <div class="info-box mt-3">
+            <form data-bind="submit: CreateComment">
+                <div class="form-group">
+                    <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..." required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-left post-box-bottom-row">
+                        @*<input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
+                        <label class="form-check-label" for="get-notifications">
+                            Get notification of replies
+                        </label>*@
+                    </div>
+                    <div class="col-5 text-right">
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-3">
+
+            @if (Model.Comments.Count == 0)
+            {
+                <p class="lead">
+                    Be the first to leave a comment...
+                </p>
+            }
+
+            @foreach (var comment in Model.Comments)
+            {
+                var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
+                <div class="row mb-4 text-left">
+                    <div class="col">
+                        <svg width="34" height="34" viewBox="0 0 16 16" class="bi bi-person-square comment-user-pic" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                            <path fill-rule="evenodd" d="M2 15v-1c0-1 1-4 6-4s6 3 6 4v1H2zm6-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                        </svg>
+                        <div class="text-small">
+                            <b>@commentUser.Name</b><br />
+                            <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
+                            @if (Utilities.CanUserEditComment(comment, Model, User))
+                            {
+                                <text>-</text>
+                                <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
+                            }
+                        </div>
+                        <div class="pt-2 text-format no-float text-link">@comment.Text</div>
+                    </div>
+                </div>
+            }
+
+        </div>
     </div>
 
 </div>
@@ -59,6 +122,38 @@
         function ViewModel() {
             // parse the images from a json blob
             this.Images = ko.observableArray(payload);
+
+            this.CreateComment = function ()
+            {
+                var comment = $("#comment-postbox").val();
+                var receiveNotifications = $("#get-notifications").prop("checked") === true;
+
+                if (comment === '') {
+                    console.log("CreateComment: no comment supplied.");
+                    return;
+                }
+
+                $.post('/api/galleries/comments?categoryId=@Model.CategoryId&galleryId=@Model.Id', { comment: comment, receiveNotifications: receiveNotifications })
+                    .done(function() {
+                        // comment created, refresh the page to show new comment
+                        location.reload();
+                    })
+                    .fail(function() {
+                        console.log("something went wrong when creating a comment...");
+                    });
+            }
+
+            this.DeleteComment = function (commentCreated, commentCreatedByUserId) {
+                $.ajax({
+                    url: `/api/galleries/comments?categoryId=@Model.CategoryId&galleryId=@Model.Id&commentCreatedTicks=${commentCreated}&commentCreatedByUserId=${commentCreatedByUserId}`,
+                    type: 'DELETE'
+                }).done(function (response) {
+                    // comment created, refresh the page to show new comment
+                    location.reload();
+                }).fail(function(response) {
+                    console.log("something went wrong when deleting the comment: " + response);
+                });
+            }
         }
 
         $(document).ready(function() {
