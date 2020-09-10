@@ -1,6 +1,6 @@
 ﻿@{
     var containerClass = "container";
-    if (ViewData["useContainer"] != null && !(bool) ViewData["useContainer"])
+    if (ViewData["useContainer"] != null && !(bool)ViewData["useContainer"])
     {
         containerClass = string.Empty;
     }
@@ -19,7 +19,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <img src="/img/lb-lid.svg" height="30" title="londonbikers.com" class="mr-2" alt="londonbikers.com logo"/>
+                <img src="/img/lb-lid.svg" height="30" title="londonbikers.com" class="mr-2" alt="londonbikers.com logo" />
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Photos</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -62,19 +62,18 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            <div class="row">
-                <div class="col">
-                    &copy; @DateTime.Now.Year - <a href="https://londonbikers.com/">londonbikers.com</a> - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
-                </div>
-                <div class="col text-right image-fade">
-                    <a href="https://www.facebook.com/LondonBikersDotCom" target="_blank"><img src="/img/facebook.svg" width="25" title="Follow us on Facebook"/></a>
-                    <a href="https://twitter.com/londonbikers" target="_blank"><img src="/img/twitter.svg" width="25" title="Follow us on Twitter"/></a>
-                    <a href="https://www.instagram.com/london.bikers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@london.bikers on Instagram"/></a>
-                    <a href="https://www.instagram.com/lbsnappers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@lbsnappers on Instagram"/></a>
-                </div>
+            &copy; @DateTime.Now.Year - <a href="https://londonbikers.com/">londonbikers.com</a> - <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+
+            <div id="footer-right" class="image-fade">
+                <a href="https://www.facebook.com/LondonBikersDotCom" target="_blank"><img src="/img/facebook.svg" width="25" title="Follow us on Facebook"/></a>
+                <a href="https://twitter.com/londonbikers" target="_blank"><img src="/img/twitter.svg" width="25" title="Follow us on Twitter"/></a>
+                <a href="https://www.instagram.com/london.bikers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@london.bikers on Instagram"/></a>
+                <a href="https://www.instagram.com/lbsnappers/" target="_blank"><img src="/img/instagram.svg" width="25" title="Follow @@lbsnappers on Instagram"/></a>
             </div>
+
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

@@ -269,3 +269,17 @@ body {
 .image-fade img:hover {
     opacity: 1;
 }
+
+@media only screen and (min-width: 500px) {
+    #footer-right {
+        float: right !important;
+    }
+}
+
+@media only screen and (max-width: 499px) {
+    #footer-right {
+        line-height: normal;
+        position: absolute;
+        margin-bottom: 15px;
+    }
+}
