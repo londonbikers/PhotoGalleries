@@ -19,7 +19,7 @@ namespace LB.PhotoGalleries.Controllers.Api
         /// <param name="imageId">The id of the image being re-ordered.</param>
         /// <param name="position">The new position of the image in the gallery.</param>
         /// <returns>Nothing, unless something goes wrong :)</returns>
-        [HttpPost("/api/images/SetPosition")]
+        [HttpPost("/api/images/set-position")]
         [Authorize(Roles = "Administrator,Photographer")]
         public async Task SetPosition(string galleryId, string imageId, int position)
         {

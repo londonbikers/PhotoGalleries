@@ -171,7 +171,7 @@
             var imageBeingMovedNewPosition = evt.newIndex;
 
             // send new position to api...
-            $.post(`/api/images/SetPosition?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
+            $.post(`/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
                 .done(function() {
                     console.log("image ordering post-back done!");
                 })
