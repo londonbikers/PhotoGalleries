@@ -298,7 +298,7 @@
 
             // if the image is smaller than the container then just return the image size
             if (image.Width <= imageContainerWidth && image.Height <= imageContainerHeight) {
-                console.log("source image is smaller than container, returning source image dimensions");
+                //console.log("source image is smaller than container, returning source image dimensions");
                 return { width: image.Width, height: image.Height };
             }
 
@@ -316,16 +316,14 @@
                 // resize by available height
                 width = Math.round(image.Width / heightRatio);
                 height = imageContainerHeight;
-                console.log(
-                    "GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
+                //console.log("GetImageDimensions(): height doesn't fit, set height to container height and downsize width");
 
             } else if (heightFits && !widthFits) {
 
                 // resize by available width
                 width = imageContainerWidth;
                 height = Math.round(image.Height / widthRatio);
-                console.log(
-                    "GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
+                //console.log("GetImageDimensions(): width doesn't fit, set width to container width and downsize height");
 
             } else {
 
@@ -351,11 +349,11 @@
 
             // if the image is full width then don't show a border radius
             if (dims.width === imageContainerWidth) {
-                console.log("GetImageClass(): image is full width, not showing radius");
+                //console.log("GetImageClass(): image is full width, not showing radius");
                 return null;
             }
 
-            console.log("GetImageClass(): image is not full width, showing radius");
+            //console.log("GetImageClass(): image is not full width, showing radius");
             return "rounded";
         }
 
@@ -366,19 +364,19 @@
             this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
 
             this.ImageContainerWidth = $(".container-max").innerWidth();
-            console.log("this.ImageContainerWidth: " + this.ImageContainerWidth);
+            //console.log("this.ImageContainerWidth: " + this.ImageContainerWidth);
 
             var pageHeight = $(window).height();
-            console.log("pageHeight: " + pageHeight);
+            //console.log("pageHeight: " + pageHeight);
 
             var imageTop = $(".container-max").position().top;
-            console.log("imageTop: " + imageTop);
+            //console.log("imageTop: " + imageTop);
 
             var usableHeight = Math.floor(pageHeight - imageTop - 10);
-            console.log("usableHeight: " + usableHeight);
+            //console.log("usableHeight: " + usableHeight);
 
             this.ImageContainerHeight = usableHeight;
-            console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
+            //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
 
             this.CreateComment = function ()
             {
