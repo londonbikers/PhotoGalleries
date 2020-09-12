@@ -8,14 +8,8 @@ namespace LB.PhotoGalleries.Controllers
 {
     public class CategoriesController : Controller
     {
-        // GET: /categories
-        public ActionResult Index()
-        {
-            return View();
-        }
-
         // GET: /categories/motorcycles
-        public async Task<ActionResult> Details(string name)
+        public async Task<ActionResult> Details(string name, int p = 1)
         {
             name = Utilities.DecodeParameterFromUrl(name);
             var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
@@ -23,7 +17,7 @@ namespace LB.PhotoGalleries.Controllers
                 return RedirectToAction("Index", "Home");
 
             ViewData.Model = category;
-            ViewData["galleries"] = await Server.Instance.Galleries.GetGalleriesAsync(category);
+            ViewData["galleries"] = await Server.Instance.Galleries.GetGalleriesAsync(category, p, 4);
             return View();
         }
     }
