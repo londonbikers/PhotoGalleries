@@ -41,13 +41,73 @@ namespace LB.PhotoGalleries.Application.Servers
             return await GetGalleryByQueryAsync(queryDefinition);
         }
 
+        /// <summary>
+        /// Returns a page of galleries residing in a specific category
+        /// </summary>
+        /// <param name="category">The category the galleries reside in</param>
+        /// <param name="page">The page of galleries to return results from, for the first page use 0.</param>
+        /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
+        /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
+        /// <param name="includeInactiveGalleries">Indicates whether or not inactive (not active) galleries should be returned. False by default.</param>
+        public async Task<PagedResultSet<Gallery>> GetGalleriesAsync(Category category, int page = 0, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
+        {
+            if (category == null)
+                throw new ArgumentNullException(nameof(category));
+
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
+
+            if (page < 0)
+                page = 1;
+
+            // limit page size to avoid incurring unnecessary charges and increasing latency
+            if (pageSize > 100)
+                pageSize = 100;
+
+            // limit how big the id query is to avoid unnecessary charges and to keep latency within an acceptable range
+            if (maxResults > 500)
+                maxResults = 500;
+
+            // get the complete list of ids
+            var queryDefinition = includeInactiveGalleries
+                ? new QueryDefinition("SELECT TOP @maxResults VALUE g.id FROM g WHERE g.CategoryId = @categoryId ORDER BY g.Created DESC").WithParameter("@maxResults", maxResults).WithParameter("@categoryId", category.Id)
+                : new QueryDefinition("SELECT TOP @maxResults VALUE g.id FROM g WHERE g.CategoryId = @categoryId AND g.Active = true ORDER BY g.Created DESC").WithParameter("@maxResults", maxResults).WithParameter("@categoryId", category.Id);
+            var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            var queryResult = container.GetItemQueryIterator<object>(queryDefinition);
+            var ids = new List<DatabaseId>();
+            double charge = 0;
+
+            while (queryResult.HasMoreResults)
+            {
+                var results = await queryResult.ReadNextAsync();
+                ids.AddRange(results.Select(result => new DatabaseId { Id = result.ToString(), PartitionKey = category.Id }));
+                charge += results.RequestCharge;
+            }
+
+            Debug.WriteLine($"GalleryServer.GetGalleriesAsync(Category): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
+            Debug.WriteLine($"GalleryServer.GetGalleriesAsync(Category): Total request charge: {charge}");
+
+            // now with all the ids we know how many total results there are and so can populate paging info
+            var pagedResultSet = new PagedResultSet<Gallery> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
+
+            // now just retrieve a page's worth of galleries from the results
+            var offset = page * pageSize;
+            var count = ids.Count >= pageSize ? pageSize : ids.Count;
+            var pageIds = ids.GetRange(offset, count);
+
+            foreach (var id in pageIds)
+                pagedResultSet.Results.Add(await GetGalleryAsync(id.PartitionKey, id.Id));
+
+            return pagedResultSet;
+        }
+
         public async Task<List<GalleryAdminStub>> GetLatestGalleriesAsync(int maxResults)
         {
             // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
             if (maxResults > 100)
                 maxResults = 100;
 
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            var queryDefinition = new QueryDefinition("SELECT TOP @pageSize c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c ORDER BY c.Created DESC").WithParameter("@pageSize", maxResults);
             return await GetGalleryStubsByQueryAsync(queryDefinition);
         }
 
@@ -57,7 +117,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 100)
                 maxResults = 100;
 
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults c.id AS Id, c.CategoryId AS PartitionKey FROM c WHERE c.Active = true ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
+            var queryDefinition = new QueryDefinition("SELECT TOP @pageSize c.id AS Id, c.CategoryId AS PartitionKey FROM c WHERE c.Active = true ORDER BY c.Created DESC").WithParameter("@pageSize", maxResults);
             var databaseIds = await Server.Instance.Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
             var galleries = new List<Gallery>();
 
@@ -77,9 +137,9 @@ namespace LB.PhotoGalleries.Application.Servers
                 maxResults = 100;
 
             var queryDefinition =
-                new QueryDefinition("SELECT TOP @maxResults c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
+                new QueryDefinition("SELECT TOP @pageSize c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
                     .WithParameter("@searchString", searchString)
-                    .WithParameter("@maxResults", maxResults);
+                    .WithParameter("@pageSize", maxResults);
 
             return await GetGalleryStubsByQueryAsync(queryDefinition);
         }
@@ -155,9 +215,8 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var result = container.GetItemQueryIterator<object>(queryDefinition);
 
-            var count = 0;
             if (!result.HasMoreResults)
-                return count;
+                return 0;
 
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine("UserServer.GetGalleriesScalarByQueryAsync: Query: " + queryDefinition.QueryText);

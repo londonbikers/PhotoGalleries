@@ -1,42 +1,77 @@
-﻿@model LB.PhotoGalleries.Application.Models.Category
-
+﻿@using LB.PhotoGalleries.Application.Models
+@using Newtonsoft.Json
+@model LB.PhotoGalleries.Application.Models.Category
 @{
     ViewData["Title"] = "Details";
+    var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Category</h4>
+<div class="text-center">
+    <h3 class="display-4">@ViewData.Model.Name</h3>
+    <div class="text-format text-link">@ViewData.Model.Description</div>
     <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Id)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PartitionKey)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PartitionKey)
-        </dd>
-    </dl>
+
+    @*<div><a asp-action="Index">Back to Categories</a></div>*@
+
+    <p><b>Latest Galleries</b></p>
+
+    <div class="row" data-bind="foreach: Galleries">
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <a data-bind="attr: { href: GetGalleryUrl(CategoryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(ThumbnailStorageId, $element) }" class="img-fluid" /></a>
+                <div class="card-body">
+                    <p class="card-text" data-bind="text: Name"></p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small data-bind="text: CategoryName" class="text-muted"></small>
+                        <small class="text-muted"><span data-bind="text: ImageCount"></span> photos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
-<div>
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
-    <a asp-action="Index">Back to List</a>
-</div>
+@section Scripts
+{
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+
+    <script type="text/javascript">
+
+        // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
+        // and convert to json so the Knockout script can parse it and use it.
+        var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Results.Select(g => new
+                      {
+                          g.CategoryId,
+                          g.Id,
+                          g.Name,
+                          g.ThumbnailStorageId,
+                          g.ImageCount,
+                          CategoryName = Model.Name
+                      })));
+
+        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
+        // this ensures images are as crisp as they can be for each client device.
+        function GetThumbnailUrl(storageId, element) {
+            var cardInnerWidth = $(element).parent().parent().innerWidth();
+            var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
+            var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
+            var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
+            return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+        }
+
+        function GetGalleryUrl(categoryId, galleryId, name) {
+            var encodedName = EncodeParamForUrl(name);
+            return `/g/${categoryId}/${galleryId}/${encodedName}`;
+        }
+
+        // the view model that knockout uses to bind data to the html
+        function ViewModel() {
+            // parse the images from a json blob
+            this.Galleries = ko.observableArray(payload);
+        }
+
+        $(document).ready(function() {
+            ko.applyBindings(new ViewModel());
+        });
+    </script>
+}

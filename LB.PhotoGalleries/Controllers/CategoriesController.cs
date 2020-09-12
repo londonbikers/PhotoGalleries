@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers
 {
@@ -14,7 +15,7 @@ namespace LB.PhotoGalleries.Controllers
         }
 
         // GET: /categories/motorcycles
-        public ActionResult Details(string name)
+        public async Task<ActionResult> Details(string name)
         {
             name = Utilities.DecodeParameterFromUrl(name);
             var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
@@ -22,6 +23,7 @@ namespace LB.PhotoGalleries.Controllers
                 return RedirectToAction("Index", "Home");
 
             ViewData.Model = category;
+            ViewData["galleries"] = await Server.Instance.Galleries.GetGalleriesAsync(category);
             return View();
         }
     }
