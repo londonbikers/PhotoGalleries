@@ -13,9 +13,9 @@
 
     @*<div><a asp-action="Index">Back to Categories</a></div>*@
 
-    <p><b>Latest Galleries</b></p>
+    <h6>Latest Galleries in @ViewData.Model.Name</h6>
 
-    <div class="row" data-bind="foreach: Galleries">
+    <div class="row mt-3" data-bind="foreach: Galleries">
         <div class="col-md-4">
             <div class="card mb-4 shadow-sm">
                 <a data-bind="attr: { href: GetGalleryUrl(CategoryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(ThumbnailStorageId, $element) }" class="img-fluid" /></a>
