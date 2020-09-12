@@ -1,4 +1,5 @@
-﻿@using LB.PhotoGalleries.Application.Models
+﻿@using LB.PhotoGalleries.Application
+@using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @model LB.PhotoGalleries.Application.Models.Category
 @{
@@ -9,6 +10,23 @@
 <div class="text-center">
     <h3 class="display-4">@ViewData.Model.Name</h3>
     <div class="text-format text-link">@ViewData.Model.Description</div>
+    
+    <div class="row mb-3 mt-3">
+        <div class="col">
+            @foreach (var category in Server.Instance.Categories.Categories)
+            {
+                if (category.Id == Model.Id)
+                {
+                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-secondary" role="button">@category.Name</a>
+                }
+                else
+                {
+                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-outline-primary" role="button">@category.Name</a>
+                }
+            }
+        </div>
+    </div>
+
     <hr />
 
     @*<div><a asp-action="Index">Back to Categories</a></div>*@
