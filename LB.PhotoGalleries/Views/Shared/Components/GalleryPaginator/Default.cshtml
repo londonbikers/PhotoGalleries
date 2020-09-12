@@ -1,7 +1,7 @@
 ﻿@using LB.PhotoGalleries.Application.Models;
 @model PagedResultSet<Gallery>
 @{
-    const int maxPagesToDisplayInNav = 3;
+    const int maxPagesToDisplayInNav = 4;
     var totalPages = Model.TotalPages;
     var numPagesToDisplayInNav = totalPages <= maxPagesToDisplayInNav ? totalPages : maxPagesToDisplayInNav;
     var pageNumbers = Model.GetNavigationPageNumbers(numPagesToDisplayInNav);
