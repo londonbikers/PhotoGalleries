@@ -14,6 +14,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using Directory = MetadataExtractor.Directory;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -146,6 +147,77 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
             Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
             return response.Resource;
+        }
+
+        /// <summary>
+        /// Returns a page of images with a specific tag
+        /// </summary>
+        /// <param name="tag">The tag used to find images for.</param>
+        /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
+        /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
+        /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
+        public async Task<PagedResultSet<Image>> GetImagesAsync(string tag, int page = 1, int pageSize = 20, int maxResults = 500)
+        {
+            if (string.IsNullOrEmpty(tag))
+                throw new ArgumentNullException(nameof(tag));
+
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
+
+            if (page < 1)
+                page = 1;
+
+            // limit page size to avoid incurring unnecessary charges and increasing latency
+            if (pageSize > 100)
+                pageSize = 100;
+
+            // limit how big the id query is to avoid unnecessary charges and to keep latency within an acceptable range
+            if (maxResults > 500)
+                maxResults = 500;
+
+            // get the complete list of ids
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE ARRAY_CONTAINS(i.Tags, @tag) ORDER BY i.Created DESC")
+                    .WithParameter("@maxResults", maxResults)
+                    .WithParameter("@tag", tag);
+            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
+            var ids = new List<DatabaseId>();
+            double charge = 0;
+
+            while (queryResult.HasMoreResults)
+            {
+                var results = await queryResult.ReadNextAsync();
+                ids.AddRange(results.Select(result => new DatabaseId { Id = result["id"].Value<string>(), PartitionKey = result["GalleryId"].Value<string>() }));
+                charge += results.RequestCharge;
+            }
+
+            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
+            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}");
+
+            // now with all the ids we know how many total results there are and so can populate paging info
+            var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
+
+            // don't let users try and request a page that doesn't exist
+            if (page > pagedResultSet.TotalPages)
+                page = pagedResultSet.TotalPages;
+
+            if (ids.Count > 0)
+            {
+                // now just retrieve a page's worth of images from the results
+                var offset = (page - 1) * pageSize;
+                var itemsToGet = ids.Count >= pageSize ? pageSize : ids.Count;
+
+                // if we're on the last page just get the remaining items
+                if (page == pagedResultSet.TotalPages)
+                    itemsToGet = pagedResultSet.TotalResults - offset;
+
+                var pageIds = ids.GetRange(offset, itemsToGet);
+
+                foreach (var id in pageIds)
+                    pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
+            }
+
+            return pagedResultSet;
         }
 
         /// <summary>
