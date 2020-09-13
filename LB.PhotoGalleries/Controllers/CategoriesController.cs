@@ -17,7 +17,7 @@ namespace LB.PhotoGalleries.Controllers
                 return RedirectToAction("Index", "Home");
 
             ViewData.Model = category;
-            ViewData["galleries"] = await Server.Instance.Galleries.GetGalleriesAsync(category, p, 4);
+            ViewData["galleries"] = await Server.Instance.Galleries.GetGalleriesAsync(category, p, 21);
             return View();
         }
     }
