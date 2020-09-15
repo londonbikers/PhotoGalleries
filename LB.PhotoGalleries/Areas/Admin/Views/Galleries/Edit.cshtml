@@ -13,7 +13,9 @@
 @section Styles {
     <link rel="stylesheet" href="~/lib/dropzone/dist/dropzone.css" />
     <link rel="stylesheet" href="~/lib/dropzone/dist/basic.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.css" />
 }
+
 
 <h1>Edit Gallery</h1>
 <div>
@@ -97,6 +99,20 @@
                 @Html.ActionLink((string)ViewData["username"], "Details", "Users", new { id = Model.CreatedByUserId })
             </dd>
 
+            <dt class="col-sm-10">
+                @Html.DisplayNameFor(model => model.Comments)
+            </dt>
+            <dd class="col-sm-10">
+                @Model.Comments.Count
+            </dd>
+
+            <dt class="col-sm-10">
+                Images
+            </dt>
+            <dd class="col-sm-10">
+                @images.Count
+            </dd>
+
             @if (Model.LegacyNumId > 0)
             {
                 <dt class="col-sm-10">
@@ -134,8 +150,26 @@
     </div>
 </div>
 
-<h2>Images</h2>
-<p>Count: @images.Count</p>
+<div class="row">
+    <div class="col">
+        <h2>Images</h2>
+
+        <form class="form-inline" data-bind="submit: UpdateAllImages">
+            <div class="form-group mb-2">
+                <input type="text" class="form-control form-control-sm" id="creditControl" placeholder="Add credit...">
+            </div>
+            <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
+                <input type="text" class="form-control form-control-sm" id="tagsControl" placeholder="Add tags...">
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
+        </form>
+        
+        <div id="bulk-update-banner" class="alert alert-success" role="alert" style="display: none">
+            All images have been updated!
+        </div>
+
+    </div>
+</div>
 
 <div class="row">
     <div class="col" data-bind="sortable: {foreach: Images, options: {onEnd: OnImageMoved}}"><div class="grid-square" data-bind="attr: {id: 'gi-'+Id}"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(StorageId)}" width="200" height="200" /></a></div></div>
@@ -149,12 +183,14 @@
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
     <script src="~/lib/sortable/dist/Sortable.min.js"></script>
     <script src="~/lib/knockout-sortable/dist/knockout-sortable.js"></script>
+    <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
 
     <script type="text/javascript">
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
+        var payload =
+            @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
         var galleryId = '@Model.Id';
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in
@@ -171,11 +207,13 @@
             var imageBeingMovedNewPosition = evt.newIndex;
 
             // send new position to api...
-            $.post(`/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
+            $.post(
+                    `/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${
+                    imageBeingMovedNewPosition}`)
                 .done(function() {
                     console.log("image ordering post-back done!");
                 })
-                .fail(function () {
+                .fail(function() {
                     // returning false on OnImageMoved() is meant to cancel the move, but it doesn't seem to work
                     console.log("oh no, something went wrong with ordering post-back!");
                     return false;
@@ -190,6 +228,34 @@
         function ViewModel() {
             // parse the images from a json blob
             this.Images = ko.observableArray(payload);
+
+            this.UpdateAllImages = function() {
+                var credit = $("#creditControl").val();
+                var tags = $("#tagsControl").val();
+
+                if (credit === '' && tags === '') {
+                    console.log("UpdateAllImages: no credit or tag supplied.");
+                    return;
+                }
+
+                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { credit: credit, tags: tags })
+                    .done(function() {
+                        // images updated
+                        // clear the form
+                        $("#creditControl").val('');
+                        $("#tagsControl").tagsinput('removeAll');
+
+                        // show a fading banner
+                        var banner = $("#bulk-update-banner");
+                        banner.show();
+                        setTimeout(function() {
+                            banner.fadeOut('slow');
+                        }, 5000);
+                    })
+                    .fail(function() {
+                        console.log("UpdateAllImages: something went wrong when updating all images...");
+                    });
+            }
         }
 
         // configure the uploader
@@ -198,18 +264,31 @@
             maxFilesize: 50,
             acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif",
             init: function() {
-                this.on("queuecomplete", function () {
-                    // the uploads are done, tell the server to update the gallery image count
-                    $.post('/api/galleries/update-image-count?categoryId=@Model.CategoryId&galleryId=@Model.Id');
+                this.on("addedfile",
+                    function() {
+                        // uploading has started, disable other controls on the page to avoid bad things happening
+                        $("#tagsControl").prop('disabled', true);
+                        $("#updateAllImagesBtn").prop('disabled', true);
+                        $("#creditControl").prop('disabled', true);
+                    });
+                this.on("queuecomplete",
+                    function() {
+                        // the uploads are done, tell the server to update the gallery image count
+                        $.post('/api/galleries/update-image-count?categoryId=@Model.CategoryId&galleryId=@Model.Id');
 
-                    // now refresh the page so we clear down the uploader and show the new images properly
-                    location.reload();
-                });
+                        // now refresh the page so we clear down the uploader and show the new images properly
+                        location.reload();
+                    });
             }
         };
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             ko.applyBindings(new ViewModel());
+
+            $("#tagsControl").tagsinput({
+                trimValue: true,
+                forceLowerCase: true
+            });
         });
     </script>
 }

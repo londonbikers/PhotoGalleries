@@ -27,6 +27,59 @@ namespace LB.PhotoGalleries.Controllers.Api
             await Server.Instance.Images.UpdateImagePositionAsync(galleryId, imageId, position);
         }
 
+        /// <summary>
+        /// Enable admins to bulk update credit and tags for all images in a gallery
+        /// </summary>
+        /// <param name="categoryId">The id for the category that the gallery resides in for these images.</param>
+        /// <param name="galleryId">The id of the gallery to update each image for.</param>
+        [HttpPost("/api/images/bulk-update")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> BulkUpdate(string categoryId, string galleryId)
+        {
+            if (string.IsNullOrEmpty(categoryId))
+                return BadRequest("categoryId value missing");
+
+            if (string.IsNullOrEmpty(galleryId))
+                return BadRequest("galleryId value missing");
+
+            // is the user authorised to edit these images?
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+                return Unauthorized("You are not authorised to update these images.");
+
+            var credit = Request.Form["credit"].FirstOrDefault();
+            var tagsCsv = Request.Form["tags"].FirstOrDefault();
+            if (string.IsNullOrEmpty(credit) && string.IsNullOrEmpty(tagsCsv))
+                return BadRequest("neither credit or tags supplied.");
+
+            string[] tags = null;
+            if (!string.IsNullOrEmpty(tagsCsv))
+            {
+                tags = tagsCsv.Split(',');
+                if (tags.Length == 0)
+                    return BadRequest("tags doesn't contain comma-separated values.");
+            }
+
+            // update all images
+            foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(galleryId))
+            {
+                if (!string.IsNullOrEmpty(credit))
+                    image.Credit = credit;
+
+                if (tags != null)
+                {
+                    // only add new tags, don't add duplicates
+                    foreach (var tag in tags)
+                        if (!image.Tags.Contains(tag))
+                            image.Tags.Add(tag);
+                }
+
+                await Server.Instance.Images.UpdateImageAsync(image);
+            }
+
+            return Ok();
+        }
+
         [Authorize]
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)
