@@ -34,7 +34,8 @@
     trimValue: false,
     allowDuplicates: false,
     triggerChange: true,
-    editOnBackspace: false
+      editOnBackspace: false,
+    forceLowerCase: false
   };
 
   /**
@@ -82,6 +83,11 @@
       // Trim value
       if (typeof item === "string" && self.options.trimValue) {
         item = $.trim(item);
+      }
+
+      // Lower case value
+      if (typeof item === "string" && self.options.forceLowerCase) {
+          item = item.toLowerCase();
       }
 
       // Throw an error when trying to add an object while the itemValue option was not set

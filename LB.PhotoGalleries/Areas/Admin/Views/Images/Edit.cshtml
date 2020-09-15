@@ -56,7 +56,7 @@
             </div>
             <div class="form-group">
                 <label for="tagsCsv" class="control-label">Tags</label>
-                <input type="text" name="tagsCsv" id="tagsCsv" data-role="tagsinput" value="@tags" />
+                <input type="text" name="tagsCsv" id="tagsCsv" value="@tags" />
                 <small class="form-text text-muted">Please enter comma separated values.</small>
             </div>
 
@@ -190,10 +190,16 @@
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(function () {
+        $(document).ready(function() {
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
             var scaledWidth = 550 * window.devicePixelRatio;
             $("#preview-image").attr('src', '/i/@Model.StorageId?w=' + scaledWidth);
+
+            $("#tagsCsv").tagsinput({
+                trimValue: true,
+                forceLowerCase: true
+            });
         });
+
     </script>
 }
