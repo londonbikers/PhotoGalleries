@@ -80,6 +80,36 @@ namespace LB.PhotoGalleries.Controllers.Api
             return Ok();
         }
 
+        /// <summary>
+        /// Let's a client tell the application that it's finished with a batch of image uploads.
+        /// This allows the application to update gallery image counts and set any outstanding position values on images.
+        /// </summary>
+        /// <param name="categoryId">The id for the category that the gallery resides in for the uploaded images.</param>
+        /// <param name="galleryId">The id of the gallery the images were uploaded for.</param>
+        [HttpPost("/api/images/upload-complete")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> UploadComplete(string categoryId, string galleryId)
+        {
+            if (string.IsNullOrEmpty(categoryId))
+                return BadRequest("categoryId value missing");
+
+            if (string.IsNullOrEmpty(galleryId))
+                return BadRequest("galleryId value missing");
+
+            // is the user authorised to perform this operation?
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+                return Unauthorized("You are not authorised to do mark that upload as complete.");
+
+            // update image count
+            await Server.Instance.Galleries.UpdateGalleryImageCount(categoryId, galleryId);
+
+            // order images if necessary
+            await Server.Instance.Images.UpdateImagePositionsAsync(galleryId);
+
+            return Ok();
+        }
+
         [Authorize]
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)

@@ -337,6 +337,31 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
+        /// Checks to see if any images in a gallery need a position setting, i.e. to accomodate new uploads and then sets the necessary positions.
+        /// </summary>
+        /// <param name="galleryId">The id of the gallery to check the positions on.</param>
+        public async Task UpdateImagePositionsAsync(string galleryId)
+        {
+            var images = await GetGalleryImagesAsync(galleryId);
+            if (images.Any(i => i.Position.HasValue))
+            {
+                // some images have been ordered, order the rest
+                var orderedImages = images.Where(i => i.Position.HasValue).OrderBy(i => i.Position.Value);
+                var unorderedImages = images.Where(i => i.Position.HasValue == false).OrderBy(i => i.Created);
+
+                // ReSharper disable once PossibleInvalidOperationException - cannot contain images without positions
+                var newPosition = orderedImages.Max(i => i.Position.Value) + 1;
+                foreach (var image in unorderedImages)
+                {
+                    image.Position = newPosition;
+                    newPosition += 1;
+
+                    await UpdateImageAsync(image);
+                }
+            }
+        }
+
+        /// <summary>
         /// Attempts to return the image previous to a given image in terms of the order they are shown in their gallery. May return null.
         /// </summary>
         public async Task<Image> GetPreviousImageInGalleryAsync(Image currentImage)

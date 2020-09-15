@@ -58,7 +58,8 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static IOrderedEnumerable<Image> OrderImages(List<Image> images)
         {
-            if (images.Any(i => i.Position.HasValue))
+            if (images.All(i => i.Position.HasValue))
+                // ReSharper disable once PossibleInvalidOperationException - already checked in query
                 return images.OrderBy(i => i.Position.Value);
 
             return images.OrderBy(i => i.Created);

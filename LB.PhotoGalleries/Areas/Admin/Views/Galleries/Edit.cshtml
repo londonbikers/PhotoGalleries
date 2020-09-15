@@ -273,8 +273,8 @@
                     });
                 this.on("queuecomplete",
                     function() {
-                        // the uploads are done, tell the server to update the gallery image count
-                        $.post('/api/galleries/update-image-count?categoryId=@Model.CategoryId&galleryId=@Model.Id');
+                        // the uploads are done, tell the server we're done so it can reconcile the additions
+                        $.post('/api/images/upload-complete?categoryId=@Model.CategoryId&galleryId=@Model.Id');
 
                         // now refresh the page so we clear down the uploader and show the new images properly
                         location.reload();
