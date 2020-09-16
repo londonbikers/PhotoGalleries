@@ -232,11 +232,18 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         public async Task DeleteImageAsync(Image image, bool performReordering = true)
         {
-            // delete the original image from storage (any other resized caches will auto-expire and be deleted)
+            // delete the original and low-res images from storage (any other resized caches will auto-expire and be deleted)
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var blobResponse = await blobContainerClient.DeleteBlobAsync(image.StorageId);
-            Debug.WriteLine($"ImageServer:DeleteImageAsync: Blob delete response: {blobResponse.Status} - {blobResponse.ReasonPhrase}");
+            var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var originalFileResponse = await originalContainerClient.DeleteBlobAsync(image.StorageId);
+            Debug.WriteLine($"ImageServer:DeleteImageAsync: original blob delete response: {originalFileResponse.Status} - {originalFileResponse.ReasonPhrase}");
+
+            if (!string.IsNullOrEmpty(image.LowResStorageId))
+            {
+                var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
+                var lowResFileResponse = await lowResContainerClient.DeleteBlobAsync(image.LowResStorageId);
+                Debug.WriteLine($"ImageServer:DeleteImageAsync: low-res blob delete response: {lowResFileResponse.Status} - {lowResFileResponse.ReasonPhrase}");
+            }
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
