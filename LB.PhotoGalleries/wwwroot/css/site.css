@@ -262,7 +262,7 @@ body {
     clear: both;
 }
 
-.image-fade img {
+img.image-fade, .image-fade img {
     opacity: 0.4;
 }
 
