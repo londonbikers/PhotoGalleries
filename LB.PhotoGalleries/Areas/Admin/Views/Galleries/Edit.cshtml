@@ -200,7 +200,7 @@
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(storageId) {
             var scaledSize = 200 * window.devicePixelRatio;
-            return `/i/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            return `/bi/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
         }
 
         function OnImageMoved(evt) {
