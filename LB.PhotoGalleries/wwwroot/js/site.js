@@ -22,5 +22,5 @@ function EncodeParamForUrl(parameter)
 }
 
 function NavigateToImage(galleryId, imageId, name) {
-    window.location.href = `/gi/${galleryId}/${imageId}/${EncodeParamForUrl(name)}`;
+    window.location.href = `/i/${galleryId}/${imageId}/${EncodeParamForUrl(name)}`;
 }

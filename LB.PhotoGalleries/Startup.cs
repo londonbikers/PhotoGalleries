@@ -183,7 +183,7 @@ namespace LB.PhotoGalleries
                     pattern: "g/{categoryId}/{galleryId}/{name}", new { controller = "Galleries", action = "Details" });
                 endpoints.MapControllerRoute(
                     name: "GalleryImage",
-                    pattern: "gi/{galleryId}/{imageId}/{name}", new { controller = "Images", action = "Details" });
+                    pattern: "i/{galleryId}/{imageId}/{name}", new { controller = "Images", action = "Details" });
                 endpoints.MapControllerRoute(
                     name: "ImageTag",
                     pattern: "t/{tag}", new { controller = "Tags", action = "Details" });
