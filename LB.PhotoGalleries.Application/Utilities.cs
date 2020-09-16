@@ -3,6 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -32,6 +33,19 @@ namespace LB.PhotoGalleries.Application
             Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Total request charge: {charge}");
 
             return ids;
+        }
+
+        /// <summary>
+        /// Does what it says on the tin. Converts a stream to a byte array.
+        /// </summary>
+        internal static byte[] ConvertStreamToBytes(Stream input)
+        {
+            if (input == null || input.Length == 0)
+                return null;
+
+            using var ms = new MemoryStream();
+            input.CopyTo(ms);
+            return ms.ToArray();
         }
     }
 

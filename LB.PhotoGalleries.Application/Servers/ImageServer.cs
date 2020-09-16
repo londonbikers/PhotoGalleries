@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Imageflow.Fluent;
 using LB.PhotoGalleries.Application.Models;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
@@ -7,6 +8,7 @@ using MetadataExtractor.Formats.Iptc;
 using MetadataExtractor.Formats.Jpeg;
 using MetadataExtractor.Formats.Png;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +16,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using Directory = MetadataExtractor.Directory;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -57,6 +58,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 {
                     Id = id,
                     StorageId = id + Path.GetExtension(filename).ToLower(),
+                    LowResStorageId = $"lr-{id}.jpg",
                     Name = Path.GetFileNameWithoutExtension(filename),
                     GalleryCategoryId = galleryCategoryId,
                     GalleryId = galleryId
@@ -67,11 +69,17 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
 
-                // upload the file to storage
+                // upload the original file to storage
                 var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-                var blobContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-                await blobContainerClient.UploadBlobAsync(image.StorageId, imageStream);
-                imageStream.Close();
+                var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+                await originalContainerClient.UploadBlobAsync(image.StorageId, imageStream);
+
+                // create the low res image an upload it to storage
+                await using (var lowResImage = await GenerateLowResImageAsync(imageStream))
+                {
+                    var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
+                    await lowResContainerClient.UploadBlobAsync(image.LowResStorageId, lowResImage);
+                }
 
                 // create the database record
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
@@ -87,11 +95,10 @@ namespace LB.PhotoGalleries.Application.Servers
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
             }
-            catch
+            finally
             {
                 // make sure we release valuable server resources in the event of a problem creating the image
                 imageStream?.Close();
-                throw;
             }
         }
 
@@ -446,7 +453,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             return users;
         }
-        
+
         /// <summary>
         /// Retrieves the ID of an image via a query you provide.
         /// </summary>
@@ -466,7 +473,41 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Query: {queryDefinition.QueryText}");
             Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}");
 
-            return (string) resultSet.Resource.FirstOrDefault();
+            return (string)resultSet.Resource.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Generates an 800 pixel (along longest dimension) sized version of the original image we can use for fast-loading.
+        /// </summary>
+        /// <param name="originalImageStream">The stream for the original image.</param>
+        /// <returns>A new image stream for the new low-res image.</returns>
+        private static async Task<Stream> GenerateLowResImageAsync(Stream originalImageStream)
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+
+            originalImageStream.Position = 0;
+            var bytes = new BytesSource(Utilities.ConvertStreamToBytes(originalImageStream));
+            using var job = new ImageJob();
+            var result = await job.Decode(bytes)
+                .ResizerCommands("w=800&h=800&mode=max")
+                .EncodeToBytes(new MozJpegEncoder(95, true))
+                .Finish()
+                .InProcessAsync();
+
+            var newImageBytes = result.First.TryGetBytes();
+            if (newImageBytes.HasValue)
+            {
+                var newStream = new MemoryStream(newImageBytes.Value.ToArray());
+
+                timer.Stop();
+                Debug.WriteLine("ImageServer.GenerateLowResImageAsync: Elapsed time: " + timer.Elapsed);
+                return newStream;
+            }
+
+            timer.Stop();
+            Debug.WriteLine("ImageServer.GenerateLowResImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
+            return null;
         }
         #endregion
 

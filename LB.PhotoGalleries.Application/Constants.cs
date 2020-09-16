@@ -21,5 +21,10 @@
         /// The name of the blob container in Azure Storage for where user-provided images are uploaded to.
         /// </summary>
         public static string StorageOriginalContainerName => "originals";
+
+        /// <summary>
+        /// The name of the blob container in Azure Storage for where the low-resolution images we generate are uploaded to.
+        /// </summary>
+        public static string StorageLowResContainerName => "lowres";
     }
 }

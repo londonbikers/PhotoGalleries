@@ -114,6 +114,20 @@ namespace LB.PhotoGalleries.Application
                     // something bad happened
                     throw;
             }
+
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(Constants.StorageLowResContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageLowResContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageLowResContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
         }
         #endregion
     }

@@ -20,6 +20,13 @@ namespace LB.PhotoGalleries.Application.Models
         [DisplayName("Storage Id")]
         public string StorageId { get; set; }
         /// <summary>
+        /// The unique identifier for the blob in Azure Blob storage for the low-resolution version of this image.
+        /// We use low-resolution versions for initial loading when we don't have a better candidate to avoid just loading in
+        /// the original which could be huge and would be slow to load, specially on gallery pages where many are shown.
+        /// </summary>
+        [DisplayName("Low Resolution Storage Id")]
+        public string LowResStorageId { get; set; }
+        /// <summary>
         /// The position of the image in the gallery.
         /// </summary>
         public int? Position { get; set; }
