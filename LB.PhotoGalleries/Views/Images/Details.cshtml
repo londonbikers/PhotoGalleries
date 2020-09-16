@@ -110,7 +110,7 @@
                         <b>Settings</b>
                         <br />
 
-                        <div class="text-uppercase">
+                        <div class="text-uppercase mt-2 mb-2">
 
                             @if (!string.IsNullOrEmpty(Model.Metadata.Aperture))
                             {
@@ -138,23 +138,24 @@
                 {
                     <div class="col">
                         <b>Camera</b>
-                        <br />
+                        <div class="mt-2">
 
-                        @if (!string.IsNullOrEmpty(cameraInfo))
-                        {
-                            @cameraInfo
-                        }
-
-                        @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
-                        {
-                            <br />
-                            @Model.Metadata.LensMake
-
-                            if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
+                            @if (!string.IsNullOrEmpty(cameraInfo))
                             {
-                                <text> @Model.Metadata.LensModel</text>
+                                @cameraInfo
                             }
-                        }
+
+                            @if (!string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel))
+                            {
+                                <br />
+                                @Model.Metadata.LensMake
+
+                                if (!string.IsNullOrEmpty(Model.Metadata.LensModel))
+                                {
+                                    <text> @Model.Metadata.LensModel</text>
+                                }
+                            }
+                        </div>
 
                     </div>
                 }
