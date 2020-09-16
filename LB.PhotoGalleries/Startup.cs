@@ -14,9 +14,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 
 namespace LB.PhotoGalleries
@@ -195,8 +197,13 @@ namespace LB.PhotoGalleries
         private void InitialiseImageFlowDiskCache()
         {
             var path = Configuration["ImageFlow:DiskCachePath"];
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            Debug.WriteLine("InitialiseImageFlowDiskCache: path: " + path);
+            if (Directory.Exists(path)) 
+                return;
+
+            Debug.WriteLine("InitialiseImageFlowDiskCache: creating new path");
+            Directory.CreateDirectory(path);
+            Debug.WriteLine("InitialiseImageFlowDiskCache: created new path");
         }
         #endregion
     }
