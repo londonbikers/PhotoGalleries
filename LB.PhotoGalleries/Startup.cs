@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 
 namespace LB.PhotoGalleries
