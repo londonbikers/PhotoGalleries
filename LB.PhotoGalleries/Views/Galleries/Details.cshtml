@@ -113,7 +113,7 @@
         function GetThumbnailUrl(storageId) {
             var scaledWidth = @thumbnailSize * window.devicePixelRatio;
             var scaledHeight = @thumbnailSize * window.devicePixelRatio;
-            return `/i/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            return `/bi/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
         }
 
         function GetImageUrl(galleryId, imageId, name) {

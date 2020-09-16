@@ -299,7 +299,7 @@
 
         function GetImageUrl(image, imageContainerWidth, imageContainerHeight) {
             var dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
-            return `/i/${image.StorageId}?w=${dims.width}&h=${dims.height}`;
+            return `/bi/${image.StorageId}?w=${dims.width}&h=${dims.height}`;
         }
 
         function GetImageDimensions(image, imageContainerWidth, imageContainerHeight) {

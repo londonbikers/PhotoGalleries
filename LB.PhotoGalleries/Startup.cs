@@ -91,9 +91,11 @@ namespace LB.PhotoGalleries
             Server.Instance.SetConfigurationAsync(Configuration).Wait();
 
             // add ImageFlow service for image resizing and serving
-            // make the originals container available on /i
-            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], new BlobClientOptions())
-                    .MapPrefix("/i/", Constants.StorageOriginalContainerName));
+            // make the originals container available on /bi (big image)
+            // make the low-res container available on /si (small image)
+            var options = new BlobClientOptions();
+            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], options).MapPrefix("/bi/", Constants.StorageOriginalContainerName));
+            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], options).MapPrefix("/si/", Constants.StorageLowResContainerName));
 
             // store processed image files to local storage to use as a cache
             // for development just create a local folder and reference that in configuration.
@@ -129,7 +131,7 @@ namespace LB.PhotoGalleries
                 .SetAllowDiskCaching(true)
                 .AddCommandDefault("down.filter", "mitchell")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
-                .AddWatermarkingHandler("/i", args => {
+                .AddWatermarkingHandler("/bi", args => {
                     var modeSpecified = args.Query.ContainsKey("mode");
                     var size = new Size();
                     if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
