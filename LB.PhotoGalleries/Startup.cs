@@ -132,7 +132,8 @@ namespace LB.PhotoGalleries
                 .AddCommandDefault("down.filter", "mitchell")
                 .AddCommandDefault("jpeg.progressive", "false")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
-                .AddWatermarkingHandler("/bi", args => {
+                .AddWatermarkingHandler("/bi", args =>
+                {
                     var modeSpecified = args.Query.ContainsKey("mode");
                     var size = new Size();
                     if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
@@ -147,7 +148,7 @@ namespace LB.PhotoGalleries
                     var imageSizeRequiresWatermark = size.Width < 1 || size.Height < 1 || (size.Width > 1000 || size.Height > 1000);
                     var referer = args.Context.Request.GetTypedHeaders().Referer;
                     var isLocalReferer = referer != null && referer.Host.Equals(args.Context.Request.Host.Host, StringComparison.CurrentCultureIgnoreCase);
-                    if (modeSpecified && isLocalReferer && !imageSizeRequiresWatermark) 
+                    if (modeSpecified && isLocalReferer && !imageSizeRequiresWatermark)
                         return;
 
                     // the watermark needs to be a bit bigger when displayed on portrait format images
@@ -155,7 +156,6 @@ namespace LB.PhotoGalleries
                     args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
                         new WatermarkOptions()
                             .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
-                            .SetOpacity(1f)
                             .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
                 }));
 
@@ -199,7 +199,7 @@ namespace LB.PhotoGalleries
         {
             var path = Configuration["ImageFlow:DiskCachePath"];
             Debug.WriteLine("InitialiseImageFlowDiskCache: path: " + path);
-            if (Directory.Exists(path)) 
+            if (Directory.Exists(path))
                 return;
 
             Debug.WriteLine("InitialiseImageFlowDiskCache: creating new path");
