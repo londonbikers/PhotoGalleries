@@ -562,6 +562,10 @@ namespace LB.PhotoGalleries.Application.Servers
                 .ResizerCommands("w=800&h=800&mode=max")
                 .EncodeToBytes(new MozJpegEncoder(50, true))
                 .Finish()
+                .SetSecurityOptions(new SecurityOptions()
+                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
                 .InProcessAsync();
 
             var newImageBytes = result.First.TryGetBytes();
