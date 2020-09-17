@@ -130,6 +130,7 @@ namespace LB.PhotoGalleries
                     .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
                 .SetAllowDiskCaching(true)
                 .AddCommandDefault("down.filter", "mitchell")
+                .AddCommandDefault("jpeg.progressive", "false")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddWatermarkingHandler("/bi", args => {
                     var modeSpecified = args.Query.ContainsKey("mode");

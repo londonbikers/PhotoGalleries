@@ -22,11 +22,10 @@
 
     <div id="photo-wrapper" data-bind="style: { 'background': GetBackgroundImage(Image) }">
         <div id="photo-wrapper-loader">
-            <img class="img-fluid" data-bind="
+            <img id="image" class="img-fluid" data-bind="
             class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight),
             attr: {
                 title: Image.Name,
-                src: GetImageUrl(Image, ImageContainerWidth, ImageContainerHeight),
                 width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width,
                 height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
             <div id="photo-overlay" class="photo-overlay-full-frame">
@@ -379,6 +378,17 @@
             return null;
         }
 
+        function LoadImage(image, imageContainerWidth, imageContainerHeight) {
+            var imgPlaceholder = new Image();
+            var imgTag =  document.getElementById("image");
+
+            imgPlaceholder.onload = function() {
+                imgTag.src = img.src;
+            };
+
+            imgTag.src = GetImageUrl(image, imageContainerWidth, imageContainerHeight);
+        }
+
         // the view model that KnockoutJS uses to bind data and events to the html
         function ViewModel() {
 
@@ -406,6 +416,10 @@
 
             this.ImageContainerHeight = usableHeight;
             //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
+
+            // mixing a data-bind on the img with this isn't conventional but not sure how to combine this all into data-binding.
+            // should probably flip it and set the img up entirely from here and eschew conventional data-binding approach.
+            LoadImage(this.Image, this.ImageContainerWidth, this.ImageContainerHeight);
 
             this.CreateComment = function ()
             {
