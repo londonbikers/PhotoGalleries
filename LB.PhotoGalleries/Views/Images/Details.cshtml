@@ -20,39 +20,47 @@
 
 <div class="container-max text-center">
 
-    <div id="photo-wrapper">
-        <img class="img-fluid" data-bind="class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight), attr: { title: Image.Name, src: GetImageUrl(Image, ImageContainerWidth, ImageContainerHeight), width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width, height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
-        <div id="photo-overlay" class="photo-overlay-full-frame">
-            <div class="row photo-overlay-full-frame">
-                <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">
-                    @if (previousImage != null)
-                    {
-                        <div id="photo-left-nav-box">
-                            <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-left-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.5 8.5a.5.5 0 0 0 0-1H5.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L5.707 8.5H11.5z" />
-                            </svg>
-                        </div>
-                    }
-                </div>
-                <div class="col-8" id="photo-overlay-middle">
-                    <div id="photo-middle-box">
-                        <div id="photo-middle-box-inner">
-                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-double-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                                <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
-                            </svg>
+    <div id="photo-wrapper" data-bind="style: { 'background': GetBackgroundImage(Image) }">
+        <div id="photo-wrapper-loader">
+            <img class="img-fluid" data-bind="
+            class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight),
+            attr: {
+                title: Image.Name,
+                src: GetImageUrl(Image, ImageContainerWidth, ImageContainerHeight),
+                width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width,
+                height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
+            <div id="photo-overlay" class="photo-overlay-full-frame">
+                <div class="row photo-overlay-full-frame">
+                    <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">
+                        @if (previousImage != null)
+                        {
+                            <div id="photo-left-nav-box">
+                                <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-left-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.5 8.5a.5.5 0 0 0 0-1H5.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L5.707 8.5H11.5z" />
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-8" id="photo-overlay-middle">
+                        <div id="photo-middle-box">
+                            <div id="photo-middle-box-inner">
+                                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-double-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                                    <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div @Html.Raw(photoRightColClass) id="photo-overlay-right">
-                    @if (nextImage != null)
-                    {
-                        <div id="photo-right-nav-box">
-                            <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-right-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm2.5 8.5a.5.5 0 0 1 0-1h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5z" />
-                            </svg>
-                        </div>
-                    }
+                    <div @Html.Raw(photoRightColClass) id="photo-overlay-right">
+                        @if (nextImage != null)
+                        {
+                            <div id="photo-right-nav-box">
+                                <svg width="32" height="32" viewBox="0 0 16 16" class="bi bi-arrow-right-square-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm2.5 8.5a.5.5 0 0 1 0-1h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5z" />
+                                </svg>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -364,11 +372,25 @@
             return "rounded";
         }
 
+        function GetBackgroundImage(image) {
+            if (image.LowResStorageId !== '') {
+                return `url(/si/${image.LowResStorageId})`;
+            }
+            return null;
+        }
+
         // the view model that KnockoutJS uses to bind data and events to the html
         function ViewModel() {
 
             // parse the image from a json blob
-            this.Image = @Html.Raw(JsonConvert.SerializeObject(new {ViewData.Model.StorageId, ViewData.Model.Metadata.Width, ViewData.Model.Metadata.Height, ViewData.Model.Name}));
+            this.Image = @Html.Raw(JsonConvert.SerializeObject(new
+                         {
+                             Model.StorageId, 
+                             Model.LowResStorageId,
+                             Model.Metadata.Width, 
+                             Model.Metadata.Height, 
+                             Model.Name
+                         }));
 
             this.ImageContainerWidth = $(".container-max").innerWidth();
             //console.log("this.ImageContainerWidth: " + this.ImageContainerWidth);
@@ -421,6 +443,8 @@
         // jQuery stuff we need to wire up as soon as the dom is ready to be used
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
+
+
 
             // enable navigation to other images using photo overlay
             @if (previousImage != null)
