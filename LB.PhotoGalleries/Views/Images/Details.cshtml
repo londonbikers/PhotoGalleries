@@ -20,14 +20,14 @@
 
 <div class="container-max text-center">
 
-    <div id="photo-wrapper" data-bind="style: { 'background': GetBackgroundImage(Image) }">
+    <div id="photo-wrapper" data-bind="style: { 'background': GetBackgroundImage(Image) }, class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight)">
         <div id="photo-wrapper-loader">
             <img id="image" class="img-fluid" data-bind="
-            class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight),
-            attr: {
-                title: Image.Name,
-                width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width,
-                height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
+                class: GetImageClass(Image, ImageContainerWidth, ImageContainerHeight),
+                attr: {
+                    title: Image.Name,
+                    width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width,
+                    height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
             <div id="photo-overlay" class="photo-overlay-full-frame">
                 <div class="row photo-overlay-full-frame">
                     <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">

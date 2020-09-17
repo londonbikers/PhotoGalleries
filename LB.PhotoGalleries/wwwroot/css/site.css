@@ -172,7 +172,6 @@ body {
     width: fit-content;
     text-align: center;
     display: inline-block;
-    border-radius: 5px;
     background-repeat: no-repeat !important;
     background-size: 100% !important;
 }
