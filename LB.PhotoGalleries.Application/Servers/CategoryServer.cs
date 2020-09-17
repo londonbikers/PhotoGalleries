@@ -4,7 +4,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -48,7 +47,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 category.PartitionKey = Constants.CategoriesPartitionKeyValue;
 
             if (string.IsNullOrEmpty(category.Id))
-                category.Id = Guid.NewGuid().ToString();
+                category.Id = Utilities.GenerateId();
 
             if (!category.IsValid())
                 throw new InvalidOperationException("Category is not valid. Check that all required properties are set");

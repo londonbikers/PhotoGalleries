@@ -53,7 +53,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 // note: we don't set a position as there's no easy way to do this at this point. instead
                 // we let the clients order by created date initially and then when/if a photographer orders the photos
                 // then the position attribute is used to order images.
-                var id = Guid.NewGuid().ToString();
+                var id = Utilities.GenerateId();
                 var image = new Image
                 {
                     Id = id,

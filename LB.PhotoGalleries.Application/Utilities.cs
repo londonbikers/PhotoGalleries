@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Application.Models;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -46,6 +47,14 @@ namespace LB.PhotoGalleries.Application
             using var ms = new MemoryStream();
             input.CopyTo(ms);
             return ms.ToArray();
+        }
+
+        /// <summary>
+        /// Generates a new unique identifier for use on objects.
+        /// </summary>
+        internal static string GenerateId()
+        {
+            return Guid.NewGuid().ToString().Replace("-", string.Empty);
         }
     }
 

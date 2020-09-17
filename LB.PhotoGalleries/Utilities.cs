@@ -22,7 +22,7 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static string CreateNewId()
         {
-            return Guid.NewGuid().ToString();
+            return Guid.NewGuid().ToString().Replace("-", string.Empty);
         }
 
         /// <summary>
