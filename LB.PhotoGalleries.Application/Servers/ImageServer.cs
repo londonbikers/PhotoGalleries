@@ -412,6 +412,66 @@ namespace LB.PhotoGalleries.Application.Servers
         }
         #endregion
 
+        #region admin methods
+        /// <summary>
+        /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
+        /// </summary>
+        /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
+        /// <param name="imagePropertyName">The name of the property on an Image object that represents the image to generate, i.e. LowResStorageId</param>
+        /// <returns>A set of responses for each image generated.</returns>
+        public async Task<List<string>> GenerateMissingImagesAsync(string galleryId, string imagePropertyName)
+        {
+            if (string.IsNullOrEmpty(galleryId))
+                throw new ArgumentException("galleryId is invalid", nameof(galleryId));
+
+            if (string.IsNullOrEmpty(imagePropertyName))
+                throw new ArgumentException("imagePropertyName is invalid", nameof(imagePropertyName));
+
+            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+            var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
+
+            var responses = new List<string>();
+            var images = await GetGalleryImagesAsync(galleryId);
+            if (imagePropertyName == "LowResStorageId")
+            {
+                var imagesToGenerateFor = images.Where(i => string.IsNullOrEmpty(i.LowResStorageId));
+                foreach (var image in imagesToGenerateFor)
+                {
+                    // download image
+                    var downloadTimer = new Stopwatch();
+                    downloadTimer.Start();
+                    var blobClient = originalContainerClient.GetBlobClient(image.StorageId);
+                    var blob = await blobClient.DownloadAsync();
+                    downloadTimer.Stop();
+                    var uploadTimer = new Stopwatch();
+
+                    await using (var ms = new MemoryStream())
+                    {
+                        // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with
+                        await using var originalImageStream = blob.Value.Content;
+                        blob.Value.Content.CopyTo(ms);
+
+                        // generate new image
+                        await using var newImage = await GenerateLowResImageAsync(ms);
+
+                        // upload new image
+                        image.LowResStorageId = $"lr-{image.Id}.jpg";
+                        uploadTimer.Start();
+                        await lowResContainerClient.UploadBlobAsync(image.LowResStorageId, newImage);
+                        uploadTimer.Stop();
+                    }
+
+                    // update image with new image info
+                    await UpdateImageAsync(image);
+                    responses.Add($"Created low-res image: {image.LowResStorageId}. Download: {downloadTimer.Elapsed}, upload: {uploadTimer.Elapsed}");
+                }
+            }
+
+            return responses;
+        }
+        #endregion
+
         #region internal methods
         internal async Task<List<Image>> GetImagesUserHasCommentedOnAsync(string userId)
         {
@@ -493,7 +553,9 @@ namespace LB.PhotoGalleries.Application.Servers
             var timer = new Stopwatch();
             timer.Start();
 
-            originalImageStream.Position = 0;
+            if (originalImageStream.CanSeek)
+                originalImageStream.Position = 0;
+
             var bytes = new BytesSource(Utilities.ConvertStreamToBytes(originalImageStream));
             using var job = new ImageJob();
             var result = await job.Decode(bytes)

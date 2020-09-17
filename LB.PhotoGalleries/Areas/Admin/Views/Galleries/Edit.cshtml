@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.css" />
 }
 
-
 <h1>Edit Gallery</h1>
 <div>
     <a asp-action="Index">Back to List</a>
@@ -135,6 +134,11 @@
 
         </dl>
 
+        @if (User.IsInRole(Roles.Administrator.ToString()) && images.Any(i => string.IsNullOrEmpty(i.LowResStorageId)))
+        {
+            <button data-bind="click: function() { GenerateMissingImageFiles('LowResStorageId'); }" class="btn btn-secondary btn-sm">Generate low-res images</button>
+        }
+
     </div>
 </div>
 
@@ -192,7 +196,8 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
+        var payload =
+            @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
         var galleryId = '@Model.Id';
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in
@@ -209,7 +214,9 @@
             var imageBeingMovedNewPosition = evt.newIndex;
 
             // send new position to api...
-            $.post(`/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
+            $.post(
+                    `/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${
+                    imageBeingMovedNewPosition}`)
                 .done(function() {
                     console.log("image ordering post-back done!");
                 })
@@ -238,7 +245,8 @@
                     return;
                 }
 
-                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { credit: credit, tags: tags })
+                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id',
+                        { credit: credit, tags: tags })
                     .done(function() {
                         // images updated
                         // clear the form
@@ -249,11 +257,24 @@
                         var banner = $("#bulk-update-banner");
                         banner.show();
                         setTimeout(function() {
-                            banner.fadeOut('slow');
-                        }, 5000);
+                                banner.fadeOut('slow');
+                            },
+                            5000);
                     })
                     .fail(function() {
                         console.log("UpdateAllImages: something went wrong when updating all images...");
+                    });
+            }
+
+            this.GenerateMissingImageFiles = function(propertyName) {
+                console.log(`GenerateMissingImageFiles('${propertyName}')`);
+                $.post(`/api/images/generate-missing-image-files?galleryId=@Model.Id&imagePropertyName=${propertyName}`)
+                    .done(function (responses) {
+                        console.log("GenerateMissingImageFiles(): done");
+                        console.log(responses);
+                    })
+                    .fail(function() {
+                        console.log("GenerateMissingImageFiles(): something went wrong");
                     });
             }
         }

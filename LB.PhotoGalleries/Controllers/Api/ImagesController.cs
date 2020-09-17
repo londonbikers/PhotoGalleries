@@ -110,6 +110,26 @@ namespace LB.PhotoGalleries.Controllers.Api
             return Ok();
         }
 
+        /// <summary>
+        /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
+        /// </summary>
+        /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
+        /// <param name="imagePropertyName">The name of the property on an Image object that represents the image to generate, i.e. LowResStorageId</param>
+        /// <returns>A set of responses for each image generated.</returns>
+        [HttpPost("/api/images/generate-missing-image-files")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> GenerateMissingImageFiles(string galleryId, string imagePropertyName)
+        {
+            if (string.IsNullOrEmpty(galleryId))
+                return BadRequest("galleryId value missing");
+
+            if (string.IsNullOrEmpty(imagePropertyName))
+                return BadRequest("imagePropertyName value missing");
+
+            var responses = await Server.Instance.Images.GenerateMissingImagesAsync(galleryId, imagePropertyName);
+            return Ok(responses);
+        }
+
         [Authorize]
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)
