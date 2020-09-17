@@ -484,7 +484,7 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
-        /// Generates an 800 pixel (along longest dimension) sized version of the original image we can use for fast-loading.
+        /// Generates an 800 pixel, low quality version of the original image we can use as a preview image ahead of rendering a main image.
         /// </summary>
         /// <param name="originalImageStream">The stream for the original image.</param>
         /// <returns>A new image stream for the new low-res image.</returns>
@@ -498,7 +498,7 @@ namespace LB.PhotoGalleries.Application.Servers
             using var job = new ImageJob();
             var result = await job.Decode(bytes)
                 .ResizerCommands("w=800&h=800&mode=max")
-                .EncodeToBytes(new MozJpegEncoder(95, true))
+                .EncodeToBytes(new MozJpegEncoder(50, true))
                 .Finish()
                 .InProcessAsync();
 
