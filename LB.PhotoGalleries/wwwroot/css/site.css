@@ -99,6 +99,10 @@ body {
     margin-bottom: 5px;
 }
 
+.container {
+    max-width: 1200px;
+}
+
 .container-max {
     width: 100%;
     padding-right: 0;
