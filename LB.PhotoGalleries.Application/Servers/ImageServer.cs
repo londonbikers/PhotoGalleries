@@ -265,7 +265,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     .WithParameter("@galleryId", galleryId)
                     .WithParameter("@position", position.Value);
 
-                var ids = await Server.Instance.Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+                var ids = await Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
                 Image newThumbnailImage = null;
 
                 for (var index = 0; index < ids.Count; index++)
