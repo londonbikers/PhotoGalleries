@@ -82,8 +82,8 @@ body {
 }
 
 .grid-square {
-    width: 202px;
-    height: 202px;
+    width: 282px;
+    height: 282px;
     display: inline-block;
     border: 1px solid #ccc;
     margin-right: 5px;
