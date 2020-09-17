@@ -378,6 +378,8 @@
             return null;
         }
 
+        // pre-loads the main image and only assigns it to the img tag when fully loaded.
+        // this allows us to show the preview image and loader right up until the main image is ready to be shown.
         function LoadImage(image, imageContainerWidth, imageContainerHeight) {
             var imgPlaceholder = new Image();
             var imgTag =  document.getElementById("image");
@@ -457,8 +459,6 @@
         // jQuery stuff we need to wire up as soon as the dom is ready to be used
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
-
-
 
             // enable navigation to other images using photo overlay
             @if (previousImage != null)
