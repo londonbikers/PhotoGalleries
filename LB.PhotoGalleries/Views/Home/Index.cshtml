@@ -73,10 +73,11 @@
             var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
             var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
             //var url = `/di800/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            var url = `/di800/${storageId}`;
 
-            storageId = storageId.replace('.webp', '.jpg');
-
-            var url = `/dio/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            //storageId = storageId.replace('.webp', '.jpg');
+            //var url = `/dio/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            
             return url;
         }
 
