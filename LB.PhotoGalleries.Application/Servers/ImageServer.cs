@@ -459,8 +459,8 @@ namespace LB.PhotoGalleries.Application.Servers
                     }
 
                     // execute the image generation tasks in parallel to make the most of server compute/networking resources
-                    //var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-                    var specs = new List<FileSpec> { FileSpec.Spec800 };
+                    var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
+                    //var specs = new List<FileSpec> { FileSpec.Spec3840 };
                     var imageUpdateNeeded = false;
                     Parallel.ForEach(specs, spec => {
                         var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();

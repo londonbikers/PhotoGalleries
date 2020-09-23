@@ -205,10 +205,10 @@ namespace LB.PhotoGalleries.Application
             FileSpecs = new List<ImageFileSpec>
             {
                 new ImageFileSpec(FileSpec.SpecOriginal, 0, 0, "originals"),
-                new ImageFileSpec(FileSpec.Spec3840, 3840, 95, FileSpec.Spec3840.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec2560, 2560, 95, FileSpec.Spec2560.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec1920, 1920, 95, FileSpec.Spec1920.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec800, 800, 95, FileSpec.Spec800.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec3840, 3840, 90, FileSpec.Spec3840.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec2560, 2560, 90, FileSpec.Spec2560.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec1920, 1920, 90, FileSpec.Spec1920.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec800, 800, 90, FileSpec.Spec800.ToString().ToLower()),
                 new ImageFileSpec(FileSpec.SpecLowRes, 400, 50, "lowres")
             };
         }
