@@ -1,6 +1,6 @@
 ﻿namespace LB.PhotoGalleries.Application
 {
-    public class Constants
+    internal class Constants
     {
         internal static string UsersContainerName => "Users";
         internal static string GalleriesContainerName => "Galleries";
@@ -20,11 +20,19 @@
         /// <summary>
         /// The name of the blob container in Azure Storage for where user-provided images are uploaded to.
         /// </summary>
-        public static string StorageOriginalContainerName => "originals";
+        internal static string StorageOriginalContainerName => "originals";
+    }
 
-        /// <summary>
-        /// The name of the blob container in Azure Storage for where the low-resolution images we generate are uploaded to.
-        /// </summary>
-        public static string StorageLowResContainerName => "lowres";
+    /// <summary>
+    /// Names of file specs we use to pre-generate images for.
+    /// </summary>
+    public enum FileSpec
+    {
+        SpecOriginal,
+        Spec3840,
+        Spec2560,
+        Spec1920,
+        Spec800,
+        SpecLowRes
     }
 }

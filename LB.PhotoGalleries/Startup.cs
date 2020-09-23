@@ -90,18 +90,19 @@ namespace LB.PhotoGalleries
             // configure the application tier
             Server.Instance.SetConfigurationAsync(Configuration).Wait();
 
-            // add ImageFlow service for image resizing and serving
-            // make the originals container available on /bi (big image)
-            // make the low-res container available on /si (small image)
-            var options = new BlobClientOptions();
-            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], options).MapPrefix("/bi/", Constants.StorageOriginalContainerName));
-            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], options).MapPrefix("/si/", Constants.StorageLowResContainerName));
+            // add ImageFlow services for dynamic image generation
+            AddImageFlowBlobService(services, FileSpec.SpecOriginal, "/dio/");
+            AddImageFlowBlobService(services, FileSpec.Spec3840, "/di3840/");
+            AddImageFlowBlobService(services, FileSpec.Spec2560, "/di2560/");
+            AddImageFlowBlobService(services, FileSpec.Spec1920, "/di1920/");
+            AddImageFlowBlobService(services, FileSpec.Spec800, "/di800/");
+            AddImageFlowBlobService(services, FileSpec.SpecLowRes, "/dilr/");
 
             // store processed image files to local storage to use as a cache
             // for development just create a local folder and reference that in configuration.
             // for production we intend on using local Azure App Service storage (d:\local). This is ephemeral but free!
-            InitialiseImageFlowDiskCache();
-            services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
+            ///InitialiseImageFlowDiskCache();
+            //services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -129,10 +130,10 @@ namespace LB.PhotoGalleries
                     .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
                     .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
                 .SetAllowDiskCaching(true)
-                .AddCommandDefault("down.filter", "mitchell")
-                .AddCommandDefault("jpeg.progressive", "false")
+                //.AddCommandDefault("down.filter", "mitchell")
+                //.AddCommandDefault("jpeg.progressive", "false")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
-                .AddWatermarkingHandler("/bi", args =>
+                .AddWatermarkingHandler("/dio/", args =>
                 {
                     var modeSpecified = args.Query.ContainsKey("mode");
                     var size = new Size();
@@ -164,7 +165,7 @@ namespace LB.PhotoGalleries
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
+            app.UseEndpoints(endpoints => 
             {
                 endpoints.MapAreaControllerRoute(
                     name: "AdminGalleryImages",
@@ -205,6 +206,13 @@ namespace LB.PhotoGalleries
             Debug.WriteLine("InitialiseImageFlowDiskCache: creating new path");
             Directory.CreateDirectory(path);
             Debug.WriteLine("InitialiseImageFlowDiskCache: created new path");
+        }
+
+        private void AddImageFlowBlobService(IServiceCollection services, FileSpec filsSpec, string path)
+        {
+            var imageFlowSpec = Server.Instance.GetImageFileSpec(filsSpec);
+            services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], new BlobClientOptions())
+                .MapPrefix(path, imageFlowSpec.ContainerName));
         }
         #endregion
     }

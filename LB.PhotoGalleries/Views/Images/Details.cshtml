@@ -302,7 +302,7 @@
 
         function GetImageUrl(image, imageContainerWidth, imageContainerHeight) {
             var dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
-            return `/bi/${image.StorageId}?w=${dims.width}&h=${dims.height}`;
+            return `/dio/${image.StorageId}?w=${dims.width}&h=${dims.height}`;
         }
 
         function GetImageDimensions(image, imageContainerWidth, imageContainerHeight) {
@@ -373,7 +373,7 @@
 
         function GetBackgroundImage(image) {
             if (image.LowResStorageId !== null) {
-                return `url(/si/${image.LowResStorageId})`;
+                return `url(/dilr/${image.Files.SpecLowResId})`;
             }
             return null;
         }
@@ -397,8 +397,7 @@
             // parse the image from a json blob
             this.Image = @Html.Raw(JsonConvert.SerializeObject(new
                          {
-                             Model.StorageId, 
-                             Model.LowResStorageId,
+                             Model.Files, 
                              Model.Metadata.Width, 
                              Model.Metadata.Height, 
                              Model.Name

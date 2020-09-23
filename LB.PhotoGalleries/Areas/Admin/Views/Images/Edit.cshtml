@@ -200,7 +200,7 @@
         $(document).ready(function() {
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
             var scaledWidth = 550 * window.devicePixelRatio;
-            $("#preview-image").attr('src', '/bi/@Model.StorageId?w=' + scaledWidth);
+            $("#preview-image").attr('src', '/dio/@Model.StorageId?w=' + scaledWidth);
 
             $("#tagsCsv").tagsinput({
                 trimValue: true,

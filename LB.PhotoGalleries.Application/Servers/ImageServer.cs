@@ -5,8 +5,7 @@ using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
 using MetadataExtractor.Formats.Iptc;
-using MetadataExtractor.Formats.Jpeg;
-using MetadataExtractor.Formats.Png;
+using Meziantou.Framework;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Directory = MetadataExtractor.Directory;
+using Image = LB.PhotoGalleries.Application.Models.Image;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -50,15 +50,13 @@ namespace LB.PhotoGalleries.Application.Servers
                     throw new ArgumentNullException(nameof(filename));
 
                 // create the Image object
-                // note: we don't set a position as there's no easy way to do this at this point. instead
+                // note: we don't set a position as there's no efficient way to do this at this point. instead
                 // we let the clients order by created date initially and then when/if a photographer orders the photos
                 // then the position attribute is used to order images.
                 var id = Utilities.GenerateId();
                 var image = new Image
                 {
                     Id = id,
-                    StorageId = id + Path.GetExtension(filename).ToLower(),
-                    LowResStorageId = $"lr-{id}.jpg",
                     Name = Path.GetFileNameWithoutExtension(filename),
                     GalleryCategoryId = galleryCategoryId,
                     GalleryId = galleryId
@@ -72,14 +70,11 @@ namespace LB.PhotoGalleries.Application.Servers
                 // upload the original file to storage
                 var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
                 var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-                await originalContainerClient.UploadBlobAsync(image.StorageId, imageStream);
+                await originalContainerClient.UploadBlobAsync(image.Files.OriginalId, imageStream);
 
-                // create the low res image an upload it to storage
-                await using (var lowResImage = await GenerateLowResImageAsync(imageStream))
-                {
-                    var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
-                    await lowResContainerClient.UploadBlobAsync(image.LowResStorageId, lowResImage);
-                }
+                // create the small image we use for thumbnails at this point as we'll need it straight away (the rest can be created asynchronously)
+                var imageBytes = Utilities.ConvertStreamToBytes(imageStream);
+                await GenerateAndStoreImageFileAsync(image, FileSpec.Spec800, imageBytes, blobServiceClient);
 
                 // create the database record
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
@@ -90,10 +85,13 @@ namespace LB.PhotoGalleries.Application.Servers
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCategoryId, galleryId);
                 if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
                 {
-                    gallery.ThumbnailStorageId = image.StorageId;
+                    gallery.ThumbnailStorageId = image.Files.Spec800Id;
                     Debug.WriteLine("ImageServer.CreateImageAsync: First image, setting gallery thumbnail");
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
+
+                // have the remaining image files generaged asyncronously so we can return asap
+                Task.Run(() => GenerateRemainingFilesAndUpdateImageAsync(image, imageStream, blobServiceClient)).Forget();
             }
             finally
             {
@@ -232,18 +230,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         public async Task DeleteImageAsync(Image image, bool performReordering = true)
         {
-            // delete the original and low-res images from storage (any other resized caches will auto-expire and be deleted)
+            // delete all image files
+            // todo: optimise this by running in parallel
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var originalFileResponse = await originalContainerClient.DeleteBlobAsync(image.StorageId);
-            Debug.WriteLine($"ImageServer:DeleteImageAsync: original blob delete response: {originalFileResponse.Status} - {originalFileResponse.ReasonPhrase}");
-
-            if (!string.IsNullOrEmpty(image.LowResStorageId))
-            {
-                var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
-                var lowResFileResponse = await lowResContainerClient.DeleteBlobAsync(image.LowResStorageId);
-                Debug.WriteLine($"ImageServer:DeleteImageAsync: low-res blob delete response: {lowResFileResponse.Status} - {lowResFileResponse.ReasonPhrase}");
-            }
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
+            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
@@ -291,7 +286,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 {
                     Debug.WriteLine("ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
                     var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-                    gallery.ThumbnailStorageId = newThumbnailImage.StorageId;
+                    gallery.ThumbnailStorageId = newThumbnailImage.Files.Spec800Id;
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
             }
@@ -345,7 +340,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 Debug.WriteLine("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(imageBeingOrdered.GalleryCategoryId, imageBeingOrdered.GalleryId);
-                gallery.ThumbnailStorageId = imageBeingOrdered.StorageId;
+                gallery.ThumbnailStorageId = imageBeingOrdered.Files.Spec800Id;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             }
         }
@@ -417,55 +412,86 @@ namespace LB.PhotoGalleries.Application.Servers
         /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
         /// </summary>
         /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
-        /// <param name="imagePropertyName">The name of the property on an Image object that represents the image to generate, i.e. LowResStorageId</param>
         /// <returns>A set of responses for each image generated.</returns>
-        public async Task<List<string>> GenerateMissingImagesAsync(string galleryId, string imagePropertyName)
+        public async Task<List<string>> GenerateMissingImagesAsync(string categoryId, string galleryId)
         {
             if (string.IsNullOrEmpty(galleryId))
                 throw new ArgumentException("galleryId is invalid", nameof(galleryId));
 
-            if (string.IsNullOrEmpty(imagePropertyName))
-                throw new ArgumentException("imagePropertyName is invalid", nameof(imagePropertyName));
-
+            var images = await GetGalleryImagesAsync(galleryId);
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var lowResContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageLowResContainerName);
-
             var responses = new List<string>();
-            var images = await GetGalleryImagesAsync(galleryId);
-            if (imagePropertyName == "LowResStorageId")
+
+            //Parallel.ForEach(images, image =>
+            foreach (var image in images)
             {
-                var imagesToGenerateFor = images.Where(i => string.IsNullOrEmpty(i.LowResStorageId));
-                foreach (var image in imagesToGenerateFor)
+                // do we have any work to do?
+                if (string.IsNullOrEmpty(image.Files.OriginalId) ||
+                    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec800Id) ||
+                    string.IsNullOrEmpty(image.Files.SpecLowResId))
                 {
-                    // download image
-                    var downloadTimer = new Stopwatch();
-                    downloadTimer.Start();
+                    // migrate the original storage id
+                    if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
+                        image.Files.OriginalId = image.StorageId;
+
+                    // we do - download the source image to use for image resizing
                     var blobClient = originalContainerClient.GetBlobClient(image.StorageId);
                     var blob = await blobClient.DownloadAsync();
-                    downloadTimer.Stop();
-                    var uploadTimer = new Stopwatch();
+                    
+                    // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with.
+                    // we need a stream to turn into a Bitmap to get dimensions from.
+                    await using var ms = new MemoryStream();
+                    await using var originalImageStream = blob.Value.Content;
+                    blob.Value.Content.CopyTo(ms);
+                    var imageBytes = ms.ToArray();
 
-                    await using (var ms = new MemoryStream())
+                    // are we missing dimensions metadata?
+                    if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
                     {
-                        // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with
-                        await using var originalImageStream = blob.Value.Content;
-                        blob.Value.Content.CopyTo(ms);
-
-                        // generate new image
-                        await using var newImage = await GenerateLowResImageAsync(ms);
-
-                        // upload new image
-                        image.LowResStorageId = $"lr-{image.Id}.jpg";
-                        uploadTimer.Start();
-                        await lowResContainerClient.UploadBlobAsync(image.LowResStorageId, newImage);
-                        uploadTimer.Stop();
+                        using var bm = new Bitmap(ms);
+                        image.Metadata.Width = bm.Width;
+                        image.Metadata.Height = bm.Height;
+                        Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
                     }
 
-                    // update image with new image info
-                    await UpdateImageAsync(image);
-                    responses.Add($"Created low-res image: {image.LowResStorageId}. Download: {downloadTimer.Elapsed}, upload: {uploadTimer.Elapsed}");
+                    // execute the image generation tasks in parallel to make the most of server compute/networking resources
+                    var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
+                    var imageUpdateNeeded = false;
+                    Parallel.ForEach(specs, spec => {
+                        var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
+                        if (imageGenerated)
+                        {
+                            imageUpdateNeeded = true;
+                            responses.Add($"Generated {spec} for image: {image.Id}");
+                        }
+                        else
+                            responses.Add($"No {spec} needed for image: {image.Id}");
+                    });
+
+                    // update the image with the new image storage ids
+                    if (imageUpdateNeeded)
+                        await UpdateImageAsync(image);
                 }
+                else
+                {
+                    responses.Add("No missing files for image: " + image.Id);
+                }
+            //});
+            }
+
+            // update the gallery with the new thumbnail image (Spec800)
+            // todo: this will not be adequate for very high pixel density displays.
+            // need to expand the concept so it allows client to make best decision (maybe just put the whole Files object into Gallery).
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!gallery.ThumbnailStorageId.EndsWith(".webp"))
+            {
+                gallery.ThumbnailStorageId = GetGalleryThumbmailImage(images).Files.Spec800Id;
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                Debug.WriteLine("ImageServer:GenerateMissingImagesAsync: updated thumbnail: " + gallery.ThumbnailStorageId);
             }
 
             return responses;
@@ -543,24 +569,31 @@ namespace LB.PhotoGalleries.Application.Servers
             return (string)resultSet.Resource.FirstOrDefault();
         }
 
+        private static Image GetGalleryThumbmailImage(List<Image> images)
+        {
+            if (images.Any(i => i.Position.HasValue))
+                return images.Single(i => i.Position.Value == 0);
+
+            return images.OrderBy(i => i.Created).First();
+        }
+
         /// <summary>
-        /// Generates an 800 pixel, low quality version of the original image we can use as a preview image ahead of rendering a main image.
+        /// Generates an resized image of the original in WebP format (quicker, smaller files).
         /// </summary>
         /// <param name="originalImageStream">The stream for the original image.</param>
-        /// <returns>A new image stream for the new low-res image.</returns>
-        private static async Task<Stream> GenerateLowResImageAsync(Stream originalImageStream)
+        /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
+        /// <returns>A new image stream for the resized image</returns>
+        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
         {
             var timer = new Stopwatch();
             timer.Start();
 
-            if (originalImageStream.CanSeek)
-                originalImageStream.Position = 0;
-
-            var bytes = new BytesSource(Utilities.ConvertStreamToBytes(originalImageStream));
             using var job = new ImageJob();
-            var result = await job.Decode(bytes)
-                .ResizerCommands("w=800&h=800&mode=max")
-                .EncodeToBytes(new MozJpegEncoder(50, true))
+            var result = await job.Decode(originalImage)
+                .ResizerCommands($"w={imageFileSpec.PixelLength}&h={imageFileSpec.PixelLength}&mode=max")
+                //.EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
+                .EncodeToBytes(new WebPLosslessEncoder())
+                //.EncodeToBytes(new MozJpegEncoder(100, true))
                 .Finish()
                 .SetSecurityOptions(new SecurityOptions()
                     .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
@@ -574,13 +607,150 @@ namespace LB.PhotoGalleries.Application.Servers
                 var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
                 timer.Stop();
-                Debug.WriteLine("ImageServer.GenerateLowResImageAsync: Elapsed time: " + timer.Elapsed);
+                Debug.WriteLine($"ImageServer.GenerateImageAsync: Done. {imageFileSpec.FileSpec}. Elapsed time: {timer.Elapsed}");
                 return newStream;
             }
 
             timer.Stop();
-            Debug.WriteLine("ImageServer.GenerateLowResImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
+            Debug.WriteLine("ImageServer.GenerateImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
             return null;
+        }
+
+        /// <summary>
+        /// Handles deleting a specific version of an image file according to file spec.
+        /// </summary>
+        private async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec, BlobServiceClient client)
+        {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+
+            var storageId = string.Empty;
+            switch (imageFileSpec.FileSpec)
+            {
+                case FileSpec.SpecOriginal:
+                    storageId = image.Files.OriginalId;
+                    break;
+                case FileSpec.Spec3840:
+                    storageId = image.Files.Spec3840Id;
+                    break;
+                case FileSpec.Spec2560:
+                    storageId = image.Files.Spec2560Id;
+                    break;
+                case FileSpec.Spec1920:
+                    storageId = image.Files.Spec1920Id;
+                    break;
+                case FileSpec.Spec800:
+                    storageId = image.Files.Spec800Id;
+                    break;
+                case FileSpec.SpecLowRes:
+                    storageId = image.Files.SpecLowResId;
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(storageId))
+            {
+                var container = client.GetBlobContainerClient(imageFileSpec.ContainerName);
+                var response = await container.DeleteBlobAsync(storageId);
+                Debug.WriteLine("ImageServer.DelegeImageFileAsync: response status: " + response.Status);
+                return;
+            }
+
+            Debug.WriteLine("ImageServer.DelegeImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
+        }
+
+        /// <summary>
+        /// Generates all remaining (i.e. all but the Spec800) image files, stores them in Azure Blob storage and updates the image object.
+        /// </summary>
+        private async Task GenerateRemainingFilesAndUpdateImageAsync(Image image, Stream imageStream, BlobServiceClient blobServiceClient)
+        {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+
+            if (imageStream == null)
+                throw new ArgumentNullException(nameof(imageStream));
+
+            if (blobServiceClient == null)
+                throw new ArgumentNullException(nameof(blobServiceClient));
+
+            // generate and store each image in parallel
+            var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.SpecLowRes };
+            Parallel.ForEach(specs, spec => {
+                var imageBytes = Utilities.ConvertStreamToBytes(imageStream);
+                GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
+            });
+
+            // update the image with the new image file storage ids
+            await UpdateImageAsync(image);
+
+            Debug.WriteLine("ImageServer.GenerateRemainingFilesAndUpdateImageAsync: Generated all images");
+        }
+
+        /// <summary>
+        /// Generates a new image file according to an image file spec, uploads it to Azure Blob storage and assigns the relevant Files property storage id value.
+        /// </summary>
+        private async Task<bool> GenerateAndStoreImageFileAsync(Image image, FileSpec fileSpec, byte[] imageBytes, BlobServiceClient blobServiceClient)
+        {
+            // TEMPORARY: force re-generations whilst we decide on a encoding
+            // is there an image missing?
+            var workToDo = true;
+            //if (fileSpec == FileSpec.Spec3840 && !string.IsNullOrEmpty(image.Files.Spec3840Id))
+            //    workToDo = false;
+            //else
+            //if (fileSpec == FileSpec.Spec2560 && !string.IsNullOrEmpty(image.Files.Spec2560Id))
+            //    workToDo = false;
+            //else if (fileSpec == FileSpec.Spec1920 && !string.IsNullOrEmpty(image.Files.Spec1920Id))
+            //    workToDo = false;
+            //else if (fileSpec == FileSpec.Spec800 && !string.IsNullOrEmpty(image.Files.Spec800Id))
+            //    workToDo = false;
+            //else if (fileSpec == FileSpec.SpecLowRes && !string.IsNullOrEmpty(image.Files.SpecLowResId))
+            //    workToDo = false;
+
+            if (!workToDo)
+            {
+                Debug.WriteLine($"ImageSever:GenerateAndStoreImageFileAsync: {fileSpec} has already been generated, no work to do");
+                return false;
+            }
+
+            var imageFileSpec = Server.Instance.GetImageFileSpec(fileSpec);
+
+            // we only generate images if the source image is larger than the size we're being asked to resize to, i.e. we only go down in size
+            var longestSide = image.Metadata.Width > image.Metadata.Height ? image.Metadata.Width : image.Metadata.Height;
+            if (longestSide <= imageFileSpec.PixelLength)
+            {
+                Debug.WriteLine($"ImageServer.GenerateAndStoreImageFileAsync: image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
+                return false;
+            }
+
+            // create the new image file
+            var storageId = imageFileSpec.GetStorageId(image);
+            await using (var imageFile = await GenerateImageAsync(imageBytes, imageFileSpec))
+            {
+                // upload the new image file to storage
+                var containerClient = blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
+                await containerClient.UploadBlobAsync(storageId, imageFile);
+            }
+
+            // now update the image with the new file storage id
+            switch (fileSpec)
+            {
+                case FileSpec.Spec3840:
+                    image.Files.Spec3840Id = storageId;
+                    break;
+                case FileSpec.Spec2560:
+                    image.Files.Spec2560Id = storageId;
+                    break;
+                case FileSpec.Spec1920:
+                    image.Files.Spec1920Id = storageId;
+                    break;
+                case FileSpec.Spec800:
+                    image.Files.Spec800Id = storageId;
+                    break;
+                case FileSpec.SpecLowRes:
+                    image.Files.SpecLowResId = storageId;
+                    break;
+            }
+
+            return true;
         }
         #endregion
 
@@ -594,6 +764,11 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
         private static void ParseAndAssignImageMetadata(Image image, Stream imageStream)
         {
+            // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
+            using var bm = new Bitmap(imageStream);
+            image.Metadata.Width = bm.Width;
+            image.Metadata.Height = bm.Height;
+
             var directories = ImageMetadataReader.ReadMetadata(imageStream);
 
             // debug info
@@ -615,13 +790,6 @@ namespace LB.PhotoGalleries.Application.Servers
             // ----------------------------------------------------------------------------------
 
             image.Metadata.TakenDate = GetImageDateTaken(directories);
-
-            var size = GetImageDimensions(directories);
-            if (size.HasValue && !size.Value.IsEmpty)
-            {
-                image.Metadata.Width = size.Value.Width;
-                image.Metadata.Height = size.Value.Height;
-            }
 
             var iso = GetImageIso(directories);
             if (iso.HasValue)
@@ -750,92 +918,6 @@ namespace LB.PhotoGalleries.Application.Servers
             // query the tag's value
             if (directory.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out var dateTime))
                 return dateTime;
-
-            return null;
-        }
-
-        /// <summary>
-        /// Attempts to extract image width and height information from image metadata.
-        /// </summary>
-        /// <param name="directories">Metadata directories extracted from the image stream.</param>
-        public static Size? GetImageDimensions(IEnumerable<Directory> directories)
-        {
-            var size = new Size();
-
-            // try and get dimensions from EXIF data first
-            var enumerable = directories as Directory[] ?? directories.ToArray();
-            var exifSubIfdDirectory = enumerable.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (exifSubIfdDirectory != null)
-            {
-                var width = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageWidth);
-                if (width != null && width.Description.HasValue())
-                {
-                    // values can contain strings, i.e. "1024 pixels" so snip those off
-                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
-                }
-
-                var height = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExifImageHeight);
-                if (height != null && height.Description.HasValue())
-                {
-                    // values can contain strings, i.e. "768 pixels" so snip those off
-                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
-                }
-
-                if (!size.IsEmpty)
-                    return size;
-            }
-
-            // no luck, try the JPEG data next
-            var jpegDirectory = enumerable.OfType<JpegDirectory>().FirstOrDefault();
-            if (jpegDirectory != null)
-            {
-                var width = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageWidth);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (width != null && width.Description.HasValue())
-                {
-                    // values can contain strings, i.e. "1024 pixels" so snip those off
-                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
-                }
-
-                var height = jpegDirectory.Tags.SingleOrDefault(t => t.Type == JpegDirectory.TagImageHeight);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (height != null && height.Description.HasValue())
-                {
-                    // values can contain strings, i.e. "768 pixels" so snip those off
-                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
-                }
-
-                return size;
-            }
-
-            // no luck, try the PNG data next
-            var pngDirectory = enumerable.OfType<PngDirectory>().FirstOrDefault();
-            if (pngDirectory != null)
-            {
-                var width = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageWidth);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (width != null && !string.IsNullOrEmpty(width.Description))
-                {
-                    // values can contain strings, i.e. "1024 pixels" so snip those off
-                    var spacePosition = width.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Width = Convert.ToInt32(spacePosition != -1 ? width.Description.Substring(0, spacePosition) : width.Description);
-                }
-
-                var height = pngDirectory.Tags.SingleOrDefault(t => t.Type == PngDirectory.TagImageHeight);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (height != null && !string.IsNullOrEmpty(height.Description))
-                {
-                    // values can contain strings, i.e. "768 pixels" so snip those off
-                    var spacePosition = height.Description.IndexOf(" ", StringComparison.Ordinal);
-                    size.Height = Convert.ToInt32(spacePosition != -1 ? height.Description.Substring(0, spacePosition) : height.Description);
-                }
-
-                return size;
-            }
 
             return null;
         }

@@ -1,9 +1,12 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
+using LB.PhotoGalleries.Application.Models;
 using LB.PhotoGalleries.Application.Servers;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -23,6 +26,7 @@ namespace LB.PhotoGalleries.Application
         public GalleryServer Galleries { get; internal set; }
         public ImageServer Images { get; internal set; }
         public UserServer Users { get; internal set; }
+        public List<ImageFileSpec> FileSpecs { get; set; }
         /// <summary>
         /// Provides access to application configuration data, i.e. connection strings.
         /// Needs to be set on startup by the client using SetConfiguration().
@@ -30,7 +34,6 @@ namespace LB.PhotoGalleries.Application
         internal IConfiguration Configuration { get; set; }
         internal CosmosClient CosmosClient { get; set; }
         internal Database Database { get; set; }
-        internal Utilities Utilities { get; set; }
         #endregion
 
         #region constructors
@@ -41,13 +44,14 @@ namespace LB.PhotoGalleries.Application
                 Categories = new CategoryServer(),
                 Galleries = new GalleryServer(),
                 Images = new ImageServer(),
-                Users = new UserServer(),
-                Utilities = new Utilities()
+                Users = new UserServer()
             };
+
+            Instance.PopulateFileSpecs();
         }
         #endregion
 
-        #region public method
+        #region public methods
         /// <summary>
         /// Must be set by the client consuming Server before the server can be used so it can obtain connection strings, etc.
         /// i.e. Set in Startup.cs for an MVC application.
@@ -57,6 +61,11 @@ namespace LB.PhotoGalleries.Application
             Configuration = configuration;
             await InitialiseDatabaseAsync();
             await InitialiseStorageAsync();
+        }
+
+        public ImageFileSpec GetImageFileSpec(FileSpec fileSpec)
+        {
+            return FileSpecs.Single(ifs => ifs.FileSpec == fileSpec);
         }
         #endregion
 
@@ -115,19 +124,93 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
+            var spec3840 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec3840);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(Constants.StorageLowResContainerName);
-                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageLowResContainerName}");
+                await blobServiceClient.CreateBlobContainerAsync(spec3840.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec3840.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageLowResContainerName}");
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {spec3840.ContainerName}");
                 else
                     // something bad happened
                     throw;
             }
+
+            var spec1440 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec2560);
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(spec1440.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1440.ContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {spec1440.ContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
+
+            var spec1080 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec1920);
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(spec1080.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1080.ContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {spec1080.ContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
+
+            var spec800 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec800);
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(spec800.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec800.ContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {spec800.ContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
+
+            var specLowres = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
+            try
+            {
+                await blobServiceClient.CreateBlobContainerAsync(specLowres.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowres.ContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {specLowres.ContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
+        }
+
+        private void PopulateFileSpecs()
+        {
+            FileSpecs = new List<ImageFileSpec>
+            {
+                new ImageFileSpec(FileSpec.SpecOriginal, 0, 100, "originals"),
+                new ImageFileSpec(FileSpec.Spec3840, 3840, 100, FileSpec.Spec3840.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec2560, 2560, 100, FileSpec.Spec2560.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec1920, 1920, 100, FileSpec.Spec1920.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.Spec800, 800, 100, FileSpec.Spec800.ToString().ToLower()),
+                new ImageFileSpec(FileSpec.SpecLowRes, 400, 50, "lowres")
+            };
         }
         #endregion
     }

@@ -134,9 +134,9 @@
 
         </dl>
 
-        @if (User.IsInRole(Roles.Administrator.ToString()) && images.Any(i => string.IsNullOrEmpty(i.LowResStorageId)))
+        @if (User.IsInRole(Roles.Administrator.ToString()))
         {
-            <button data-bind="click: function() { GenerateMissingImageFiles('LowResStorageId'); }" class="btn btn-secondary btn-sm">Generate low-res images</button>
+            <button data-bind="click: function() { GenerateMissingImageFiles(); }" class="btn btn-secondary btn-sm">Generate missing images</button>
         }
 
     </div>
@@ -204,7 +204,7 @@
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(storageId) {
             var scaledSize = 280 * window.devicePixelRatio;
-            return `/bi/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            return `/dio/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
         }
 
         function OnImageMoved(evt) {
@@ -266,9 +266,9 @@
                     });
             }
 
-            this.GenerateMissingImageFiles = function(propertyName) {
-                console.log(`GenerateMissingImageFiles('${propertyName}')`);
-                $.post(`/api/images/generate-missing-image-files?galleryId=@Model.Id&imagePropertyName=${propertyName}`)
+            this.GenerateMissingImageFiles = function() {
+                console.log(`GenerateMissingImageFiles()`);
+                $.post(`/api/images/generate-missing-image-files?categoryId=@Model.CategoryId&galleryId=@Model.Id`)
                     .done(function (responses) {
                         console.log("GenerateMissingImageFiles(): done");
                         console.log(responses);

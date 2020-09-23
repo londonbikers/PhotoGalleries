@@ -28,7 +28,6 @@
         <ul>
             <li><b>@Html.DisplayNameFor(model => model.Id)</b>: @Html.DisplayFor(model => model.Id)</li>
             <li><b>@Html.DisplayNameFor(model => model.GalleryId)</b>: @Html.DisplayFor(model => model.GalleryId)</li>
-            <li><b>@Html.DisplayNameFor(model => model.StorageId)</b>: @Html.DisplayFor(model => model.StorageId)</li>
             <li><b>@Html.DisplayNameFor(model => model.Position)</b>: @Html.DisplayFor(model => model.Position)</li>
             <li><b>@Html.DisplayNameFor(model => model.Name)</b>: @Html.DisplayFor(model => model.Name)</li>
             <li><b>@Html.DisplayNameFor(model => model.Caption)</b>: @Html.DisplayNameFor(model => model.Caption)</li>
@@ -36,7 +35,14 @@
             <li><b>@Html.DisplayNameFor(model => model.Created)</b>: @Html.DisplayFor(model => model.Created)</li>
             <li><b>@Html.DisplayNameFor(model => model.LegacyNumId)</b>: @Html.DisplayFor(model => model.LegacyNumId)</li>
             <li><b>@Html.DisplayNameFor(model => model.LegacyGuidId)</b>: @Html.DisplayFor(model => model.LegacyGuidId)</li>
-            <li><b>Tags</b>: 
+            <li><b>@Html.DisplayNameFor(model => model.Files.OriginalId)</b>: @Html.DisplayFor(model => model.Files.OriginalId)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Files.Spec3840Id)</b>: @Html.DisplayFor(model => model.Files.Spec3840Id)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Files.Spec2560Id)</b>: @Html.DisplayFor(model => model.Files.Spec2560Id)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Files.Spec1920Id)</b>: @Html.DisplayFor(model => model.Files.Spec1920Id)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Files.Spec800Id)</b>: @Html.DisplayFor(model => model.Files.Spec800Id)</li>
+            <li><b>@Html.DisplayNameFor(model => model.Files.SpecLowResId)</b>: @Html.DisplayFor(model => model.Files.SpecLowResId)</li>
+            <li>
+                <b>Tags</b>:
                 @foreach (var tag in Model.Tags)
                 {
                     <span class="badge badge-info">@tag</span>
