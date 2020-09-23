@@ -427,13 +427,13 @@ namespace LB.PhotoGalleries.Application.Servers
             foreach (var image in images)
             {
                 // do we have any work to do?
-                //if (string.IsNullOrEmpty(image.Files.OriginalId) ||
-                //    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
-                //    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
-                //    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
-                //    string.IsNullOrEmpty(image.Files.Spec800Id) ||
-                //    string.IsNullOrEmpty(image.Files.SpecLowResId))
-                //{
+                if (string.IsNullOrEmpty(image.Files.OriginalId) ||
+                    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
+                    string.IsNullOrEmpty(image.Files.Spec800Id) ||
+                    string.IsNullOrEmpty(image.Files.SpecLowResId))
+                {
                     // migrate the original storage id
                     if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
                         image.Files.OriginalId = image.StorageId;
@@ -460,7 +460,6 @@ namespace LB.PhotoGalleries.Application.Servers
 
                     // execute the image generation tasks in parallel to make the most of server compute/networking resources
                     var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-                    //var specs = new List<FileSpec> { FileSpec.Spec3840 };
                     var imageUpdateNeeded = false;
                     Parallel.ForEach(specs, spec => {
                         var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
@@ -476,12 +475,12 @@ namespace LB.PhotoGalleries.Application.Servers
                     // update the image with the new image storage ids
                     if (imageUpdateNeeded)
                         await UpdateImageAsync(image);
-                //}
-                //else
-                //{
-                //    responses.Add("No missing files for image: " + image.Id);
-                //}
-            //});
+                }
+                else
+                {
+                    responses.Add("No missing files for image: " + image.Id);
+                }
+                //});
             }
 
             // update the gallery with the new thumbnail image (Spec800)
