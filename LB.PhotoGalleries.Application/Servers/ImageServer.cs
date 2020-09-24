@@ -569,10 +569,10 @@ namespace LB.PhotoGalleries.Application.Servers
             return (string)resultSet.Resource.FirstOrDefault();
         }
 
-        private static Image GetGalleryThumbmailImage(List<Image> images)
+        private static Image GetGalleryThumbmailImage(IReadOnlyCollection<Image> images)
         {
             if (images.Any(i => i.Position.HasValue))
-                return images.Single(i => i.Position.Value == 0);
+                return images.Single(i => i.Position != null && i.Position.Value == 0);
 
             return images.OrderBy(i => i.Created).First();
         }
