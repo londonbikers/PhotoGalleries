@@ -108,7 +108,7 @@ namespace LB.PhotoGalleries.Application.Models
         public bool IsValid()
         {
             if (string.IsNullOrEmpty(Id) ||
-                string.IsNullOrEmpty(Files.OriginalId) ||
+                //string.IsNullOrEmpty(Files.OriginalId) ||
                 string.IsNullOrEmpty(GalleryId) ||
                 string.IsNullOrEmpty(GalleryCategoryId) ||
                 string.IsNullOrEmpty(Name))
