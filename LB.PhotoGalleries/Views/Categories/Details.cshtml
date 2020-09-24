@@ -75,7 +75,8 @@
             var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
             var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
             var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
-            return `/dio/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            var url = `/di800/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+            return url;
         }
 
         function GetGalleryUrl(categoryId, galleryId, name) {
