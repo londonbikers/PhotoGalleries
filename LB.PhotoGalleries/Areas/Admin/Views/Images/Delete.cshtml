@@ -1,5 +1,6 @@
 ﻿@model LB.PhotoGalleries.Application.Models.Image
 @using LB.PhotoGalleries.Application.Models
+@using Newtonsoft.Json
 @{
     ViewData["Title"] = "Delete Image";
     var error = (string)ViewData["error"];
@@ -140,20 +141,25 @@
 @section Scripts {
     <script type="text/javascript">
         $(document).ready(function () {
+
+            // payload
+            var files = @Html.Raw(JsonConvert.SerializeObject(Model.Files));
+
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
             var scaledWidth = 550 * window.devicePixelRatio;
 
             // choose ImageFileSpec for scaled dimensions
-            if (scaledWidth <= 800) {
-                var url = `/di800/@Model.Files.Spec800Id?w=${scaledWidth}`;
-            } else if (scaledWidth <= 1920) {
-                var url = `/di1920/@Model.Files.Spec1920Id?w=${scaledWidth}`;
-            } else if (scaledWidth <= 2560) {
-                var url = `/di2560/@Model.Files.Spec2560Id?w=${scaledWidth}`;
-            } else if (scaledWidth <= 3840) {
-                var url = `/di3840/@Model.Files.Spec3840Id?w=${scaledWidth}`;
+            var url;
+            if (scaledWidth <= 800 && files.Spec800Id != null) {
+                url = `/di800/@Model.Files.Spec800Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 1920 && files.Spec1920Id != null) {
+                url = `/di1920/@Model.Files.Spec1920Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 2560 && files.Spec2560Id != null) {
+                url = `/di2560/@Model.Files.Spec2560Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 3840 && files.Spec3840Id != null) {
+                url = `/di3840/@Model.Files.Spec3840Id?w=${scaledWidth}`;
             } else {
-                var url = `/dio/@Model.Files.OriginalId?w=${scaledWidth}`;
+                url = `/dio/@Model.Files.OriginalId?w=${scaledWidth}`;
             }
 
             $("#preview-image").attr('src', url);

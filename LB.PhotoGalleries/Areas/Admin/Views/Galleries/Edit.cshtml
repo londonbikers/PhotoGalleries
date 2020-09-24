@@ -206,13 +206,13 @@
             var scaledSize = 280 * window.devicePixelRatio;
 
             // choose ImageFileSpec for scaled dimensions
-            if (scaledSize <= 800) {
+            if (scaledSize <= 800 && files.Spec800Id != null) {
                 return `/di800/${files.Spec800Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 1920) {
+            } else if (scaledSize <= 1920 && files.Spec1920Id != null) {
                 return `/di1920/${files.Spec1920Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 2560) {
+            } else if (scaledSize <= 2560 && files.Spec2560Id != null) {
                 return `/di2560/${files.Spec2560Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 3840) {
+            } else if (scaledSize <= 3840 && files.Spec3840Id != null) {
                 return `/di3840/${files.Spec3840Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
             } else {
                 return `/dio/${files.OriginalId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
