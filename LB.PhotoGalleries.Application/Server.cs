@@ -209,7 +209,7 @@ namespace LB.PhotoGalleries.Application
                 new ImageFileSpec(FileSpec.Spec2560, 2560, 90, FileSpec.Spec2560.ToString().ToLower()),
                 new ImageFileSpec(FileSpec.Spec1920, 1920, 90, FileSpec.Spec1920.ToString().ToLower()),
                 new ImageFileSpec(FileSpec.Spec800, 800, 90, FileSpec.Spec800.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.SpecLowRes, 400, 50, "lowres")
+                new ImageFileSpec(FileSpec.SpecLowRes, 400, 75, "lowres")
             };
         }
         #endregion

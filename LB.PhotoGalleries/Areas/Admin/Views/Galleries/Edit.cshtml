@@ -178,7 +178,7 @@
     </div>
 
     <div class="row">
-        <div class="col" data-bind="sortable: {foreach: Images, options: {onEnd: OnImageMoved}}"><div class="grid-square" data-bind="attr: {id: 'gi-'+Id}"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(StorageId)}" width="280" height="280" /></a></div></div>
+        <div class="col" data-bind="sortable: {foreach: Images, options: {onEnd: OnImageMoved}}"><div class="grid-square" data-bind="attr: {id: 'gi-'+Id}"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(Files)}" width="280" height="280" /></a></div></div>
     </div>
 }
 
@@ -196,15 +196,26 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload =
-            @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.StorageId})));
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.Files})));
         var galleryId = '@Model.Id';
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in
         // this ensures images are as crisp as they can be for each client device.
-        function GetThumbnailUrl(storageId) {
+        function GetThumbnailUrl(files) {
             var scaledSize = 280 * window.devicePixelRatio;
-            return `/dio/${storageId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+
+            // choose ImageFileSpec for scaled dimensions
+            if (scaledSize <= 800) {
+                return `/di800/${files.Spec800Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            } else if (scaledSize <= 1920) {
+                return `/di1920/${files.Spec1920Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            } else if (scaledSize <= 2560) {
+                return `/di2560/${files.Spec2560Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            } else if (scaledSize <= 3840) {
+                return `/di3840/${files.Spec3840Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            } else {
+                return `/dio/${files.OriginalId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
+            }
         }
 
         function OnImageMoved(evt) {

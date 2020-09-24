@@ -427,19 +427,19 @@ namespace LB.PhotoGalleries.Application.Servers
             foreach (var image in images)
             {
                 // do we have any work to do?
-                if (string.IsNullOrEmpty(image.Files.OriginalId) ||
-                    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
-                    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
-                    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
-                    string.IsNullOrEmpty(image.Files.Spec800Id) ||
-                    string.IsNullOrEmpty(image.Files.SpecLowResId))
-                {
+                //if (string.IsNullOrEmpty(image.Files.OriginalId) ||
+                //    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
+                //    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
+                //    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
+                //    string.IsNullOrEmpty(image.Files.Spec800Id) ||
+                //    string.IsNullOrEmpty(image.Files.SpecLowResId))
+                //{
                     // migrate the original storage id
                     if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
                         image.Files.OriginalId = image.StorageId;
 
                     // we do - download the source image to use for image resizing
-                    var blobClient = originalContainerClient.GetBlobClient(image.StorageId);
+                    var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
                     var blob = await blobClient.DownloadAsync();
                     
                     // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with.
@@ -475,11 +475,11 @@ namespace LB.PhotoGalleries.Application.Servers
                     // update the image with the new image storage ids
                     if (imageUpdateNeeded)
                         await UpdateImageAsync(image);
-                }
-                else
-                {
-                    responses.Add("No missing files for image: " + image.Id);
-                }
+                //}
+                //else
+                //{
+                //    responses.Add("No missing files for image: " + image.Id);
+                //}
                 //});
             }
 
@@ -580,7 +580,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Generates an resized image of the original in WebP format (quicker, smaller files).
         /// </summary>
-        /// <param name="originalImageStream">The stream for the original image.</param>
+        /// <param name="originalImage">The byte array for the original image.</param>
         /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
         /// <returns>A new image stream for the resized image</returns>
         private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
@@ -590,7 +590,8 @@ namespace LB.PhotoGalleries.Application.Servers
 
             using var job = new ImageJob();
             var result = await job.Decode(originalImage)
-                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
+                //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
+                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
                 .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
                 .Finish()
                 .SetSecurityOptions(new SecurityOptions()

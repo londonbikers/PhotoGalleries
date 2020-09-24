@@ -142,7 +142,21 @@
         $(document).ready(function () {
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
             var scaledWidth = 550 * window.devicePixelRatio;
-            $("#preview-image").attr('src', '/i/@Model.StorageId?w=' + scaledWidth);
+
+            // choose ImageFileSpec for scaled dimensions
+            if (scaledWidth <= 800) {
+                var url = `/di800/@Model.Files.Spec800Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 1920) {
+                var url = `/di1920/@Model.Files.Spec1920Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 2560) {
+                var url = `/di2560/@Model.Files.Spec2560Id?w=${scaledWidth}`;
+            } else if (scaledWidth <= 3840) {
+                var url = `/di3840/@Model.Files.Spec3840Id?w=${scaledWidth}`;
+            } else {
+                var url = `/dio/@Model.Files.OriginalId?w=${scaledWidth}`;
+            }
+
+            $("#preview-image").attr('src', url);
         });
     </script>
 }

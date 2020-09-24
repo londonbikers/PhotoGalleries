@@ -24,3 +24,25 @@ function EncodeParamForUrl(parameter)
 function NavigateToImage(galleryId, imageId, name) {
     window.location.href = `/i/${galleryId}/${imageId}/${EncodeParamForUrl(name)}`;
 }
+
+// for high-dpi displays we need to request a larger image than the space we intend to view it in.
+// this ensures images are as crisp as they can be for each client device.
+function GetImageThumbnailUrl(files, element) {
+    var cardInnerWidth = $(element).parent().parent().innerWidth();
+    var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
+    var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
+    var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
+
+    // choose ImageFileSpec for scaled dimensions
+    if (scaledWidth <= 800 && scaledHeight <= 800) {
+        return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+    } else if (scaledWidth <= 1920 && scaledHeight <= 1920) {
+        return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+    } else if (scaledWidth <= 2560 && scaledHeight <= 2560) {
+        return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+    } else if (scaledWidth <= 3840 && scaledHeight <= 3840) {
+        return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+    } else {
+        return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
+    }
+}
