@@ -593,60 +593,59 @@ namespace LB.PhotoGalleries.Application.Servers
         private async Task HandlePhotoMissingImagesGenerationAsync(Image image, BlobServiceClient blobServiceClient, BlobContainerClient originalContainerClient, ICollection<string> responses)
         {
             // do we have any work to do?
-            //if (string.IsNullOrEmpty(image.Files.OriginalId) ||
-            //    string.IsNullOrEmpty(image.Files.Spec3840Id) ||
-            //    string.IsNullOrEmpty(image.Files.Spec2560Id) ||
-            //    string.IsNullOrEmpty(image.Files.Spec1920Id) ||
-            //    string.IsNullOrEmpty(image.Files.Spec800Id) ||
-            //    string.IsNullOrEmpty(image.Files.SpecLowResId))
-            //{
-            // migrate the original storage id
-            if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
-                image.Files.OriginalId = image.StorageId;
-
-            // we do - download the source image to use for image resizing
-            var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
-            var blob = await blobClient.DownloadAsync();
-
-            // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with.
-            // we need a stream to turn into a Bitmap to get dimensions from.
-            await using var ms = new MemoryStream();
-            await using var originalImageStream = blob.Value.Content;
-            blob.Value.Content.CopyTo(ms);
-            var imageBytes = ms.ToArray();
-
-            // are we missing dimensions metadata?
-            if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
+            if (string.IsNullOrEmpty(image.Files.OriginalId) ||
+                string.IsNullOrEmpty(image.Files.Spec3840Id) ||
+                string.IsNullOrEmpty(image.Files.Spec2560Id) ||
+                string.IsNullOrEmpty(image.Files.Spec1920Id) ||
+                string.IsNullOrEmpty(image.Files.Spec800Id) ||
+                string.IsNullOrEmpty(image.Files.SpecLowResId))
             {
-                using var bm = new Bitmap(ms);
-                image.Metadata.Width = bm.Width;
-                image.Metadata.Height = bm.Height;
-                Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
-            }
+                // migrate the original storage id
+                if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
+                    image.Files.OriginalId = image.StorageId;
 
-            // execute the image generation tasks in parallel to make the most of server compute/networking resources
-            var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-            var imageUpdateNeeded = false;
-            Parallel.ForEach(specs, spec => {
-                var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
-                if (imageGenerated)
+                // we do - download the source image to use for image resizing
+                var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
+                var blob = await blobClient.DownloadAsync();
+
+                // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with.
+                // we need a stream to turn into a Bitmap to get dimensions from.
+                await using var ms = new MemoryStream();
+                await using var originalImageStream = blob.Value.Content;
+                blob.Value.Content.CopyTo(ms);
+                var imageBytes = ms.ToArray();
+
+                // are we missing dimensions metadata?
+                if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
                 {
-                    imageUpdateNeeded = true;
-                    responses.Add($"Generated {spec} for image: {image.Id}");
+                    using var bm = new Bitmap(ms);
+                    image.Metadata.Width = bm.Width;
+                    image.Metadata.Height = bm.Height;
+                    Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
                 }
-                else
-                    responses.Add($"No {spec} needed for image: {image.Id}");
-            });
 
-            // update the image with the new image storage ids
-            if (imageUpdateNeeded)
-                await UpdateImageAsync(image);
-            //}
-            //else
-            //{
-            //    responses.Add("No missing files for image: " + image.Id);
-            //}
-            //});
+                // execute the image generation tasks in parallel to make the most of server compute/networking resources
+                var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
+                var imageUpdateNeeded = false;
+                Parallel.ForEach(specs, spec => {
+                    var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
+                    if (imageGenerated)
+                    {
+                        imageUpdateNeeded = true;
+                        responses.Add($"Generated {spec} for image: {image.Id}");
+                    }
+                    else
+                        responses.Add($"No {spec} needed for image: {image.Id}");
+                });
+
+                // update the image with the new image storage ids
+                if (imageUpdateNeeded)
+                    await UpdateImageAsync(image);
+            }
+            else
+            {
+                responses.Add("No missing files for image: " + image.Id);
+            }
         }
 
         /// <summary>
@@ -721,18 +720,15 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             // TEMPORARY: force re-generations whilst we decide on a encoding
             // is there an image missing?
-            var workToDo = true;
-            //if (fileSpec == FileSpec.Spec3840 && !string.IsNullOrEmpty(image.Files.Spec3840Id))
-            //    workToDo = false;
-            //else
-            //if (fileSpec == FileSpec.Spec2560 && !string.IsNullOrEmpty(image.Files.Spec2560Id))
-            //    workToDo = false;
-            //else if (fileSpec == FileSpec.Spec1920 && !string.IsNullOrEmpty(image.Files.Spec1920Id))
-            //    workToDo = false;
-            //else if (fileSpec == FileSpec.Spec800 && !string.IsNullOrEmpty(image.Files.Spec800Id))
-            //    workToDo = false;
-            //else if (fileSpec == FileSpec.SpecLowRes && !string.IsNullOrEmpty(image.Files.SpecLowResId))
-            //    workToDo = false;
+            var workToDo = fileSpec switch
+            {
+                FileSpec.Spec3840 when !string.IsNullOrEmpty(image.Files.Spec3840Id) => false,
+                FileSpec.Spec2560 when !string.IsNullOrEmpty(image.Files.Spec2560Id) => false,
+                FileSpec.Spec1920 when !string.IsNullOrEmpty(image.Files.Spec1920Id) => false,
+                FileSpec.Spec800 when !string.IsNullOrEmpty(image.Files.Spec800Id) => false,
+                FileSpec.SpecLowRes when !string.IsNullOrEmpty(image.Files.SpecLowResId) => false,
+                _ => true
+            };
 
             if (!workToDo)
             {
@@ -754,8 +750,9 @@ namespace LB.PhotoGalleries.Application.Servers
             var storageId = imageFileSpec.GetStorageId(image);
             await using (var imageFile = await GenerateImageAsync(imageBytes, imageFileSpec))
             {
-                // upload the new image file to storage
+                // upload the new image file to storage (delete any old version first)
                 var containerClient = blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
+                await containerClient.DeleteBlobIfExistsAsync(storageId);
                 await containerClient.UploadBlobAsync(storageId, imageFile);
             }
 
