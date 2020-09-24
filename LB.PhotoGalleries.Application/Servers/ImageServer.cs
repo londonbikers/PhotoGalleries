@@ -435,7 +435,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             if (!gallery.ThumbnailStorageId.EndsWith(".webp"))
             {
-                gallery.ThumbnailStorageId = GetGalleryThumbmailImage(images).Files.Spec800Id;
+                gallery.ThumbnailStorageId = GetGalleryThumbnailImage(images).Files.Spec800Id;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 Debug.WriteLine("ImageServer:GenerateMissingImagesAsync: updated thumbnail: " + gallery.ThumbnailStorageId);
             }
@@ -540,7 +540,7 @@ namespace LB.PhotoGalleries.Application.Servers
             return (string)resultSet.Resource.FirstOrDefault();
         }
 
-        private static Image GetGalleryThumbmailImage(IReadOnlyCollection<Image> images)
+        private static Image GetGalleryThumbnailImage(IReadOnlyCollection<Image> images)
         {
             if (images.Any(i => i.Position.HasValue))
                 return images.Single(i => i.Position != null && i.Position.Value == 0);
