@@ -110,12 +110,12 @@ namespace LB.PhotoGalleries.Controllers.Api
             return Ok();
         }
 
-        ///// <summary>
-        ///// If we add new types of generated images to the app then new image files will need generating, this method will do that.
-        ///// </summary>
-        ///// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
-        ///// <param name="imagePropertyName">The name of the property on an Image object that represents the image to generate, i.e. LowResStorageId</param>
-        ///// <returns>A set of responses for each image generated.</returns>
+        /// <summary>
+        /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
+        /// </summary>
+        /// <param name="categoryId">The unique identifier for the category the gallery resides in that we want to generate missing image files for.</param>
+        /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
+        /// <returns>A set of responses for each image generated.</returns>
         [HttpPost("/api/images/generate-missing-image-files")]
         [Authorize(Roles = "Administrator")]
         public async Task<ActionResult> GenerateMissingImageFiles(string categoryId, string galleryId)
