@@ -127,6 +127,17 @@ namespace LB.PhotoGalleries.Controllers.Api
             return Ok(responses);
         }
 
+        [HttpPost("/api/images/delete-pregen-image-files")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> DeletePreGenImageFiles(string galleryId)
+        {
+            if (string.IsNullOrEmpty(galleryId))
+                return BadRequest("galleryId value missing");
+
+            await Server.Instance.Images.DeletePreGenImageFilesAsync(galleryId);
+            return Ok();
+        }
+
         [Authorize]
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)

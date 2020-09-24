@@ -408,7 +408,6 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region admin methods
-
         /// <summary>
         /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
         /// </summary>
@@ -442,6 +441,31 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             return responses;
+        }
+
+        /// <summary>
+        /// Deletes all pre-generated image files and updates the image object.
+        /// </summary>
+        public async Task DeletePreGenImageFilesAsync(string galleryId)
+        {
+            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+            var images = await GetGalleryImagesAsync(galleryId);
+            Parallel.ForEach(images, image =>
+            {
+                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
+
+                image.Files.Spec3840Id = null;
+                image.Files.Spec2560Id = null;
+                image.Files.Spec1920Id = null;
+                image.Files.Spec800Id = null;
+                image.Files.SpecLowResId = null;
+
+                UpdateImageAsync(image).GetAwaiter().GetResult();
+            });
         }
         #endregion
 
@@ -558,8 +582,8 @@ namespace LB.PhotoGalleries.Application.Servers
             if (!string.IsNullOrEmpty(storageId))
             {
                 var container = client.GetBlobContainerClient(imageFileSpec.ContainerName);
-                var response = await container.DeleteBlobAsync(storageId);
-                Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Status);
+                var response = await container.DeleteBlobIfExistsAsync(storageId);
+                Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
                 return;
             }
 
