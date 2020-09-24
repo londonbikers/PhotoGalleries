@@ -687,7 +687,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Generates a new image file according to an image file spec, uploads it to Azure Blob storage and assigns the relevant Files property storage id value.
         /// </summary>
-        private async Task<bool> GenerateAndStoreImageFileAsync(Image image, FileSpec fileSpec, byte[] imageBytes, BlobServiceClient blobServiceClient)
+        private static async Task<bool> GenerateAndStoreImageFileAsync(Image image, FileSpec fileSpec, byte[] imageBytes, BlobServiceClient blobServiceClient)
         {
             // TEMPORARY: force re-generations whilst we decide on a encoding
             // is there an image missing?
