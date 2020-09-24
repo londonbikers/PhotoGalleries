@@ -580,44 +580,6 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
-        /// Generates an resized image of the original in WebP format (quicker, smaller files).
-        /// </summary>
-        /// <param name="originalImage">The byte array for the original image.</param>
-        /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
-        /// <returns>A new image stream for the resized image</returns>
-        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
-        {
-            var timer = new Stopwatch();
-            timer.Start();
-
-            using var job = new ImageJob();
-            var result = await job.Decode(originalImage)
-                //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
-                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
-                .Finish()
-                .SetSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
-                .InProcessAsync();
-
-            var newImageBytes = result.First.TryGetBytes();
-            if (newImageBytes.HasValue)
-            {
-                var newStream = new MemoryStream(newImageBytes.Value.ToArray());
-
-                timer.Stop();
-                Debug.WriteLine($"ImageServer.GenerateImageAsync: Done. {imageFileSpec.FileSpec}. Elapsed time: {timer.Elapsed}");
-                return newStream;
-            }
-
-            timer.Stop();
-            Debug.WriteLine("ImageServer.GenerateImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
-            return null;
-        }
-
-        /// <summary>
         /// Handles deleting a specific version of an image file according to file spec.
         /// </summary>
         private async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec, BlobServiceClient client)
@@ -657,6 +619,44 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             Debug.WriteLine("ImageServer.DeleteImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
+        }
+
+        /// <summary>
+        /// Generates an resized image of the original in WebP format (quicker, smaller files).
+        /// </summary>
+        /// <param name="originalImage">The byte array for the original image.</param>
+        /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
+        /// <returns>A new image stream for the resized image</returns>
+        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+
+            using var job = new ImageJob();
+            var result = await job.Decode(originalImage)
+                //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
+                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
+                .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
+                .Finish()
+                .SetSecurityOptions(new SecurityOptions()
+                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
+                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
+                .InProcessAsync();
+
+            var newImageBytes = result.First.TryGetBytes();
+            if (newImageBytes.HasValue)
+            {
+                var newStream = new MemoryStream(newImageBytes.Value.ToArray());
+
+                timer.Stop();
+                Debug.WriteLine($"ImageServer.GenerateImageAsync: Done. {imageFileSpec.FileSpec}. Elapsed time: {timer.Elapsed}");
+                return newStream;
+            }
+
+            timer.Stop();
+            Debug.WriteLine("ImageServer.GenerateImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
+            return null;
         }
 
         /// <summary>
