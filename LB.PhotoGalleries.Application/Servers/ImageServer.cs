@@ -556,28 +556,16 @@ namespace LB.PhotoGalleries.Application.Servers
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
 
-            var storageId = string.Empty;
-            switch (imageFileSpec.FileSpec)
+            var storageId = imageFileSpec.FileSpec switch
             {
-                case FileSpec.SpecOriginal:
-                    storageId = image.Files.OriginalId;
-                    break;
-                case FileSpec.Spec3840:
-                    storageId = image.Files.Spec3840Id;
-                    break;
-                case FileSpec.Spec2560:
-                    storageId = image.Files.Spec2560Id;
-                    break;
-                case FileSpec.Spec1920:
-                    storageId = image.Files.Spec1920Id;
-                    break;
-                case FileSpec.Spec800:
-                    storageId = image.Files.Spec800Id;
-                    break;
-                case FileSpec.SpecLowRes:
-                    storageId = image.Files.SpecLowResId;
-                    break;
-            }
+                FileSpec.SpecOriginal => image.Files.OriginalId,
+                FileSpec.Spec3840 => image.Files.Spec3840Id,
+                FileSpec.Spec2560 => image.Files.Spec2560Id,
+                FileSpec.Spec1920 => image.Files.Spec1920Id,
+                FileSpec.Spec800 => image.Files.Spec800Id,
+                FileSpec.SpecLowRes => image.Files.SpecLowResId,
+                _ => string.Empty
+            };
 
             if (!string.IsNullOrEmpty(storageId))
             {
