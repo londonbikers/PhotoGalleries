@@ -650,11 +650,11 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var container = client.GetBlobContainerClient(imageFileSpec.ContainerName);
                 var response = await container.DeleteBlobAsync(storageId);
-                Debug.WriteLine("ImageServer.DelegeImageFileAsync: response status: " + response.Status);
+                Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Status);
                 return;
             }
 
-            Debug.WriteLine("ImageServer.DelegeImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
+            Debug.WriteLine("ImageServer.DeleteImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
         }
 
         /// <summary>
