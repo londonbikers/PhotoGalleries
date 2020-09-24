@@ -408,9 +408,11 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region admin methods
+
         /// <summary>
         /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
         /// </summary>
+        /// <param name="categoryId">The unique identifier for the category the gallery resides in that we want to generate missing images for.</param>
         /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
         /// <returns>A set of responses for each image generated.</returns>
         public async Task<List<string>> GenerateMissingImagesAsync(string categoryId, string galleryId)
