@@ -601,20 +601,15 @@ namespace LB.PhotoGalleries.Application.Servers
                 // we do - download the source image to use for image resizing
                 var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
                 var blob = await blobClient.DownloadAsync();
-
-                // copy the blob stream to a new stream because the blob stream is some weird type that we can't work with.
-                // we need a stream to turn into a Bitmap to get dimensions from.
-                await using var ms = new MemoryStream();
                 await using var originalImageStream = blob.Value.Content;
-                blob.Value.Content.CopyTo(ms);
-                var imageBytes = ms.ToArray();
+                var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
 
                 // are we missing dimensions metadata?
                 if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
                 {
-                    using var bm = new Bitmap(ms);
-                    image.Metadata.Width = bm.Width;
-                    image.Metadata.Height = bm.Height;
+                    var imageInfo = await ImageJob.GetImageInfo(new BytesSource(imageBytes));
+                    image.Metadata.Width = (int?) imageInfo.ImageWidth;
+                    image.Metadata.Height = (int?)imageInfo.ImageHeight;
                     Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
                 }
 
