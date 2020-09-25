@@ -710,7 +710,6 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         private static async Task<bool> GenerateAndStoreImageFileAsync(Image image, FileSpec fileSpec, byte[] imageBytes, BlobServiceClient blobServiceClient)
         {
-            // TEMPORARY: force re-generations whilst we decide on a encoding
             // is there an image missing?
             var workToDo = fileSpec switch
             {
