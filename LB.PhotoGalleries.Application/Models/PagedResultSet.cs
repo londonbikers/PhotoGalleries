@@ -14,9 +14,8 @@ namespace LB.PhotoGalleries.Application.Models
         {
             get 
             {
-                var pages = TotalResults / PageSize;
-                var pagesDecimal = Convert.ToDecimal(pages);
-                var roundedUpDecimal = Math.Ceiling(pagesDecimal);
+                var pages = (double)TotalResults / (double)PageSize;
+                var roundedUpDecimal = Math.Ceiling(pages);
                 var roundedUpInt = Convert.ToInt32(roundedUpDecimal);
 
                 // if we have some items but less than a page size then return one page, not zero
