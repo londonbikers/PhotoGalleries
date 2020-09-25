@@ -41,7 +41,7 @@ namespace LB.PhotoGalleries.Application
         /// </summary>
         internal static byte[] ConvertStreamToBytes(Stream input)
         {
-            if (input == null || input.Length == 0)
+            if (input == null)
                 return null;
 
             using var ms = new MemoryStream();
