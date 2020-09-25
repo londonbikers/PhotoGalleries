@@ -34,13 +34,13 @@ function GetImageThumbnailUrl(files, element) {
     var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
 
     // choose ImageFileSpec for scaled dimensions
-    if (scaledWidth <= 800 && scaledHeight <= 800) {
+    if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
         return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 1920 && scaledHeight <= 1920) {
+    } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
         return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 2560 && scaledHeight <= 2560) {
+    } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
         return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 3840 && scaledHeight <= 3840) {
+    } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
         return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else {
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
