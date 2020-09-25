@@ -608,7 +608,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
                 {
                     var imageInfo = await ImageJob.GetImageInfo(new BytesSource(imageBytes));
-                    image.Metadata.Width = (int?) imageInfo.ImageWidth;
+                    image.Metadata.Width = (int?)imageInfo.ImageWidth;
                     image.Metadata.Height = (int?)imageInfo.ImageHeight;
                     Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
                 }
@@ -616,7 +616,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 // execute the image generation tasks in parallel to make the most of server compute/networking resources
                 var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
                 var imageUpdateNeeded = false;
-                Parallel.ForEach(specs, spec => {
+                Parallel.ForEach(specs, spec =>
+                {
                     var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
                     if (imageGenerated)
                     {
@@ -691,7 +692,8 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // generate and store each image in parallel
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.SpecLowRes };
-            Parallel.ForEach(specs, spec => {
+            Parallel.ForEach(specs, spec =>
+            {
                 var imageBytes = Utilities.ConvertStreamToBytes(imageStream);
                 GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
             });
