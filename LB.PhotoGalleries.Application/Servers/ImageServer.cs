@@ -424,10 +424,16 @@ namespace LB.PhotoGalleries.Application.Servers
             var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
             var responses = new List<string>();
 
-            Parallel.ForEach(images, image =>
+            //Parallel.ForEach(images, image =>
+            //{
+            //    HandlePhotoMissingImagesGenerationAsync(image, blobServiceClient, originalContainerClient, responses).GetAwaiter().GetResult();
+            //});
+
+            // making this synchronous for now whilst we address the server resourcing issue
+            foreach (var image in images)
             {
-                HandlePhotoMissingImagesGenerationAsync(image, blobServiceClient, originalContainerClient, responses).GetAwaiter().GetResult();
-            });
+                await HandlePhotoMissingImagesGenerationAsync(image, blobServiceClient, originalContainerClient, responses);
+            }
 
             // update the gallery with the new thumbnail image (Spec800)
             // todo: this will not be adequate for very high pixel density displays.
