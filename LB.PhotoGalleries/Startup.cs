@@ -101,8 +101,8 @@ namespace LB.PhotoGalleries
             // store processed image files to local storage to use as a cache
             // for development just create a local folder and reference that in configuration.
             // for production we intend on using local Azure App Service storage (d:\local). This is ephemeral but free!
-            //InitialiseImageFlowDiskCache();
-            //services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
+            InitialiseImageFlowDiskCache();
+            services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
