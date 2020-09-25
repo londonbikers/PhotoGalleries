@@ -44,6 +44,9 @@ namespace LB.PhotoGalleries.Application
             if (input == null)
                 return null;
 
+            if (input.CanSeek && input.Position != 0)
+                input.Position = 0;
+
             using var ms = new MemoryStream();
             input.CopyTo(ms);
             return ms.ToArray();

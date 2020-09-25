@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Application.Models;
 using MetadataExtractor;
@@ -15,7 +16,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs.Models;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Application.Models.Image;
 
@@ -60,7 +60,8 @@ namespace LB.PhotoGalleries.Application.Servers
                     Id = id,
                     Name = Path.GetFileNameWithoutExtension(filename),
                     GalleryCategoryId = galleryCategoryId,
-                    GalleryId = galleryId
+                    GalleryId = galleryId,
+                    Files = { OriginalId = id + Path.GetExtension(filename).ToLower() }
                 };
 
                 ParseAndAssignImageMetadata(image, imageStream);
@@ -91,8 +92,13 @@ namespace LB.PhotoGalleries.Application.Servers
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
                 }
 
-                // have the remaining image files generaged asyncronously so we can return asap
+                // have the remaining image files generated asynchronously so we can return asap
                 Task.Run(() => GenerateRemainingFilesAndUpdateImageAsync(image, imageStream, blobServiceClient)).Forget();
+            }
+            catch (Exception ex)
+            {
+                var m = ex.Message;
+                throw;
             }
             finally
             {
@@ -785,6 +791,9 @@ namespace LB.PhotoGalleries.Application.Servers
             using var bm = new Bitmap(imageStream);
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
+
+            if (imageStream.CanSeek && imageStream.Position != 0)
+                imageStream.Position = 0;
 
             var directories = ImageMetadataReader.ReadMetadata(imageStream);
 
