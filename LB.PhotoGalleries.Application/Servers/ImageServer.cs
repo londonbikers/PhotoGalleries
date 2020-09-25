@@ -15,6 +15,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs.Models;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Application.Models.Image;
 
@@ -576,7 +577,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (!string.IsNullOrEmpty(storageId))
             {
                 var container = client.GetBlobContainerClient(imageFileSpec.ContainerName);
-                var response = await container.DeleteBlobIfExistsAsync(storageId);
+                var response = await container.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
                 Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
                 return;
             }
@@ -743,7 +744,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 // upload the new image file to storage (delete any old version first)
                 var containerClient = blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
-                await containerClient.DeleteBlobIfExistsAsync(storageId);
+                await containerClient.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
                 await containerClient.UploadBlobAsync(storageId, imageFile);
             }
 
