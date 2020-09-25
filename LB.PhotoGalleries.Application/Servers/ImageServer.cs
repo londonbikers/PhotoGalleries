@@ -93,7 +93,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
 
                 // have the remaining image files generated asynchronously so we can return asap
-                Task.Run(() => GenerateRemainingFilesAndUpdateImageAsync(image, imageStream, blobServiceClient)).Forget();
+                Task.Run(() => GenerateRemainingFilesAndUpdateImageAsync(image, imageBytes, blobServiceClient)).Forget();
             }
             catch (Exception ex)
             {
@@ -686,13 +686,13 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Generates all remaining (i.e. all but the Spec800) image files, stores them in Azure Blob storage and updates the image object.
         /// </summary>
-        private async Task GenerateRemainingFilesAndUpdateImageAsync(Image image, Stream imageStream, BlobServiceClient blobServiceClient)
+        private async Task GenerateRemainingFilesAndUpdateImageAsync(Image image, byte[] imageBytes, BlobServiceClient blobServiceClient)
         {
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
 
-            if (imageStream == null)
-                throw new ArgumentNullException(nameof(imageStream));
+            if (imageBytes == null)
+                throw new ArgumentNullException(nameof(imageBytes));
 
             if (blobServiceClient == null)
                 throw new ArgumentNullException(nameof(blobServiceClient));
@@ -701,7 +701,6 @@ namespace LB.PhotoGalleries.Application.Servers
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.SpecLowRes };
             Parallel.ForEach(specs, spec =>
             {
-                var imageBytes = Utilities.ConvertStreamToBytes(imageStream);
                 GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
             });
 
