@@ -65,6 +65,8 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var appGallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
             var createdByUser = await Server.Instance.Users.GetUserAsync(appGallery.CreatedByUserId);
             var images = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
+            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, createdByUser.Id);
+            var inErrorState = false;
 
             try
             {
@@ -72,16 +74,31 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 if (!Utilities.CanUserEditObject(User, appGallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
-                    return View();
+                    inErrorState = true;
+                } 
+                else if (!appGallery.Active && gallery.Active && images.Count == 0)
+                {
+                    // don't allow publication if there's no images
+                    ViewData["error"] = "Please upload some photos before trying to make the gallery active.";
+                    inErrorState = true;
+                }
+                else if (!appGallery.Active && gallery.Active && images.Any(i => string.IsNullOrEmpty(i.Files.Spec800Id)))
+                {
+                    // don't allow publication if all images are not yet pre-generated
+                    ViewData["error"] = "Please wait until all images have been processed before making the gallery active.";
+                    inErrorState = true;
                 }
 
-                // map attributes from form gallery to one retrieved from the app server
-                appGallery.Name = gallery.Name;
-                appGallery.Description = gallery.Description;
-                appGallery.Active = gallery.Active;
-             
-                await Server.Instance.Galleries.UpdateGalleryAsync(appGallery);
-                ViewData["success"] = "Gallery updated!";
+                if (!inErrorState)
+                {
+                    // map attributes from form gallery to one retrieved from the app server
+                    appGallery.Name = gallery.Name;
+                    appGallery.Description = gallery.Description;
+                    appGallery.Active = gallery.Active;
+
+                    await Server.Instance.Galleries.UpdateGalleryAsync(appGallery);
+                    ViewData["success"] = "Gallery updated!";
+                }
             }
             catch (Exception ex)
             {
@@ -91,7 +108,6 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = appGallery;
             ViewData["username"] = createdByUser.Name;
             ViewData["images"] = images;
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, createdByUser.Id);
 
             return View();
         }

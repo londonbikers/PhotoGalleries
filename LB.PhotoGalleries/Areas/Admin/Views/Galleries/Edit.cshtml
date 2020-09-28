@@ -179,7 +179,7 @@
     </div>
 
     <div class="row">
-        <div class="col" data-bind="sortable: {foreach: Images, options: {onEnd: OnImageMoved}}"><div class="grid-square" data-bind="attr: {id: 'gi-'+Id}"><a data-bind="attr: {href: GetImageEditUrl(Id)}"><img data-bind="attr: {title: Name, src: GetThumbnailUrl(Files)}" width="280" height="280" /></a></div></div>
+        <div class="col" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }"><div class="grid-square" data-bind="attr: { id: 'gi-'+Id }"><a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(Files) }" width="280" height="280" /></a></div></div>
     </div>
 }
 
@@ -204,6 +204,11 @@
         // this ensures images are as crisp as they can be for each client device.
         function GetThumbnailUrl(files) {
             var scaledSize = 280 * window.devicePixelRatio;
+
+            // if there's no Spec800 file then processing is not complete so show a working graphic for now
+            if (files.Spec800Id === null) {
+                return '/img/generating-images.png';
+            }
 
             // choose ImageFileSpec for scaled dimensions
             if (scaledSize <= 800 && files.Spec800Id != null) {
