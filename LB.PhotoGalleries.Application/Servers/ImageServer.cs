@@ -521,6 +521,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (enableParallelProcessing)
             {
                 // process images in parallel (multi-threaded, faster, more memory intensive)
+                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: processing images in parallel: " + image.Id);
                 Parallel.ForEach(specs, spec =>
                 {
                     GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
@@ -529,6 +530,7 @@ namespace LB.PhotoGalleries.Application.Servers
             else
             {
                 // process images in sequentially
+                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: processing images in sequence: " + image.Id);
                 foreach (var spec in specs)
                     await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
             }
