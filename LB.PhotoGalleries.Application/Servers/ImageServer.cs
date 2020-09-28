@@ -499,6 +499,54 @@ namespace LB.PhotoGalleries.Application.Servers
 
             return Convert.ToInt32(resultSet.Resource.First());
         }
+
+        /// <summary>
+        /// Generates all remaining (i.e. all but the Spec800) image files, stores them in Azure Blob storage and updates the image object.
+        /// </summary>
+        internal async Task GenerateFilesAndUpdateImageAsync(Image image, byte[] imageBytes)
+        {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+
+            if (imageBytes == null)
+                throw new ArgumentNullException(nameof(imageBytes));
+
+            // generate and store each image
+            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
+            var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
+
+            // hosts with very few resources may struggle to process images in parallel so provide an option to configure the host either way
+            bool.TryParse(Server.Instance.Configuration["Host:EnableParallelProcessing"], out var enableParallelProcessing);
+
+            if (enableParallelProcessing)
+            {
+                // process images in parallel (multi-threaded, faster, more memory intensive)
+                Parallel.ForEach(specs, spec =>
+                {
+                    GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
+                });
+            }
+            else
+            {
+                // process images in sequentially
+                foreach (var spec in specs)
+                    await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
+            }
+
+            // update the image with the new image file storage ids
+            await UpdateImageAsync(image);
+
+            // was this the first image? set the gallery thumbnail using this image if so
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
+            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
+            {
+                gallery.ThumbnailStorageId = image.Files.Spec800Id;
+                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: First image, setting gallery thumbnail");
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+            }
+
+            Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: Generated all images");
+        }
         #endregion
 
         #region private methods
@@ -672,54 +720,6 @@ namespace LB.PhotoGalleries.Application.Servers
             timer.Stop();
             Debug.WriteLine("ImageServer.GenerateImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
             return null;
-        }
-
-        /// <summary>
-        /// Generates all remaining (i.e. all but the Spec800) image files, stores them in Azure Blob storage and updates the image object.
-        /// </summary>
-        internal async Task GenerateFilesAndUpdateImageAsync(Image image, byte[] imageBytes)
-        {
-            if (image == null)
-                throw new ArgumentNullException(nameof(image));
-
-            if (imageBytes == null)
-                throw new ArgumentNullException(nameof(imageBytes));
-
-            // generate and store each image
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-
-            // hosts with very few resources may struggle to process images in parallel so provide an option to configure the host either way
-            bool.TryParse(Server.Instance.Configuration["Host:EnableParallelProcessing"], out var enableParallelProcessing);
-
-            if (enableParallelProcessing)
-            {
-                // process images in parallel (multi-threaded, faster, more memory intensive)
-                Parallel.ForEach(specs, spec =>
-                    {
-                        GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
-                    });
-            }
-            else
-            {
-                // process images in sequentially
-                foreach (var spec in specs)
-                    await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
-            }
-
-            // update the image with the new image file storage ids
-            await UpdateImageAsync(image);
-
-            // was this the first image? set the gallery thumbnail using this image if so
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
-            {
-                gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: First image, setting gallery thumbnail");
-                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-            }
-
-            Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: Generated all images");
         }
 
         /// <summary>
