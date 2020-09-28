@@ -690,9 +690,9 @@ namespace LB.PhotoGalleries.Application.Servers
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
 
             // hosts with very few resources may struggle to process images in parallel so provide an option to configure the host either way
-            bool.TryParse(Server.Instance.Configuration["Host:ProcessInParallel"], out var processInParallel);
+            bool.TryParse(Server.Instance.Configuration["Host:EnableParallelProcessing"], out var enableParallelProcessing);
 
-            if (processInParallel)
+            if (enableParallelProcessing)
             {
                 // process images in parallel (multi-threaded, faster, more memory intensive)
                 Parallel.ForEach(specs, spec =>
