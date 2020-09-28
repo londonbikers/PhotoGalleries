@@ -114,6 +114,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         
         [HttpPost]
         [RequestSizeLimit(104857600)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
         public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)
         {
             // RequestSizeLimit: 104857600 = 100MB
