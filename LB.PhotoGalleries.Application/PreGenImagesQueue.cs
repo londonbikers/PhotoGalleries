@@ -16,10 +16,17 @@ namespace LB.PhotoGalleries.Application
     /// </remarks>
     public class PreGenImagesQueue
     {
+        #region members
         private readonly Queue<PreGenImagesJob> _jobs = new Queue<PreGenImagesJob>();
         private bool _delegateQueuedOrRunning;
+        #endregion
 
-        public void Enqueue(PreGenImagesJob job)
+        #region accessors
+        public int Count => _jobs.Count;
+        #endregion
+
+        #region internal methods
+        internal void Enqueue(PreGenImagesJob job)
         {
             lock (_jobs)
             {
@@ -31,7 +38,9 @@ namespace LB.PhotoGalleries.Application
                 ThreadPool.UnsafeQueueUserWorkItem(ProcessQueuedItems, null);
             }
         }
+        #endregion
 
+        #region private methods
         private void ProcessQueuedItems(object ignored)
         {
             while (true)
@@ -60,5 +69,6 @@ namespace LB.PhotoGalleries.Application
                 }
             }
         }
+        #endregion
     }
 }

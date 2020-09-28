@@ -23,7 +23,7 @@ namespace LB.PhotoGalleries.Application.Servers
     public class ImageServer
     {
         #region accessors
-        private PreGenImagesQueue ImageProcessingQueue { get; }
+        public PreGenImagesQueue ImageProcessingQueue { get; }
         #endregion
 
         #region constructors
