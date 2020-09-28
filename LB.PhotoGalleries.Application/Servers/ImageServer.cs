@@ -688,8 +688,24 @@ namespace LB.PhotoGalleries.Application.Servers
             // generate and store each image
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-            foreach (var spec in specs)
-                await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
+
+            // hosts with very few resources may struggle to process images in parallel so provide an option to configure the host either way
+            bool.TryParse(Server.Instance.Configuration["Host:ProcessInParallel"], out var processInParallel);
+
+            if (processInParallel)
+            {
+                // process images in parallel (multi-threaded, faster, more memory intensive)
+                Parallel.ForEach(specs, spec =>
+                    {
+                        GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
+                    });
+            }
+            else
+            {
+                // process images in sequentially
+                foreach (var spec in specs)
+                    await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
+            }
 
             // update the image with the new image file storage ids
             await UpdateImageAsync(image);
