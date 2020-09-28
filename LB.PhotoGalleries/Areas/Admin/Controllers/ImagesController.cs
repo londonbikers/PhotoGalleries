@@ -2,10 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Configuration;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Areas.Admin.Controllers
 {
@@ -113,6 +112,12 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 ViewData["error"] = ex.Message;
                 return View();
             }
+        }
+
+        //GET: /admin/images/queue
+        public ActionResult Queue()
+        {
+            return View();
         }
     }
 }
