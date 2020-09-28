@@ -113,8 +113,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         }
         
         [HttpPost]
+        [RequestSizeLimit(104857600)]
         public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)
         {
+            // RequestSizeLimit: 104857600 = 100MB
             // store the file in cloud storage and post-process
             // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
 
