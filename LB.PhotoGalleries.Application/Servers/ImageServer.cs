@@ -3,6 +3,9 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Utilities;
+using LB.PhotoGalleries.Shared;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
@@ -227,12 +230,12 @@ namespace LB.PhotoGalleries.Application.Servers
             // delete all image files
             // todo: optimise this by running in parallel
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
@@ -254,7 +257,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     .WithParameter("@galleryId", galleryId)
                     .WithParameter("@position", position.Value);
 
-                var ids = await Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+                var ids = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
                 Image newThumbnailImage = null;
 
                 for (var index = 0; index < ids.Count; index++)
@@ -452,11 +455,11 @@ namespace LB.PhotoGalleries.Application.Servers
             var images = await GetGalleryImagesAsync(galleryId);
             Parallel.ForEach(images, image =>
             {
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
 
                 image.Files.Spec3840Id = null;
                 image.Files.Spec2560Id = null;
@@ -742,7 +745,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 return false;
             }
 
-            var imageFileSpec = Server.Instance.GetImageFileSpec(fileSpec);
+            var imageFileSpec = ImageFileSpecs.GetImageFileSpec(fileSpec);
 
             // we only generate images if the source image is larger than the size we're being asked to resize to, i.e. we only go down in size
             var longestSide = image.Metadata.Width > image.Metadata.Height ? image.Metadata.Width : image.Metadata.Height;
@@ -794,7 +797,8 @@ namespace LB.PhotoGalleries.Application.Servers
             var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
 
             // Create the message and send to the queue
-            var messageText = Utilities.Base64Encode(image.Id);
+            var ids = image.Id + ":" + image.GalleryId;
+            var messageText = Utilities.Base64Encode(ids);
             await queueClient.SendMessageAsync(messageText);
         }
         #endregion

@@ -10,6 +10,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LB.PhotoGalleries.Functions
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LB.PhotoGalleries.Models", "LB.PhotoGalleries.Models\LB.PhotoGalleries.Models.csproj", "{9424FBF1-A64B-46D2-8556-CD072155A48B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LB.PhotoGalleries.Shared", "LB.PhotoGalleries.Shared\LB.PhotoGalleries.Shared.csproj", "{66A797E1-3822-420D-95CB-6312386FEE56}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{9424FBF1-A64B-46D2-8556-CD072155A48B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9424FBF1-A64B-46D2-8556-CD072155A48B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9424FBF1-A64B-46D2-8556-CD072155A48B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66A797E1-3822-420D-95CB-6312386FEE56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66A797E1-3822-420D-95CB-6312386FEE56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66A797E1-3822-420D-95CB-6312386FEE56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66A797E1-3822-420D-95CB-6312386FEE56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

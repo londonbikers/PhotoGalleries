@@ -1,4 +1,6 @@
-﻿namespace LB.PhotoGalleries.Models
+﻿using LB.PhotoGalleries.Models.Enums;
+
+namespace LB.PhotoGalleries.Models
 {
     /// <summary>
     /// Defines an image file specification we use to create and retrieve pre-generated images.

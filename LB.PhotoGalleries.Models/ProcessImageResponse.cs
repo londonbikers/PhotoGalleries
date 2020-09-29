@@ -1,11 +1,13 @@
-﻿namespace LB.PhotoGalleries.Models
+﻿using LB.PhotoGalleries.Models.Enums;
+
+namespace LB.PhotoGalleries.Models
 {
     public class ProcessImageResponse
     {
-        public string FileSpec { get; }
+        public FileSpec FileSpec { get; }
         public string StorageId { get; }
 
-        public ProcessImageResponse(string fileSpec, string storageId)
+        public ProcessImageResponse(FileSpec fileSpec, string storageId)
         {
             FileSpec = fileSpec;
             StorageId = storageId;

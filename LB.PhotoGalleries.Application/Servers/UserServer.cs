@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using LB.PhotoGalleries.Models.Utilities;
+using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

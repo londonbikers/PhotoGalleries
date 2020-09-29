@@ -1,4 +1,5 @@
 ﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Utilities;
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
@@ -127,7 +128,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 maxResults = 100;
 
             var queryDefinition = new QueryDefinition("SELECT TOP @pageSize c.id AS Id, c.CategoryId AS PartitionKey FROM c WHERE c.Active = true ORDER BY c.Created DESC").WithParameter("@pageSize", maxResults);
-            var databaseIds = await Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+            var databaseIds = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
             var galleries = new List<Gallery>();
 
             foreach (var databaseId in databaseIds)

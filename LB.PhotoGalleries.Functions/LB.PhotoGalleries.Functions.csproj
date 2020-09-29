@@ -5,6 +5,9 @@
     <UserSecretsId>daeb26df-7fce-4077-9950-8373c2f10aea</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
+    <PackageReference Include="Imageflow.Net" Version="0.7.6" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.13.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.3.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.1.0" />
@@ -12,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LB.PhotoGalleries.Models\LB.PhotoGalleries.Models.csproj" />
+    <ProjectReference Include="..\LB.PhotoGalleries.Shared\LB.PhotoGalleries.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

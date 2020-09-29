@@ -1,4 +1,4 @@
-﻿namespace LB.PhotoGalleries.Models
+﻿namespace LB.PhotoGalleries.Models.Enums
 {
     /// <summary>
     /// Names of file specs we use to pre-generate images for.

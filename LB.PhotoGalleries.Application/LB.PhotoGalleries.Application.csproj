@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LB.PhotoGalleries.Models\LB.PhotoGalleries.Models.csproj" />
+    <ProjectReference Include="..\LB.PhotoGalleries.Shared\LB.PhotoGalleries.Shared.csproj" />
   </ItemGroup>
 </Project>
