@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Queues;
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Application.Models;
 using MetadataExtractor;
@@ -22,14 +23,9 @@ namespace LB.PhotoGalleries.Application.Servers
 {
     public class ImageServer
     {
-        #region accessors
-        public PreGenImagesQueue ImageProcessingQueue { get; }
-        #endregion
-
         #region constructors
         internal ImageServer()
         {
-            ImageProcessingQueue = new PreGenImagesQueue();
         }
         #endregion
 
@@ -83,8 +79,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
 
-                // create a queue job to have the pre-generated images created and the image object updated
-                ImageProcessingQueue.Enqueue(new PreGenImagesJob(image, Utilities.ConvertStreamToBytes(imageStream)));
+                // have the pre-gen images created by an Azure Function
+                await PostProcessImagesAsync(image);
             }
             catch (Exception ex)
             {
@@ -787,6 +783,19 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Adds the image id to the images-to-process Azure storage message queue so that pre-generated images can be created to speed up page delivery.
+        /// </summary>
+        private static async Task PostProcessImagesAsync(Image image)
+        {
+            // instantiate a QueueClient which will be used to create and manipulate the queue
+            var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
+
+            // Create the message and send to the queue
+            var messageText = Utilities.Base64Encode(image.Id);
+            await queueClient.SendMessageAsync(messageText);
         }
         #endregion
 

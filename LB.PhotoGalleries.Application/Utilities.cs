@@ -59,6 +59,15 @@ namespace LB.PhotoGalleries.Application
         {
             return Guid.NewGuid().ToString().Replace("-", string.Empty);
         }
+
+        /// <summary>
+        /// Base64 encodes a string.
+        /// </summary>
+        internal static string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return Convert.ToBase64String(plainTextBytes);
+        }
     }
 
     internal static class Extensions

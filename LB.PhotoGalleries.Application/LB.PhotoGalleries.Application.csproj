@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.5.1" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.4.2" />
     <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.4.10-rc50" />
     <PackageReference Include="Imageflow.Net" Version="0.7.2" />
     <PackageReference Include="MetadataExtractor" Version="2.4.3" />

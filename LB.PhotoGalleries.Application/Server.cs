@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using LB.PhotoGalleries.Application.Models;
 using LB.PhotoGalleries.Application.Servers;
 using Microsoft.Azure.Cosmos;
@@ -61,6 +62,7 @@ namespace LB.PhotoGalleries.Application
             Configuration = configuration;
             await InitialiseDatabaseAsync();
             await InitialiseStorageAsync();
+            await InitialiseQueuesAsync();
         }
 
         public ImageFileSpec GetImageFileSpec(FileSpec fileSpec)
@@ -198,6 +200,24 @@ namespace LB.PhotoGalleries.Application
                     // something bad happened
                     throw;
             }
+        }
+
+        /// <summary>
+        /// Sets up the Azure Storage message queues.
+        /// </summary>
+        private async Task InitialiseQueuesAsync()
+        {
+            var storageConnectionString = Configuration["Storage:ConnectionString"];
+            
+            // Instantiate a QueueClient which will be used to create and manipulate the queue
+            var queueClient = new QueueClient(storageConnectionString, Constants.QueueImagesToProcess);
+
+            // Create the queue
+            var response = await queueClient.CreateIfNotExistsAsync();
+
+            Debug.WriteLine(response != null
+                ? $"Server.InitialiseQueuesAsync: Created {queueClient.Name} queue? {response.ReasonPhrase}"
+                : $"Server.InitialiseQueuesAsync: {queueClient.Name} already exists.");
         }
 
         private void PopulateFileSpecs()
