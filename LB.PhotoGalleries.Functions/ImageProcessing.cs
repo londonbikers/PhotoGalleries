@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Functions
@@ -57,7 +56,10 @@ namespace LB.PhotoGalleries.Functions
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
 
             // resize images in parallel
-            var parallelTasks = specs.Select(spec => context.CallActivityAsync<ProcessImageResponse>("ProcessImage", new ProcessImageInput(image, imageBytes, spec))).ToList();
+            var parallelTasks = new List<Task<ProcessImageResponse>>();
+            foreach (var spec in specs)
+                parallelTasks.Add(context.CallActivityAsync<ProcessImageResponse>("ProcessImage", new ProcessImageInput(image, imageBytes, spec)));
+
             await Task.WhenAll(parallelTasks);
 
             // write the new storage ids back to the Image object
