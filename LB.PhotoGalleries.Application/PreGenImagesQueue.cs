@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Application.Models;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application
 {
@@ -35,13 +36,13 @@ namespace LB.PhotoGalleries.Application
                     return;
 
                 _delegateQueuedOrRunning = true;
-                ThreadPool.UnsafeQueueUserWorkItem(ProcessQueuedItems, null);
+                ThreadPool.UnsafeQueueUserWorkItem(async cancellationToken => { await ProcessQueuedItems(); }, null);
             }
         }
         #endregion
 
         #region private methods
-        private void ProcessQueuedItems(object ignored)
+        private async Task ProcessQueuedItems()
         {
             while (true)
             {
@@ -60,11 +61,11 @@ namespace LB.PhotoGalleries.Application
                 try
                 {
                     //do job
-                    Server.Instance.Images.GenerateFilesAndUpdateImageAsync(item.Image, item.ImageBytes).GetAwaiter().GetResult();
+                    await Server.Instance.Images.GenerateFilesAndUpdateImageAsync(item.Image, item.ImageBytes);
                 }
                 catch
                 {
-                    ThreadPool.UnsafeQueueUserWorkItem(ProcessQueuedItems, null);
+                    ThreadPool.UnsafeQueueUserWorkItem(async cancellationToken => { await ProcessQueuedItems(); }, null);
                     throw;
                 }
             }
