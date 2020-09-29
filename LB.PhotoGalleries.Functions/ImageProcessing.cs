@@ -90,19 +90,7 @@ namespace LB.PhotoGalleries.Functions
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
             // update the gallery thumbnail if this is the first image
-            //var galleryContainer = database.GetContainer(Constants.GalleriesContainerName);
-            //var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(image.GalleryCategoryId));
-            //log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
-            //var gallery = getGalleryResponse.Resource;
-
-            //if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
-            //{
-            //    gallery.ThumbnailStorageId = image.Files.Spec800Id;
-            //    log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail");
-            //    await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-            //}
-
-            // in future: expire Image cache item
+            // todo...
         }
 
         /// <summary>
