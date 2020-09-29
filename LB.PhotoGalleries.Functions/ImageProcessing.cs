@@ -41,15 +41,15 @@ namespace LB.PhotoGalleries.Functions
             var cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
             var database = cosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
             var container = database.GetContainer(Constants.ImagesContainerName);
-            var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
+            var response = container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
             var image = response.Resource;
 
             // download image bytes
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
             var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
             var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
-            var blob = await blobClient.DownloadAsync();
-            await using var originalImageStream = blob.Value.Content;
+            var blob = blobClient.Download();
+            using var originalImageStream = blob.Value.Content;
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
 
             // create array of file specs
@@ -86,7 +86,7 @@ namespace LB.PhotoGalleries.Functions
             }
 
             // update image in db
-            var replaceResult = await container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
+            var replaceResult = container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
             // update the gallery thumbnail if this is the first image
