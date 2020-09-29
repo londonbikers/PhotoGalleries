@@ -1,8 +1,8 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
-using LB.PhotoGalleries.Application.Models;
 using LB.PhotoGalleries.Application.Servers;
+using LB.PhotoGalleries.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;

@@ -4,7 +4,7 @@ using Imageflow.Server;
 using Imageflow.Server.DiskCache;
 using Imageflow.Server.Storage.AzureBlob;
 using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

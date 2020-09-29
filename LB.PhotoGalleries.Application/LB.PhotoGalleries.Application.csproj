@@ -13,4 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.7" />
     <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LB.PhotoGalleries.Models\LB.PhotoGalleries.Models.csproj" />
+  </ItemGroup>
 </Project>

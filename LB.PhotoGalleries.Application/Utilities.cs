@@ -1,4 +1,4 @@
-﻿using LB.PhotoGalleries.Application.Models;
+﻿using LB.PhotoGalleries.Models;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;

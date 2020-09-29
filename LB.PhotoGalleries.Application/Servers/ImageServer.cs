@@ -2,7 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Imageflow.Fluent;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
@@ -17,7 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Directory = MetadataExtractor.Directory;
-using Image = LB.PhotoGalleries.Application.Models.Image;
+using Image = LB.PhotoGalleries.Models.Image;
 
 namespace LB.PhotoGalleries.Application.Servers
 {

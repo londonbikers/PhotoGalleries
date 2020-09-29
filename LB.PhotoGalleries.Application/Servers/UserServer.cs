@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using User = LB.PhotoGalleries.Application.Models.User;
+using User = LB.PhotoGalleries.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
 {

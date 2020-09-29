@@ -1,5 +1,5 @@
 ﻿using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
