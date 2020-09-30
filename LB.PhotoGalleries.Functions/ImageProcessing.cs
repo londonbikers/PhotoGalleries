@@ -21,7 +21,7 @@ namespace LB.PhotoGalleries.Functions
     {
         #region public methods
         [FunctionName("ImageProcessingQueueStart")]
-        public static Task Run([QueueTrigger("images-to-process")] string queueMessage, [DurableClient] IDurableOrchestrationClient starter)
+        public static Task Run([QueueTrigger("images-to-process", Connection = "Storage:ConnectionString")] string queueMessage, [DurableClient] IDurableOrchestrationClient starter)
         {
             // Orchestration queueMessage comes from the queue message content.
             return starter.StartNewAsync("ImageProcessingOrchestrator", queueMessage);
