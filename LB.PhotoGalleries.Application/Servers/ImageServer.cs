@@ -520,14 +520,6 @@ namespace LB.PhotoGalleries.Application.Servers
             return (string)resultSet.Resource.FirstOrDefault();
         }
 
-        private static Image GetGalleryThumbnailImage(IReadOnlyCollection<Image> images)
-        {
-            if (images.Any(i => i.Position.HasValue))
-                return images.Single(i => i.Position != null && i.Position.Value == 0);
-
-            return images.OrderBy(i => i.Created).First();
-        }
-
         /// <summary>
         /// Handles deleting a specific version of an image file according to file spec.
         /// </summary>
@@ -563,10 +555,6 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         private static async Task PostProcessImagesAsync(Image image)
         {
-            // message queue items can be initiated too quickly and cosmos db returns a 404 so add a little delay
-            // (I know, this is bad, but looking to prove the issue first)
-            await Task.Delay(TimeSpan.FromSeconds(5));
-
             // instantiate a QueueClient which will be used to create and manipulate the queue
             var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
 
