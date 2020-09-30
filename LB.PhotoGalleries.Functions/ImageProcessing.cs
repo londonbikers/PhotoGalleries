@@ -86,7 +86,7 @@ namespace LB.PhotoGalleries.Functions
                 }
             }
 
-            // update image in db
+            // update image in the db
             var replaceResult = container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
@@ -102,7 +102,7 @@ namespace LB.PhotoGalleries.Functions
                 gallery.ThumbnailStorageId = image.Files.Spec800Id;
                 log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail");
 
-                // update the gallery
+                // update the gallery in the db
                 var partitionKey = new PartitionKey(gallery.CategoryId);
                 var updateGalleryResponse = await container.ReplaceItemAsync(gallery, gallery.Id, partitionKey);
                 log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
