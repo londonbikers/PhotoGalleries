@@ -563,6 +563,10 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         private static async Task PostProcessImagesAsync(Image image)
         {
+            // message queue items can be initiated too quickly and cosmos db returns a 404 so add a little delay
+            // (I know, this is bad, but looking to prove the issue first)
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
             // instantiate a QueueClient which will be used to create and manipulate the queue
             var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
 
