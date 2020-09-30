@@ -1,7 +1,10 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Imageflow.Fluent;
-using LB.PhotoGalleries.Application.Models;
+using Azure.Storage.Queues;
+using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Utilities;
+using LB.PhotoGalleries.Shared;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
@@ -16,20 +19,15 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Directory = MetadataExtractor.Directory;
-using Image = LB.PhotoGalleries.Application.Models.Image;
+using Image = LB.PhotoGalleries.Models.Image;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
     public class ImageServer
     {
-        #region accessors
-        public PreGenImagesQueue ImageProcessingQueue { get; }
-        #endregion
-
         #region constructors
         internal ImageServer()
         {
-            ImageProcessingQueue = new PreGenImagesQueue();
         }
         #endregion
 
@@ -83,8 +81,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
 
-                // create a queue job to have the pre-generated images created and the image object updated
-                ImageProcessingQueue.Enqueue(new PreGenImagesJob(image, Utilities.ConvertStreamToBytes(imageStream)));
+                // have the pre-gen images created by an Azure Function
+                await PostProcessImagesAsync(image);
             }
             catch (Exception ex)
             {
@@ -231,12 +229,12 @@ namespace LB.PhotoGalleries.Application.Servers
             // delete all image files
             // todo: optimise this by running in parallel
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
-            await DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
@@ -258,7 +256,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     .WithParameter("@galleryId", galleryId)
                     .WithParameter("@position", position.Value);
 
-                var ids = await Utilities.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+                var ids = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
                 Image newThumbnailImage = null;
 
                 for (var index = 0; index < ids.Count; index++)
@@ -407,44 +405,22 @@ namespace LB.PhotoGalleries.Application.Servers
 
         #region admin methods
         /// <summary>
-        /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
+        /// If we add new types of generated images to the app then new image files will need generating.
+        /// This method will re-generate all pre-generated images including new ones.
         /// </summary>
-        /// <param name="categoryId">The unique identifier for the category the gallery resides in that we want to generate missing images for.</param>
         /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
         /// <returns>A set of responses for each image generated.</returns>
-        public async Task<List<string>> GenerateMissingImagesAsync(string categoryId, string galleryId)
+        public async Task GenerateMissingImagesAsync(string galleryId)
         {
             if (string.IsNullOrEmpty(galleryId))
                 throw new ArgumentException("galleryId is invalid", nameof(galleryId));
 
+            // make sure you update the file specs in LB.PhotoGalleries.Functions.ImageProcessing class so it knows to generate new images
+            // todo: modify queue usage so the message says what file specs to generate, making this a more efficient process, i.e. only generate missing image files
+
             var images = await GetGalleryImagesAsync(galleryId);
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var responses = new List<string>();
-
-            //Parallel.ForEach(images, image =>
-            //{
-            //    HandlePhotoMissingImagesGenerationAsync(image, blobServiceClient, originalContainerClient, responses).GetAwaiter().GetResult();
-            //});
-
-            // making this synchronous for now whilst we address the server resourcing issue
             foreach (var image in images)
-            {
-                await HandlePhotoMissingImagesGenerationAsync(image, blobServiceClient, originalContainerClient, responses);
-            }
-
-            // update the gallery with the new thumbnail image (Spec800)
-            // todo: this will not be adequate for very high pixel density displays.
-            // need to expand the concept so it allows client to make best decision (maybe just put the whole Files object into Gallery).
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
-            if (!gallery.ThumbnailStorageId.EndsWith(".webp"))
-            {
-                gallery.ThumbnailStorageId = GetGalleryThumbnailImage(images).Files.Spec800Id;
-                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                Debug.WriteLine("ImageServer:GenerateMissingImagesAsync: updated thumbnail: " + gallery.ThumbnailStorageId);
-            }
-
-            return responses;
+                await PostProcessImagesAsync(image);
         }
 
         /// <summary>
@@ -456,11 +432,11 @@ namespace LB.PhotoGalleries.Application.Servers
             var images = await GetGalleryImagesAsync(galleryId);
             Parallel.ForEach(images, image =>
             {
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, Server.Instance.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
 
                 image.Files.Spec3840Id = null;
                 image.Files.Spec2560Id = null;
@@ -498,56 +474,6 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}");
 
             return Convert.ToInt32(resultSet.Resource.First());
-        }
-
-        /// <summary>
-        /// Generates all remaining (i.e. all but the Spec800) image files, stores them in Azure Blob storage and updates the image object.
-        /// </summary>
-        internal async Task GenerateFilesAndUpdateImageAsync(Image image, byte[] imageBytes)
-        {
-            if (image == null)
-                throw new ArgumentNullException(nameof(image));
-
-            if (imageBytes == null)
-                throw new ArgumentNullException(nameof(imageBytes));
-
-            // generate and store each image
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-
-            // hosts with very few resources may struggle to process images in parallel so provide an option to configure the host either way
-            bool.TryParse(Server.Instance.Configuration["Host:EnableParallelProcessing"], out var enableParallelProcessing);
-
-            if (enableParallelProcessing)
-            {
-                // process images in parallel (multi-threaded, faster, more memory intensive)
-                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: processing images in parallel: " + image.Id);
-                Parallel.ForEach(specs, spec =>
-                {
-                    GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
-                });
-            }
-            else
-            {
-                // process images in sequentially
-                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: processing images in sequence: " + image.Id);
-                foreach (var spec in specs)
-                    await GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient);
-            }
-
-            // update the image with the new image file storage ids
-            await UpdateImageAsync(image);
-
-            // was this the first image? set the gallery thumbnail using this image if so
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
-            {
-                gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: First image, setting gallery thumbnail");
-                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-            }
-
-            Debug.WriteLine("ImageServer.GenerateFilesAndUpdateImageAsync: Generated all images");
         }
         #endregion
 
@@ -632,161 +558,18 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("ImageServer.DeleteImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
         }
 
-        private async Task HandlePhotoMissingImagesGenerationAsync(Image image, BlobServiceClient blobServiceClient, BlobContainerClient originalContainerClient, ICollection<string> responses)
-        {
-            // do we have any work to do?
-            if (string.IsNullOrEmpty(image.Files.OriginalId) ||
-                string.IsNullOrEmpty(image.Files.Spec3840Id) ||
-                string.IsNullOrEmpty(image.Files.Spec2560Id) ||
-                string.IsNullOrEmpty(image.Files.Spec1920Id) ||
-                string.IsNullOrEmpty(image.Files.Spec800Id) ||
-                string.IsNullOrEmpty(image.Files.SpecLowResId))
-            {
-                // migrate the original storage id
-                if (!string.IsNullOrEmpty(image.StorageId) && string.IsNullOrEmpty(image.Files.OriginalId))
-                    image.Files.OriginalId = image.StorageId;
-
-                // we do - download the source image to use for image resizing
-                var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
-                var blob = await blobClient.DownloadAsync();
-                await using var originalImageStream = blob.Value.Content;
-                var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
-
-                // are we missing dimensions metadata?
-                if (!image.Metadata.Width.HasValue || !image.Metadata.Height.HasValue)
-                {
-                    var imageInfo = await ImageJob.GetImageInfo(new BytesSource(imageBytes));
-                    image.Metadata.Width = (int?)imageInfo.ImageWidth;
-                    image.Metadata.Height = (int?)imageInfo.ImageHeight;
-                    Debug.WriteLine($"ImageServer:GenerateRemainingFilesAndUpdateImageAsync: Setting dimensions: {image.Metadata.Width} x {image.Metadata.Height}");
-                }
-
-                // execute the image generation tasks in parallel to make the most of server compute/networking resources
-                var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
-                var imageUpdateNeeded = false;
-                Parallel.ForEach(specs, spec =>
-                {
-                    var imageGenerated = GenerateAndStoreImageFileAsync(image, spec, imageBytes, blobServiceClient).GetAwaiter().GetResult();
-                    if (imageGenerated)
-                    {
-                        imageUpdateNeeded = true;
-                        responses.Add($"Generated {spec} for image: {image.Id}");
-                    }
-                    else
-                        responses.Add($"No {spec} needed for image: {image.Id}");
-                });
-
-                // update the image with the new image storage ids
-                if (imageUpdateNeeded)
-                    await UpdateImageAsync(image);
-            }
-            else
-            {
-                responses.Add("No missing files for image: " + image.Id);
-            }
-        }
-
         /// <summary>
-        /// Generates an resized image of the original in WebP format (quicker, smaller files).
+        /// Adds the image id to the images-to-process Azure storage message queue so that pre-generated images can be created to speed up page delivery.
         /// </summary>
-        /// <param name="originalImage">The byte array for the original image.</param>
-        /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
-        /// <returns>A new image stream for the resized image</returns>
-        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
+        private static async Task PostProcessImagesAsync(Image image)
         {
-            var timer = new Stopwatch();
-            timer.Start();
+            // instantiate a QueueClient which will be used to create and manipulate the queue
+            var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
 
-            using var job = new ImageJob();
-            var result = await job.Decode(originalImage)
-                //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
-                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
-                .Finish()
-                .SetSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
-                .InProcessAsync();
-
-            var newImageBytes = result.First.TryGetBytes();
-            if (newImageBytes.HasValue)
-            {
-                var newStream = new MemoryStream(newImageBytes.Value.ToArray());
-
-                timer.Stop();
-                Debug.WriteLine($"ImageServer.GenerateImageAsync: Done. {imageFileSpec.FileSpec}. Elapsed time: {timer.Elapsed}");
-                return newStream;
-            }
-
-            timer.Stop();
-            Debug.WriteLine("ImageServer.GenerateImageAsync: Couldn't generate new image! Elapsed time: " + timer.Elapsed);
-            return null;
-        }
-
-        /// <summary>
-        /// Generates a new image file according to an image file spec, uploads it to Azure Blob storage and assigns the relevant Files property storage id value.
-        /// </summary>
-        private static async Task<bool> GenerateAndStoreImageFileAsync(Image image, FileSpec fileSpec, byte[] imageBytes, BlobServiceClient blobServiceClient)
-        {
-            // is there an image missing?
-            var workToDo = fileSpec switch
-            {
-                FileSpec.Spec3840 when !string.IsNullOrEmpty(image.Files.Spec3840Id) => false,
-                FileSpec.Spec2560 when !string.IsNullOrEmpty(image.Files.Spec2560Id) => false,
-                FileSpec.Spec1920 when !string.IsNullOrEmpty(image.Files.Spec1920Id) => false,
-                FileSpec.Spec800 when !string.IsNullOrEmpty(image.Files.Spec800Id) => false,
-                FileSpec.SpecLowRes when !string.IsNullOrEmpty(image.Files.SpecLowResId) => false,
-                _ => true
-            };
-
-            if (!workToDo)
-            {
-                Debug.WriteLine($"ImageSever:GenerateAndStoreImageFileAsync: {fileSpec} has already been generated, no work to do");
-                return false;
-            }
-
-            var imageFileSpec = Server.Instance.GetImageFileSpec(fileSpec);
-
-            // we only generate images if the source image is larger than the size we're being asked to resize to, i.e. we only go down in size
-            var longestSide = image.Metadata.Width > image.Metadata.Height ? image.Metadata.Width : image.Metadata.Height;
-            if (longestSide <= imageFileSpec.PixelLength)
-            {
-                Debug.WriteLine($"ImageServer.GenerateAndStoreImageFileAsync: image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
-                return false;
-            }
-
-            // create the new image file
-            var storageId = imageFileSpec.GetStorageId(image);
-            await using (var imageFile = await GenerateImageAsync(imageBytes, imageFileSpec))
-            {
-                // upload the new image file to storage (delete any old version first)
-                var containerClient = blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
-                await containerClient.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
-                await containerClient.UploadBlobAsync(storageId, imageFile);
-            }
-
-            // now update the image with the new file storage id
-            switch (fileSpec)
-            {
-                case FileSpec.Spec3840:
-                    image.Files.Spec3840Id = storageId;
-                    break;
-                case FileSpec.Spec2560:
-                    image.Files.Spec2560Id = storageId;
-                    break;
-                case FileSpec.Spec1920:
-                    image.Files.Spec1920Id = storageId;
-                    break;
-                case FileSpec.Spec800:
-                    image.Files.Spec800Id = storageId;
-                    break;
-                case FileSpec.SpecLowRes:
-                    image.Files.SpecLowResId = storageId;
-                    break;
-            }
-
-            return true;
+            // Create the message and send to the queue
+            var ids = image.Id + ":" + image.GalleryId;
+            var messageText = Utilities.Base64Encode(ids);
+            await queueClient.SendMessageAsync(messageText);
         }
         #endregion
 

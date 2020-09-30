@@ -1,8 +1,7 @@
 ﻿@using LB.PhotoGalleries.Application
-@using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
 @using System.Linq
-@model LB.PhotoGalleries.Application.Models.Gallery
+@model Gallery
 @{
     ViewData["Title"] = ViewData.Model.Name;
     var category = Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId);

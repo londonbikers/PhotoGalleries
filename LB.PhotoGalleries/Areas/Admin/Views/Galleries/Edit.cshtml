@@ -1,7 +1,6 @@
 ﻿@using LB.PhotoGalleries.Application
-@using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
-@model LB.PhotoGalleries.Application.Models.Gallery
+@model Gallery
 @{
     ViewData["Title"] = "Edit Gallery";
     var error = (string)ViewData["error"];
@@ -285,7 +284,7 @@
 
             this.GenerateMissingImageFiles = function() {
                 console.log('GenerateMissingImageFiles()');
-                $.post('/api/images/generate-missing-image-files?categoryId=@Model.CategoryId&galleryId=@Model.Id')
+                $.post('/api/images/generate-missing-image-files?galleryId=@Model.Id')
                     .done(function (responses) {
                         console.log("GenerateMissingImageFiles(): done");
                         console.log(responses);

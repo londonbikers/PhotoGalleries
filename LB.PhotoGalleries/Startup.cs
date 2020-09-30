@@ -4,7 +4,9 @@ using Imageflow.Server;
 using Imageflow.Server.DiskCache;
 using Imageflow.Server.Storage.AzureBlob;
 using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -208,9 +210,9 @@ namespace LB.PhotoGalleries
             Debug.WriteLine("InitialiseImageFlowDiskCache: created new path");
         }
 
-        private void AddImageFlowBlobService(IServiceCollection services, FileSpec filsSpec, string path)
+        private void AddImageFlowBlobService(IServiceCollection services, FileSpec fileSpec, string path)
         {
-            var imageFlowSpec = Server.Instance.GetImageFileSpec(filsSpec);
+            var imageFlowSpec = ImageFileSpecs.GetImageFileSpec(fileSpec);
             services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], new BlobClientOptions())
                 .MapPrefix(path, imageFlowSpec.ContainerName));
         }

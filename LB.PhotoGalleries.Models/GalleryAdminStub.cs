@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace LB.PhotoGalleries.Application.Models
+namespace LB.PhotoGalleries.Models
 {
     /// <summary>
     /// A downsized version of the Gallery model. Used in the admin area for displaying the gallery in indexes and other

@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace LB.PhotoGalleries.Application.Models
+namespace LB.PhotoGalleries.Models
 {
     public class Comment
     {

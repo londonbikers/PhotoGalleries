@@ -1,7 +1,6 @@
 ﻿@using LB.PhotoGalleries.Application
-@using LB.PhotoGalleries.Application.Models
 @using Newtonsoft.Json
-@model LB.PhotoGalleries.Application.Models.Category
+@model Category
 @{
     ViewData["Title"] = "Details";
     var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];

@@ -1,5 +1,5 @@
 ﻿using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -113,18 +113,17 @@ namespace LB.PhotoGalleries.Controllers.Api
         /// <summary>
         /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
         /// </summary>
-        /// <param name="categoryId">The unique identifier for the category the gallery resides in that we want to generate missing image files for.</param>
         /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
         /// <returns>A set of responses for each image generated.</returns>
         [HttpPost("/api/images/generate-missing-image-files")]
         [Authorize(Roles = "Administrator")]
-        public async Task<ActionResult> GenerateMissingImageFiles(string categoryId, string galleryId)
+        public async Task<ActionResult> GenerateMissingImageFiles(string galleryId)
         {
             if (string.IsNullOrEmpty(galleryId))
                 return BadRequest("galleryId value missing");
 
-            var responses = await Server.Instance.Images.GenerateMissingImagesAsync(categoryId, galleryId);
-            return Ok(responses);
+            await Server.Instance.Images.GenerateMissingImagesAsync(galleryId);
+            return Ok();
         }
 
         [HttpPost("/api/images/delete-pregen-image-files")]

@@ -113,11 +113,5 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return View();
             }
         }
-
-        //GET: /admin/images/queue
-        public ActionResult Queue()
-        {
-            return View();
-        }
     }
 }

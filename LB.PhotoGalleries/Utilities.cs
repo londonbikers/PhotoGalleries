@@ -1,4 +1,4 @@
-﻿using LB.PhotoGalleries.Application.Models;
+﻿using LB.PhotoGalleries.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

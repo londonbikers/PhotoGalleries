@@ -1,4 +1,5 @@
-﻿using LB.PhotoGalleries.Application.Models;
+﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Utilities;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Application.Servers
 {

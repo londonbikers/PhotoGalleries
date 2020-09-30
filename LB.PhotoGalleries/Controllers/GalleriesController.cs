@@ -1,5 +1,5 @@
 ﻿using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Application.Models;
+using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;

@@ -1,9 +1,14 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
-using LB.PhotoGalleries.Application.Models;
+using Azure.Storage.Queues;
 using LB.PhotoGalleries.Application.Servers;
+using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Utilities;
+using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -26,7 +31,6 @@ namespace LB.PhotoGalleries.Application
         public GalleryServer Galleries { get; internal set; }
         public ImageServer Images { get; internal set; }
         public UserServer Users { get; internal set; }
-        public List<ImageFileSpec> FileSpecs { get; set; }
         /// <summary>
         /// Provides access to application configuration data, i.e. connection strings.
         /// Needs to be set on startup by the client using SetConfiguration().
@@ -46,8 +50,6 @@ namespace LB.PhotoGalleries.Application
                 Images = new ImageServer(),
                 Users = new UserServer()
             };
-
-            Instance.PopulateFileSpecs();
         }
         #endregion
 
@@ -61,11 +63,33 @@ namespace LB.PhotoGalleries.Application
             Configuration = configuration;
             await InitialiseDatabaseAsync();
             await InitialiseStorageAsync();
+            await InitialiseQueuesAsync();
         }
+        #endregion
 
-        public ImageFileSpec GetImageFileSpec(FileSpec fileSpec)
+        #region internal methods
+        /// <summary>
+        /// Gets a pairing of partition key and id via a supplied query.
+        /// The query must return the partition key as 'PartitionKey' and the id as 'Id'.
+        /// </summary>
+        internal static async Task<List<DatabaseId>> GetIdsByQueryAsync(string containerName, QueryDefinition queryDefinition)
         {
-            return FileSpecs.Single(ifs => ifs.FileSpec == fileSpec);
+            var container = Server.Instance.Database.GetContainer(containerName);
+            var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
+            var ids = new List<DatabaseId>();
+            double charge = 0;
+
+            while (queryResult.HasMoreResults)
+            {
+                var results = await queryResult.ReadNextAsync();
+                ids.AddRange(results.Select(result => new DatabaseId { Id = result["Id"].Value<string>(), PartitionKey = result["PartitionKey"].Value<string>() }));
+                charge += results.RequestCharge;
+            }
+
+            Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Found {ids.Count} DatabaseIds using query: {queryDefinition.QueryText}");
+            Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Total request charge: {charge}");
+
+            return ids;
         }
         #endregion
 
@@ -124,7 +148,7 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var spec3840 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec3840);
+            var spec3840 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec3840);
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(spec3840.ContainerName);
@@ -139,7 +163,7 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var spec1440 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec2560);
+            var spec1440 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec2560);
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(spec1440.ContainerName);
@@ -154,7 +178,7 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var spec1080 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec1920);
+            var spec1080 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec1920);
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(spec1080.ContainerName);
@@ -169,7 +193,7 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var spec800 = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.Spec800);
+            var spec800 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec800);
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(spec800.ContainerName);
@@ -184,7 +208,7 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var specLowres = FileSpecs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
+            var specLowres = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
             try
             {
                 await blobServiceClient.CreateBlobContainerAsync(specLowres.ContainerName);
@@ -200,17 +224,22 @@ namespace LB.PhotoGalleries.Application
             }
         }
 
-        private void PopulateFileSpecs()
+        /// <summary>
+        /// Sets up the Azure Storage message queues.
+        /// </summary>
+        private async Task InitialiseQueuesAsync()
         {
-            FileSpecs = new List<ImageFileSpec>
-            {
-                new ImageFileSpec(FileSpec.SpecOriginal, 0, 0, "originals"),
-                new ImageFileSpec(FileSpec.Spec3840, 3840, 90, FileSpec.Spec3840.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec2560, 2560, 90, FileSpec.Spec2560.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec1920, 1920, 90, FileSpec.Spec1920.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.Spec800, 800, 90, FileSpec.Spec800.ToString().ToLower()),
-                new ImageFileSpec(FileSpec.SpecLowRes, 400, 75, "lowres")
-            };
+            var storageConnectionString = Configuration["Storage:ConnectionString"];
+
+            // Instantiate a QueueClient which will be used to create and manipulate the queue
+            var queueClient = new QueueClient(storageConnectionString, Constants.QueueImagesToProcess);
+
+            // Create the queue
+            var response = await queueClient.CreateIfNotExistsAsync();
+
+            Debug.WriteLine(response != null
+                ? $"Server.InitialiseQueuesAsync: Created {queueClient.Name} queue? {response.ReasonPhrase}"
+                : $"Server.InitialiseQueuesAsync: {queueClient.Name} already exists.");
         }
         #endregion
     }
