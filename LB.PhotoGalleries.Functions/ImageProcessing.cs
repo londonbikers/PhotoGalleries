@@ -45,6 +45,9 @@ namespace LB.PhotoGalleries.Functions
             var image = response.Resource;
 
             // download image bytes
+            var downloadTimer = new Stopwatch();
+            downloadTimer.Start();
+
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
             var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
             var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
@@ -52,6 +55,9 @@ namespace LB.PhotoGalleries.Functions
             // ReSharper disable once UseAwaitUsing - await not supported at this point in Azure Function
             using var originalImageStream = blob.Value.Content;
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
+            
+            downloadTimer.Stop();
+            log.LogWarning("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
 
             // create array of file specs
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
@@ -180,7 +186,7 @@ namespace LB.PhotoGalleries.Functions
                 var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
                 timer.Stop();
-                log.LogInformation($"ImageProcessing.GenerateImageAsync() - Done. {imageFileSpec.FileSpec}. Elapsed time: {timer.Elapsed}");
+                log.LogInformation($"ImageProcessing.GenerateImageAsync() - Done {imageFileSpec.FileSpec}. Image generation time: {timer.Elapsed}");
                 return newStream;
             }
 
