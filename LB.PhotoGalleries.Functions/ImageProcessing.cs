@@ -1,6 +1,7 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Imageflow.Fluent;
+using LB.PhotoGalleries.Functions.Models;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Utilities;
@@ -15,7 +16,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Functions.Models;
 
 namespace LB.PhotoGalleries.Functions
 {
@@ -85,7 +85,7 @@ namespace LB.PhotoGalleries.Functions
             }
 
             // update the image and gallery objects as necessary
-            await context.CallActivityAsync<byte[]>("UpdateModels", image);
+            await context.CallActivityAsync("UpdateModels", image);
         }
 
         /// <summary>
