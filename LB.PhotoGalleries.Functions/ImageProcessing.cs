@@ -20,6 +20,11 @@ namespace LB.PhotoGalleries.Functions
 {
     public static class ImageProcessing
     {
+        #region members
+        private static readonly CosmosClient CosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
+        private static readonly BlobServiceClient BlobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
+        #endregion
+
         #region public methods
         [FunctionName("ImageProcessingQueueStart")]
         public static Task Run([QueueTrigger("images-to-process", Connection = "Storage:ConnectionString")] string queueMessage, [DurableClient] IDurableOrchestrationClient starter)
@@ -40,9 +45,7 @@ namespace LB.PhotoGalleries.Functions
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - imageId: {imageId}, galleryId: {galleryId}");
 
             // retrieve Image object
-            // authenticate with the CosmosDB service and create a client we can re-use
-            var cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
-            var database = cosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
+            var database = CosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
             var imageContainer = database.GetContainer(Constants.ImagesContainerName);
 
             // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
@@ -71,14 +74,13 @@ namespace LB.PhotoGalleries.Functions
             var downloadTimer = new Stopwatch();
             downloadTimer.Start();
 
-            var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
-            var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var originalContainerClient = BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
             var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
             var blob = blobClient.Download();
             // ReSharper disable once UseAwaitUsing - await not supported at this point in Azure Function
             using var originalImageStream = blob.Value.Content;
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
-            
+
             downloadTimer.Stop();
             log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
 
@@ -178,7 +180,6 @@ namespace LB.PhotoGalleries.Functions
         #endregion
 
         #region private methods
-
         /// <summary>
         /// Generates an resized image of the original in WebP format (quicker, smaller files).
         /// </summary>
@@ -192,26 +193,28 @@ namespace LB.PhotoGalleries.Functions
             var timer = new Stopwatch();
             timer.Start();
 
-            using var job = new ImageJob();
-            var result = await job.Decode(originalImage)
-                //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
-                .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
-                .Finish()
-                .SetSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
-                .InProcessAsync();
-
-            var newImageBytes = result.First.TryGetBytes();
-            if (newImageBytes.HasValue)
+            using (var job = new ImageJob())
             {
-                var newStream = new MemoryStream(newImageBytes.Value.ToArray());
+                var result = await job.Decode(originalImage)
+                    //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
+                    .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
+                    .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
+                    .Finish()
+                    .SetSecurityOptions(new SecurityOptions()
+                        .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
+                        .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
+                        .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
+                    .InProcessAsync();
 
-                timer.Stop();
-                log.LogInformation($"ImageProcessing.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
-                return newStream;
+                var newImageBytes = result.First.TryGetBytes();
+                if (newImageBytes.HasValue)
+                {
+                    var newStream = new MemoryStream(newImageBytes.Value.ToArray());
+
+                    timer.Stop();
+                    log.LogInformation($"ImageProcessing.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
+                    return newStream;
+                }
             }
 
             timer.Stop();
