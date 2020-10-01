@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Functions.Models;
 
 namespace LB.PhotoGalleries.Functions
 {
@@ -23,6 +24,8 @@ namespace LB.PhotoGalleries.Functions
         #region members
         private static readonly CosmosClient CosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
         private static readonly BlobServiceClient BlobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
+        private static readonly Database Database = CosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
+        private static readonly Container ImagesContainer = Database.GetContainer(Constants.ImagesContainerName);
         #endregion
 
         #region public methods
@@ -44,50 +47,14 @@ namespace LB.PhotoGalleries.Functions
 
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - imageId: {imageId}, galleryId: {galleryId}");
 
-            // retrieve Image object
-            var database = CosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
-            var imageContainer = database.GetContainer(Constants.ImagesContainerName);
+            // retrieve Image object and bytes
+            var image = await context.CallActivityAsync<Image>("GetImage", new DatabaseId(imageId, galleryId));
+            var imageBytes = await context.CallActivityAsync<byte[]>("GetImageBytes", image);
 
-            // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
-            // sure the new record is fully available
-            Image image = null;
-            var getImageTries = 0;
-            while (image == null && getImageTries < 500)
-            {
-                var response = imageContainer.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    getImageTries += 1;
-                    continue;
-                }
-
-                image = response.Resource;
-            }
-            if (image == null)
-            {
-                // shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
-                log.LogError("ImageProcessing.ImageProcessingOrchestrator() - Image could not be retrieved from CosmosDB. Quitting.");
-                return;
-            }
-
-            // download image bytes
-            var downloadTimer = new Stopwatch();
-            downloadTimer.Start();
-
-            var originalContainerClient = BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
-            var blob = blobClient.Download();
-            // ReSharper disable once UseAwaitUsing - await not supported at this point in Azure Function
-            using var originalImageStream = blob.Value.Content;
-            var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
-
-            downloadTimer.Stop();
-            log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
-
-            // create array of file specs
+            // create array of file specs to iterate over
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
 
-            // resize original image file in parallel
+            // resize original image file to smaller versions in parallel
             var parallelTasks = new List<Task<ProcessImageResponse>>();
             foreach (var spec in specs)
                 parallelTasks.Add(context.CallActivityAsync<ProcessImageResponse>("ProcessImage", new ProcessImageInput(image, imageBytes, spec)));
@@ -117,28 +84,8 @@ namespace LB.PhotoGalleries.Functions
                 }
             }
 
-            // update Image in the db
-            var replaceResult = imageContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
-            log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
-
-            // update the gallery thumbnail if this is the first image being added to the gallery
-            var galleryContainer = database.GetContainer(Constants.GalleriesContainerName);
-            var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(image.GalleryCategoryId));
-            log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
-            var gallery = getGalleryResponse.Resource;
-
-            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
-            {
-                // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
-                gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
-
-                // update the gallery in the db
-                var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
-                log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
-            }
-
-            // todo: in the future: expire Image cache item when we implement domain caching
+            // update the image and gallery objects as necessary
+            await context.CallActivityAsync<byte[]>("UpdateModels", image);
         }
 
         /// <summary>
@@ -176,6 +123,73 @@ namespace LB.PhotoGalleries.Functions
             }
 
             return new ProcessImageResponse(input.FileSpec, storageId);
+        }
+
+        [FunctionName("GetImage")]
+        public static async Task<Image> GetImageAsync([ActivityTrigger] DatabaseId databaseId, ILogger log)
+        {
+            // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
+            // sure the new record is fully available
+            var getImageTries = 0;
+            while (getImageTries < 500)
+            {
+                var response = await ImagesContainer.ReadItemAsync<Image>(databaseId.Id, new PartitionKey(databaseId.PartitionKey));
+                if (response.StatusCode == HttpStatusCode.OK)
+                    return response.Resource;
+
+                getImageTries += 1;
+            }
+
+            // shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
+            log.LogError("ImageProcessing.GetImage() - Image could not be retrieved from CosmosDB. Returning null.");
+            return null;
+        }
+
+        [FunctionName("GetImageBytes")]
+        public static async Task<byte[]> GetImageBytesAsync([ActivityTrigger] Image image, ILogger log)
+        {
+            // download image bytes
+            var downloadTimer = new Stopwatch();
+            downloadTimer.Start();
+
+            var originalContainerClient = BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
+            var blob = await blobClient.DownloadAsync();
+
+            await using var originalImageStream = blob.Value.Content;
+            var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
+
+            downloadTimer.Stop();
+            log.LogInformation("ImageProcessing.GetImageBytes() - Image downloaded in: " + downloadTimer.Elapsed);
+
+            return imageBytes;
+        }
+
+        [FunctionName("UpdateModels")]
+        public static async Task UpdateModelsAsync([ActivityTrigger] Image image, ILogger log)
+        {
+            // update Image in the db
+            var replaceResult = await ImagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
+            log.LogInformation($"ImageProcessing.UpdateModels() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
+
+            // update the gallery thumbnail if this is the first image being added to the gallery
+            var galleryContainer = Database.GetContainer(Constants.GalleriesContainerName);
+            var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(image.GalleryId, new PartitionKey(image.GalleryCategoryId));
+            log.LogInformation($"ImageProcessing.UpdateModels() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
+            var gallery = getGalleryResponse.Resource;
+
+            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
+            {
+                // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
+                gallery.ThumbnailStorageId = image.Files.Spec800Id;
+                log.LogInformation($"ImageProcessing.UpdateModels() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
+
+                // update the gallery in the db
+                var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
+                log.LogInformation("ImageProcessing.UpdateModels() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
+            }
+
+            // todo: in the future: expire Image cache item when we implement domain caching
         }
         #endregion
 

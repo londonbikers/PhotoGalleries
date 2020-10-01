@@ -188,7 +188,7 @@ namespace LB.PhotoGalleries.Application.Servers
             while (queryResult.HasMoreResults)
             {
                 var results = await queryResult.ReadNextAsync();
-                ids.AddRange(results.Select(result => new DatabaseId { Id = result["id"].Value<string>(), PartitionKey = result["GalleryId"].Value<string>() }));
+                ids.AddRange(results.Select(result => new DatabaseId(result["id"].Value<string>(), result["GalleryId"].Value<string>())));
                 charge += results.RequestCharge;
             }
 

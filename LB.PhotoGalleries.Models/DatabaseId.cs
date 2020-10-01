@@ -8,5 +8,11 @@
     {
         public string Id { get; set; }
         public string PartitionKey { get; set; }
+
+        public DatabaseId(string id, string partitionKey)
+        {
+            Id = id;
+            PartitionKey = partitionKey;
+        }
     }
 }

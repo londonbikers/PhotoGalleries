@@ -1,6 +1,6 @@
 ﻿using LB.PhotoGalleries.Models.Enums;
 
-namespace LB.PhotoGalleries.Models
+namespace LB.PhotoGalleries.Functions.Models
 {
     public class ProcessImageResponse
     {

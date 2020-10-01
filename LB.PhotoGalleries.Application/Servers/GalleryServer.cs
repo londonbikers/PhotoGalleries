@@ -81,7 +81,7 @@ namespace LB.PhotoGalleries.Application.Servers
             while (queryResult.HasMoreResults)
             {
                 var results = await queryResult.ReadNextAsync();
-                ids.AddRange(results.Select(result => new DatabaseId { Id = result.ToString(), PartitionKey = category.Id }));
+                ids.AddRange(results.Select(result => new DatabaseId(result.ToString(), category.Id)));
                 charge += results.RequestCharge;
             }
 
