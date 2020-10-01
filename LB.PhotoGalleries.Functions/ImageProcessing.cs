@@ -25,14 +25,15 @@ namespace LB.PhotoGalleries.Functions
         public static Task Run([QueueTrigger("images-to-process", Connection = "Storage:ConnectionString")] string queueMessage, [DurableClient] IDurableOrchestrationClient starter)
         {
             // Orchestration queueMessage comes from the queue message content.
-            return starter.StartNewAsync("ImageProcessingOrchestrator", queueMessage);
+            return starter.StartNewAsync("ImageProcessingOrchestrator", Guid.NewGuid().ToString(), queueMessage);
         }
 
         [FunctionName("ImageProcessingOrchestrator")]
         public static async Task RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
         {
             log = context.CreateReplaySafeLogger(log);
-            var ids = context.InstanceId.Split(':');
+
+            var ids = context.GetInput<string>().Split(':');
             var imageId = ids[0];
             var galleryId = ids[1];
 
