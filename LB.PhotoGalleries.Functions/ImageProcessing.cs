@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Functions
@@ -41,8 +42,28 @@ namespace LB.PhotoGalleries.Functions
             var cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
             var database = cosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
             var container = database.GetContainer(Constants.ImagesContainerName);
-            var response = container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
-            var image = response.Resource;
+
+            // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
+            // sure the new record is fully available
+            Image image = null;
+            var getImageTries = 0;
+            while (image == null && getImageTries < 500)
+            {
+                var response = container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    getImageTries += 1;
+                    continue;
+                }
+
+                image = response.Resource;
+            }
+            if (image == null)
+            {
+                // shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
+                log.LogError("ImageProcessing.ImageProcessingOrchestrator() - Image could not be retrieved from CosmosDB. Quitting.");
+                return;
+            }
 
             // download image bytes
             var downloadTimer = new Stopwatch();
