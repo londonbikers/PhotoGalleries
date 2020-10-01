@@ -148,7 +148,7 @@ namespace LB.PhotoGalleries.Functions
         [FunctionName("ProcessImage")]
         public static async Task<ProcessImageResponse> ProcessImage([ActivityTrigger] ProcessImageInput input, ILogger log)
         {
-            log.LogInformation($"ImageProcessing.ProcessImage() - Image {input.Image.Id} for file spec {input.FileSpec}...");
+            log.LogInformation($"ImageProcessing.ProcessImage() - Image {input.Image.Id} for file spec {input.FileSpec}");
 
             var imageFileSpec = ImageFileSpecs.GetImageFileSpec(input.FileSpec);
 
@@ -163,7 +163,7 @@ namespace LB.PhotoGalleries.Functions
             // create the new image file
             var storageId = imageFileSpec.GetStorageId(input.Image);
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("Storage:ConnectionString"));
-            await using (var imageFile = await GenerateImageAsync(input.ImageBytes, imageFileSpec, log))
+            await using (var imageFile = await GenerateImageAsync(input.Image, input.ImageBytes, imageFileSpec, log))
             {
                 // upload the new image file to storage (delete any old version first)
                 var containerClient = blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
@@ -178,14 +178,16 @@ namespace LB.PhotoGalleries.Functions
         #endregion
 
         #region private methods
+
         /// <summary>
         /// Generates an resized image of the original in WebP format (quicker, smaller files).
         /// </summary>
+        /// <param name="image">The Image the new file should be generated for. Used for logging purposes.</param>
         /// <param name="originalImage">The byte array for the original image.</param>
         /// <param name="imageFileSpec">The name of the image file specification to base the new image.</param>
         /// <param name="log">Enables logging.</param>
         /// <returns>A new image stream for the resized image</returns>
-        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec, ILogger log)
+        private static async Task<Stream> GenerateImageAsync(Image image, byte[] originalImage, ImageFileSpec imageFileSpec, ILogger log)
         {
             var timer = new Stopwatch();
             timer.Start();
@@ -208,12 +210,12 @@ namespace LB.PhotoGalleries.Functions
                 var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
                 timer.Stop();
-                log.LogInformation($"ImageProcessing.GenerateImageAsync() - Done {imageFileSpec.FileSpec}. Image generation time: {timer.Elapsed}");
+                log.LogInformation($"ImageProcessing.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
                 return newStream;
             }
 
             timer.Stop();
-            log.LogWarning("ImageProcessing.GenerateImageAsync() - Couldn't generate new image! Elapsed time: " + timer.Elapsed);
+            log.LogWarning($"ImageProcessing.GenerateImageAsync() - Couldn't generate new image for {image.Id}! Elapsed time: {timer.Elapsed}");
             return null;
         }
         #endregion
