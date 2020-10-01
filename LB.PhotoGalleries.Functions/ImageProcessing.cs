@@ -57,12 +57,12 @@ namespace LB.PhotoGalleries.Functions
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
             
             downloadTimer.Stop();
-            log.LogWarning("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
+            log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
 
             // create array of file specs
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
 
-            // resize images in parallel
+            // resize original image file in parallel
             var parallelTasks = new List<Task<ProcessImageResponse>>();
             foreach (var spec in specs)
                 parallelTasks.Add(context.CallActivityAsync<ProcessImageResponse>("ProcessImage", new ProcessImageInput(image, imageBytes, spec)));
@@ -92,11 +92,11 @@ namespace LB.PhotoGalleries.Functions
                 }
             }
 
-            // update image in the db
+            // update Image in the db
             var replaceResult = container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
-            // update the gallery thumbnail if this is the first image
+            // update the gallery thumbnail if this is the first image being added to the gallery
             var galleryContainer = database.GetContainer(Constants.GalleriesContainerName);
             var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(image.GalleryCategoryId));
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
@@ -114,7 +114,7 @@ namespace LB.PhotoGalleries.Functions
                 log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
             }
 
-            // todo: in the future: expire Image cache item
+            // todo: in the future: expire Image cache item when we implement domain caching
         }
 
         /// <summary>
