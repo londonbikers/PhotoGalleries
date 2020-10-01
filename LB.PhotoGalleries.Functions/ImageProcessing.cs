@@ -35,7 +35,8 @@ namespace LB.PhotoGalleries.Functions
             var imageId = ids[0];
             var galleryId = ids[1];
 
-            log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - imageId: {imageId}, galleryId: {galleryId}");
+            if (!context.IsReplaying)
+                log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - imageId: {imageId}, galleryId: {galleryId}");
 
             // retrieve Image object
             // authenticate with the CosmosDB service and create a client we can re-use
@@ -78,7 +79,8 @@ namespace LB.PhotoGalleries.Functions
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
             
             downloadTimer.Stop();
-            log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
+            if (!context.IsReplaying)
+                log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Image downloaded in: " + downloadTimer.Elapsed);
 
             // create array of file specs
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
@@ -115,24 +117,28 @@ namespace LB.PhotoGalleries.Functions
 
             // update Image in the db
             var replaceResult = container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
-            log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
+            if (!context.IsReplaying)
+                log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
             // update the gallery thumbnail if this is the first image being added to the gallery
             var galleryContainer = database.GetContainer(Constants.GalleriesContainerName);
             var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(image.GalleryCategoryId));
-            log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
+            if (!context.IsReplaying)
+                log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
             var gallery = getGalleryResponse.Resource;
 
             if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
             {
                 // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
                 gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail");
+                if (!context.IsReplaying)
+                    log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail");
 
                 // update the gallery in the db
                 var partitionKey = new PartitionKey(gallery.CategoryId);
                 var updateGalleryResponse = await container.ReplaceItemAsync(gallery, gallery.Id, partitionKey);
-                log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
+                if (!context.IsReplaying)
+                    log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
             }
 
             // todo: in the future: expire Image cache item when we implement domain caching
