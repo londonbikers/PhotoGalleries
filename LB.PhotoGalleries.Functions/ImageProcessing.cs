@@ -43,7 +43,7 @@ namespace LB.PhotoGalleries.Functions
             // authenticate with the CosmosDB service and create a client we can re-use
             var cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDB:Uri"), Environment.GetEnvironmentVariable("CosmosDB:PrimaryKey"));
             var database = cosmosClient.GetDatabase(Environment.GetEnvironmentVariable("CosmosDB:DatabaseName"));
-            var container = database.GetContainer(Constants.ImagesContainerName);
+            var imageContainer = database.GetContainer(Constants.ImagesContainerName);
 
             // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
             // sure the new record is fully available
@@ -51,7 +51,7 @@ namespace LB.PhotoGalleries.Functions
             var getImageTries = 0;
             while (image == null && getImageTries < 500)
             {
-                var response = container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
+                var response = imageContainer.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId)).Result;
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     getImageTries += 1;
@@ -116,7 +116,7 @@ namespace LB.PhotoGalleries.Functions
             }
 
             // update Image in the db
-            var replaceResult = container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
+            var replaceResult = imageContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId)).Result;
             log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
             // update the gallery thumbnail if this is the first image being added to the gallery
@@ -129,11 +129,10 @@ namespace LB.PhotoGalleries.Functions
             {
                 // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
                 gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail");
+                log.LogInformation($"ImageProcessing.ImageProcessingOrchestrator() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
 
                 // update the gallery in the db
-                var partitionKey = new PartitionKey(gallery.CategoryId);
-                var updateGalleryResponse = await container.ReplaceItemAsync(gallery, gallery.Id, partitionKey);
+                var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
                 log.LogInformation("ImageProcessing.ImageProcessingOrchestrator() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
             }
 
