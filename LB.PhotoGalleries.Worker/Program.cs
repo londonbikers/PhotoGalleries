@@ -112,8 +112,6 @@ namespace LB.PhotoGalleries.Worker
             var imageId = ids[0];
             var galleryId = ids[1];
 
-            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImage() - imageId: {imageId}, galleryId: {galleryId}");
-
             // retrieve Image object and bytes
             var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
             var imageBytes = await GetImageBytesAsync(image);
@@ -128,7 +126,7 @@ namespace LB.PhotoGalleries.Worker
             await UpdateModelsAsync(image);
 
             stopwatch.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImage() - Processed {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Processed {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private static async Task<Image> GetImageAsync(DatabaseId databaseId)
