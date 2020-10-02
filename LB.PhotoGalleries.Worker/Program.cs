@@ -60,8 +60,6 @@ namespace LB.PhotoGalleries.Worker
                 _database = _cosmosClient.GetDatabase(_configuration["CosmosDB:DatabaseName"]);
                 _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
 
-                // todo: implement logging
-
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
                 var queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
