@@ -1,6 +1,7 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
@@ -13,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -27,6 +27,7 @@ namespace LB.PhotoGalleries.Worker
     {
         #region members
         private static IConfiguration _configuration;
+        private static QueueClient _queueClient;
         private static CosmosClient _cosmosClient;
         private static BlobServiceClient _blobServiceClient;
         private static Database _database;
@@ -62,10 +63,10 @@ namespace LB.PhotoGalleries.Worker
 
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
-                var queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
+                _queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
                 int.TryParse(_configuration["Storage:MessageBatchSize"], out var messageBatchSize);
                 int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
-                if (!await queueClient.ExistsAsync())
+                if (!await _queueClient.ExistsAsync())
                 {
                     _log.Fatal($"LB.PhotoGalleries.Worker.Program.Main() - {queueName} queue does not exist. Cannot continue.");
                     return;
@@ -76,17 +77,14 @@ namespace LB.PhotoGalleries.Worker
                 {
                     // get a batch of messages from the queue to process
                     // getting a batch is more efficient as it minimises the number of HTTP calls we have to make
-                    var messages = await queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
+                    var messages = await _queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
                     _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
 
-                    // todo: make this parallel
-                    foreach (var message in messages.Value)
+                    // this is the fastest method of processing messages I have found so far. It's wrong I know, but numbers don't lie.
+                    Parallel.ForEach(messages.Value, message =>
                     {
-                        await ProcessImageProcessingMessageAsync(message.MessageText);
-
-                        // as the message was processed successfully, we can delete the message from the queue
-                        await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
-                    }
+                        HandleMessageAsync(message).GetAwaiter().GetResult();
+                    });
 
                     // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
                     if (messages.Value.Length == 0)
@@ -103,6 +101,14 @@ namespace LB.PhotoGalleries.Worker
         }
 
         #region private methods
+        private static async Task HandleMessageAsync(QueueMessage message)
+        {
+            await ProcessImageProcessingMessageAsync(message.MessageText);
+
+            // as the message was processed successfully, we can delete the message from the queue
+            await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+        }
+
         private static async Task ProcessImageProcessingMessageAsync(string message)
         {
             var stopwatch = new Stopwatch();
@@ -120,8 +126,21 @@ namespace LB.PhotoGalleries.Worker
             var specs = new List<FileSpec> { FileSpec.Spec3840, FileSpec.Spec2560, FileSpec.Spec1920, FileSpec.Spec800, FileSpec.SpecLowRes };
 
             // resize original image file to smaller versions in parallel
-            var parallelTasks = specs.Select(spec => ProcessImageAsync(image, imageBytes, spec)).ToList();
-            await Task.WhenAll(parallelTasks);
+            //var parallelTasks = specs.Select(spec => ProcessImageAsync(image, imageBytes, spec)).ToList();
+            //await Task.WhenAll(parallelTasks);
+
+            //foreach (var spec in specs)
+            //    await ProcessImageAsync(image, imageBytes, spec);
+
+            // This approach is the fastest of the three methods here. I have no idea why.
+            // 20MB image resized five times (each spec)
+            // Task.WhenAll: 11785ms average
+            // Foreach: 8540ms average
+            // Parallel.Foreach with GetAwaiter/GetResult: 7887ms average
+            Parallel.ForEach(specs, spec =>
+            {
+                ProcessImageAsync(image, imageBytes, spec).GetAwaiter().GetResult();
+            });
 
             await UpdateModelsAsync(image);
 
