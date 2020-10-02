@@ -201,7 +201,7 @@ namespace LB.PhotoGalleries.Worker
                 await containerClient.UploadBlobAsync(storageId, imageFile);
                 uploadStopwatch.Stop();
 
-                _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Delete blob elapsed time: {deleteStopwatch.ElapsedMilliseconds}ms. Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}");
+                _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Delete blob elapsed time: {deleteStopwatch.ElapsedMilliseconds}ms. Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}ms");
             }
 
             // update the Image object with the storage id of the newly-generated image file
