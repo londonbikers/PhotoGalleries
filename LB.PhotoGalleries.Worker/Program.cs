@@ -98,13 +98,16 @@ namespace LB.PhotoGalleries.Worker
             }
             catch (Exception exception)
             {
-                _log.Fatal(exception, "LB.PhotoGalleries.Worker.Program.Main() - Unhandled exception");
+                _log.Fatal(exception, "LB.PhotoGalleries.Worker.Program.Main() - Unhandled exception!");
             }
         }
 
         #region private methods
         private static async Task ProcessImageProcessingMessageAsync(string message)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             var ids = Utilities.Base64Decode(message).Split(':');
             var imageId = ids[0];
             var galleryId = ids[1];
@@ -123,6 +126,9 @@ namespace LB.PhotoGalleries.Worker
             await Task.WhenAll(parallelTasks);
 
             await UpdateModelsAsync(image);
+
+            stopwatch.Stop();
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImage() - Processed {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private static async Task<Image> GetImageAsync(DatabaseId databaseId)
@@ -158,7 +164,7 @@ namespace LB.PhotoGalleries.Worker
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
 
             downloadTimer.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image downloaded in: {downloadTimer.Elapsed}");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image downloaded in: {downloadTimer.ElapsedMilliseconds}ms");
 
             return imageBytes;
         }
@@ -173,7 +179,7 @@ namespace LB.PhotoGalleries.Worker
             var longestSide = image.Metadata.Width > image.Metadata.Height ? image.Metadata.Width : image.Metadata.Height;
             if (longestSide <= imageFileSpec.PixelLength)
             {
-                _log.Warning($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
+                _log.Warning($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
                 return;
             }
 
@@ -185,8 +191,17 @@ namespace LB.PhotoGalleries.Worker
                 var containerClient = _blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
 
                 // ensure this is repeatable, delete any previous blob that may have been generated
+                var deleteStopwatch = new Stopwatch();
+                deleteStopwatch.Start();
                 await containerClient.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
+                deleteStopwatch.Stop();
+
+                var uploadStopwatch = new Stopwatch();
+                uploadStopwatch.Start();
                 await containerClient.UploadBlobAsync(storageId, imageFile);
+                uploadStopwatch.Stop();
+
+                _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Delete blob elapsed time: {deleteStopwatch.ElapsedMilliseconds}ms. Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}");
             }
 
             // update the Image object with the storage id of the newly-generated image file
@@ -219,8 +234,8 @@ namespace LB.PhotoGalleries.Worker
         /// <returns>A new image stream for the resized image</returns>
         private static async Task<Stream> GenerateImageAsync(Image image, byte[] originalImage, ImageFileSpec imageFileSpec)
         {
-            var timer = new Stopwatch();
-            timer.Start();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             using (var job = new ImageJob())
             {
@@ -240,19 +255,22 @@ namespace LB.PhotoGalleries.Worker
                 {
                     var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
-                    timer.Stop();
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
+                    stopwatch.Stop();
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
                     return newStream;
                 }
             }
 
-            timer.Stop();
-            _log.Warning($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Couldn't generate new image for {image.Id}! Elapsed time: {timer.Elapsed}");
+            stopwatch.Stop();
+            _log.Warning($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Couldn't generate new image for {image.Id}! Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
             return null;
         }
 
         private static async Task UpdateModelsAsync(Image image)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             // update Image in the db
             var replaceResult = await _imagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
@@ -267,12 +285,14 @@ namespace LB.PhotoGalleries.Worker
             {
                 // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
                 gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
 
                 // update the gallery in the db
                 var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
-                _log.Information("LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
+                _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}. Request charge: {updateGalleryResponse.RequestCharge}");
             }
+
+            stopwatch.Stop();
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
 
             // todo: in the future: expire Image cache item when we implement domain caching
         }
