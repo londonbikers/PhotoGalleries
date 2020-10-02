@@ -88,6 +88,7 @@ namespace LB.PhotoGalleries.Worker
                     await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
                 }
 
+                // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
                 if (messages.Value.Length == 0)
                 {
                     // todo: implement better back-off functionality
