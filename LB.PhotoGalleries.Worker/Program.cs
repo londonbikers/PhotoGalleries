@@ -8,6 +8,7 @@ using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,6 +31,7 @@ namespace LB.PhotoGalleries.Worker
         private static BlobServiceClient _blobServiceClient;
         private static Database _database;
         private static Container _imagesContainer;
+        private static ILogger _log;
         #endregion
 
         private static async Task Main(string[] args)
@@ -42,6 +44,13 @@ namespace LB.PhotoGalleries.Worker
                 .AddEnvironmentVariables()
                 .AddCommandLine(args)
                 .Build();
+
+            // setup logging
+            _log = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.File("logs\\lb.photogalleries.worker.log", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
 
             // setup clients/references
             _cosmosClient = new CosmosClient(_configuration["CosmosDB:Uri"], _configuration["CosmosDB:PrimaryKey"]);
@@ -58,7 +67,7 @@ namespace LB.PhotoGalleries.Worker
             int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
             if (!await queueClient.ExistsAsync())
             {
-                Console.WriteLine($"{queueName} queue does not exist. Cannot continue.");
+                _log.Fatal($"LB.PhotoGalleries.Worker.Program.Main() - {queueName} queue does not exist. Cannot continue.");
                 return;
             }
 
@@ -67,8 +76,8 @@ namespace LB.PhotoGalleries.Worker
             {
                 // get a batch of messages from the queue to process
                 // getting a batch is more efficient as it minimises the number of HTTP calls we have to make
-                Console.WriteLine($"Retrieving up to {messageBatchSize} messages from the {queueName} queue");
                 var messages = await queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
+                _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
 
                 // todo: make this parallel
                 foreach (var message in messages.Value)
@@ -91,7 +100,7 @@ namespace LB.PhotoGalleries.Worker
             var imageId = ids[0];
             var galleryId = ids[1];
 
-            //log.LogInformation($"LB.PhotoGalleries.Worker.Program.GetImage() - imageId: {imageId}, galleryId: {galleryId}");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImage() - imageId: {imageId}, galleryId: {galleryId}");
 
             // retrieve Image object and bytes
             var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
@@ -122,7 +131,7 @@ namespace LB.PhotoGalleries.Worker
             }
 
             // shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
-            //log.LogError("ImageProcessing.GetImage() - Image could not be retrieved from CosmosDB. Returning null.");
+            _log.Error("ImageProcessing.GetImage() - Image could not be retrieved from CosmosDB. Returning null.");
             return null;
         }
 
@@ -140,14 +149,14 @@ namespace LB.PhotoGalleries.Worker
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
 
             downloadTimer.Stop();
-            //log.LogInformation("LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image downloaded in: " + downloadTimer.Elapsed);
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image downloaded in: {downloadTimer.Elapsed}");
 
             return imageBytes;
         }
 
         private static async Task ProcessImageAsync(Image image, byte[] imageBytes, FileSpec fileSpec)
         {
-            //log.LogInformation($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Image {image.Id} for file spec {fileSpec}");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Image {image.Id} for file spec {fileSpec}");
 
             var imageFileSpec = ImageFileSpecs.GetImageFileSpec(fileSpec);
 
@@ -155,7 +164,7 @@ namespace LB.PhotoGalleries.Worker
             var longestSide = image.Metadata.Width > image.Metadata.Height ? image.Metadata.Width : image.Metadata.Height;
             if (longestSide <= imageFileSpec.PixelLength)
             {
-                //log.LogWarning($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
+                _log.Warning($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - image too small for this file spec: {fileSpec}: {image.Metadata.Width} x {image.Metadata.Height}");
                 return;
             }
 
@@ -223,13 +232,13 @@ namespace LB.PhotoGalleries.Worker
                     var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
                     timer.Stop();
-                    //log.LogInformation($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Image generation time: {timer.Elapsed}");
                     return newStream;
                 }
             }
 
             timer.Stop();
-            //log.LogWarning($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Couldn't generate new image for {image.Id}! Elapsed time: {timer.Elapsed}");
+            _log.Warning($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Couldn't generate new image for {image.Id}! Elapsed time: {timer.Elapsed}");
             return null;
         }
 
@@ -237,23 +246,23 @@ namespace LB.PhotoGalleries.Worker
         {
             // update Image in the db
             var replaceResult = await _imagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
-            //log.LogInformation($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
 
             // update the gallery thumbnail if this is the first image being added to the gallery
             var galleryContainer = _database.GetContainer(Constants.GalleriesContainerName);
             var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(image.GalleryId, new PartitionKey(image.GalleryCategoryId));
-            //log.LogInformation($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
             var gallery = getGalleryResponse.Resource;
 
             if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
             {
                 // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
                 gallery.ThumbnailStorageId = image.Files.Spec800Id;
-                //log.LogInformation($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
+                _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}");
 
                 // update the gallery in the db
                 var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
-                //log.LogInformation("LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
+                _log.Information("LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Update gallery request charge: " + updateGalleryResponse.RequestCharge);
             }
 
             // todo: in the future: expire Image cache item when we implement domain caching
