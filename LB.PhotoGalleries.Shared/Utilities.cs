@@ -37,5 +37,12 @@ namespace LB.PhotoGalleries.Shared
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
             return Convert.ToBase64String(plainTextBytes);
         }
+
+        public static string Base64Decode(string base64EncodedText)
+        {
+            var data = Convert.FromBase64String(base64EncodedText);
+            var decoded = System.Text.Encoding.ASCII.GetString(data);
+            return decoded;
+        }
     }
 }
