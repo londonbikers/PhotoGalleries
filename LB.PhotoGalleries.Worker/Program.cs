@@ -52,48 +52,55 @@ namespace LB.PhotoGalleries.Worker
                 .WriteTo.File("logs\\lb.photogalleries.worker.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-            // setup clients/references
-            _cosmosClient = new CosmosClient(_configuration["CosmosDB:Uri"], _configuration["CosmosDB:PrimaryKey"]);
-            _blobServiceClient = new BlobServiceClient(_configuration["Storage:ConnectionString"]);
-            _database = _cosmosClient.GetDatabase(_configuration["CosmosDB:DatabaseName"]);
-            _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
-
-            // todo: implement logging
-
-            // set the message queue listener
-            var queueName = _configuration["Storage:ImageProcessingQueueName"];
-            var queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
-            int.TryParse(_configuration["Storage:MessageBatchSize"], out var messageBatchSize);
-            int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
-            if (!await queueClient.ExistsAsync())
+            try
             {
-                _log.Fatal($"LB.PhotoGalleries.Worker.Program.Main() - {queueName} queue does not exist. Cannot continue.");
-                return;
+                // setup clients/references
+                _cosmosClient = new CosmosClient(_configuration["CosmosDB:Uri"], _configuration["CosmosDB:PrimaryKey"]);
+                _blobServiceClient = new BlobServiceClient(_configuration["Storage:ConnectionString"]);
+                _database = _cosmosClient.GetDatabase(_configuration["CosmosDB:DatabaseName"]);
+                _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
+
+                // todo: implement logging
+
+                // set the message queue listener
+                var queueName = _configuration["Storage:ImageProcessingQueueName"];
+                var queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
+                int.TryParse(_configuration["Storage:MessageBatchSize"], out var messageBatchSize);
+                int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
+                if (!await queueClient.ExistsAsync())
+                {
+                    _log.Fatal($"LB.PhotoGalleries.Worker.Program.Main() - {queueName} queue does not exist. Cannot continue.");
+                    return;
+                }
+
+                // keep processing the queue until the program is shutdown
+                while (true)
+                {
+                    // get a batch of messages from the queue to process
+                    // getting a batch is more efficient as it minimises the number of HTTP calls we have to make
+                    var messages = await queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
+
+                    // todo: make this parallel
+                    foreach (var message in messages.Value)
+                    {
+                        await ProcessImageProcessingMessageAsync(message.MessageText);
+
+                        // as the message was processed successfully, we can delete the message from the queue
+                        await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+                    }
+
+                    // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
+                    if (messages.Value.Length == 0)
+                    {
+                        // todo: implement better back-off functionality
+                        await Task.Delay(TimeSpan.FromSeconds(5));
+                    }
+                }
             }
-
-            // keep processing the queue until the program is shutdown
-            while (true)
+            catch (Exception exception)
             {
-                // get a batch of messages from the queue to process
-                // getting a batch is more efficient as it minimises the number of HTTP calls we have to make
-                var messages = await queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
-                _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
-
-                // todo: make this parallel
-                foreach (var message in messages.Value)
-                {
-                    await ProcessImageProcessingMessageAsync(message.MessageText);
-
-                    // as the message was processed successfully, we can delete the message from the queue
-                    await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
-                }
-
-                // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
-                if (messages.Value.Length == 0)
-                {
-                    // todo: implement better back-off functionality
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                }
+                _log.Fatal(exception, "LB.PhotoGalleries.Worker.Program.Main() - Unhandled exception");
             }
         }
 
