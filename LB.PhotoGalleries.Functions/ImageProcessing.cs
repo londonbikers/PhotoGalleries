@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Azure;
 
 namespace LB.PhotoGalleries.Functions
 {
@@ -119,7 +120,18 @@ namespace LB.PhotoGalleries.Functions
 
                 // ensure this is repeatable, delete any previous blob that may have been generated
                 await containerClient.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
-                await containerClient.UploadBlobAsync(storageId, imageFile);
+
+                try
+                {
+                    await containerClient.UploadBlobAsync(storageId, imageFile);
+                }
+                catch (RequestFailedException ex)
+                {
+                    // no problem if the blob already exists.
+                    // it's weird, but Azure Durable Functions is also weird at times.
+                    if (!ex.Message.StartsWith("The specified blob already exists"))
+                        throw;
+                }
             }
 
             return new ProcessImageResponse(input.FileSpec, storageId);
