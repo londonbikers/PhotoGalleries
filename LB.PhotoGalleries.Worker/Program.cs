@@ -88,8 +88,11 @@ namespace LB.PhotoGalleries.Worker
                     await queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
                 }
 
-                // todo: implement back-off functionality
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                if (messages.Value.Length == 0)
+                {
+                    // todo: implement better back-off functionality
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
             }
         }
 
