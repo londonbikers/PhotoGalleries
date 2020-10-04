@@ -79,25 +79,41 @@ namespace LB.PhotoGalleries.Worker
                     return;
                 }
 
+                if (!int.TryParse(_configuration["ZeroMessagesPollIntervalSeconds"], out var zeroMessagesPollIntervalSeconds))
+                    zeroMessagesPollIntervalSeconds = 5;
+                var delayTime = TimeSpan.FromSeconds(zeroMessagesPollIntervalSeconds);
+                var zeroMessagesCount = 0;
+
                 // keep processing the queue until the program is shutdown
                 while (true)
                 {
                     // get a batch of messages from the queue to process
-                    // getting a batch is more efficient as it minimises the number of HTTP calls we have to make
+                    // getting a batch is more efficient as it minimises the number of HTTP calls we have to make to the queue
                     var messages = await _queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
-
-                    // this is the fastest method of processing messages I have found so far. It's wrong I know, but numbers don't lie.
-                    Parallel.ForEach(messages.Value, message =>
+                    if (zeroMessagesCount < 2)
+                        _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
+                    
+                    if (messages.Value.Length > 0)
                     {
-                        HandleMessageAsync(message).GetAwaiter().GetResult();
-                    });
+                        // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
+                        Parallel.ForEach(messages.Value, message => {
+                            HandleMessageAsync(message).GetAwaiter().GetResult();
+                        });
+                    }
 
                     // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
+                    // otherwise limit the rate we poll the queue and also don't log messages after a while
                     if (messages.Value.Length == 0)
                     {
-                        // todo: implement better back-off functionality
-                        await Task.Delay(TimeSpan.FromSeconds(5));
+                        if (zeroMessagesCount == 2)
+                            _log.Information($"Stopping logging until we we receive messages again. Still polling the queue every {delayTime} seconds though");
+
+                        zeroMessagesCount += 1;
+                        await Task.Delay(delayTime);
+                    }
+                    else
+                    {
+                        zeroMessagesCount = 0;
                     }
                 }
             }
