@@ -135,32 +135,10 @@ namespace LB.PhotoGalleries
                 //.AddCommandDefault("down.filter", "mitchell")
                 //.AddCommandDefault("jpeg.progressive", "false")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
-                .AddWatermarkingHandler("/dio/", args =>
-                {
-                    var modeSpecified = args.Query.ContainsKey("mode");
-                    var size = new Size();
-                    if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
-                        size.Width = wParam;
-                    else if (args.Query.ContainsKey("width") && int.TryParse(args.Query["width"], out var widthParam))
-                        size.Width = widthParam;
-                    if (args.Query.ContainsKey("h") && int.TryParse(args.Query["h"], out var hParam))
-                        size.Height = hParam;
-                    else if (args.Query.ContainsKey("height") && int.TryParse(args.Query["height"], out var heightParam))
-                        size.Width = heightParam;
-
-                    var imageSizeRequiresWatermark = size.Width < 1 || size.Height < 1 || (size.Width > 1000 || size.Height > 1000);
-                    var referer = args.Context.Request.GetTypedHeaders().Referer;
-                    var isLocalReferer = referer != null && referer.Host.Equals(args.Context.Request.Host.Host, StringComparison.CurrentCultureIgnoreCase);
-                    if (modeSpecified && isLocalReferer && !imageSizeRequiresWatermark)
-                        return;
-
-                    // the watermark needs to be a bit bigger when displayed on portrait format images
-                    var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
-                    args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
-                        new WatermarkOptions()
-                            .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
-                            .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
-                }));
+                .AddWatermarkingHandler("/dio/", AddWatermark)
+                .AddWatermarkingHandler("/di3840/", AddWatermark)
+                .AddWatermarkingHandler("/di2560/", AddWatermark)
+                .AddWatermarkingHandler("/di1920/", AddWatermark));
 
             app.UseStaticFiles();
             app.UseRouting();
@@ -215,6 +193,33 @@ namespace LB.PhotoGalleries
             var imageFlowSpec = ImageFileSpecs.GetImageFileSpec(fileSpec);
             services.AddImageflowAzureBlobService(new AzureBlobServiceOptions(Configuration["Storage:ConnectionString"], new BlobClientOptions())
                 .MapPrefix(path, imageFlowSpec.ContainerName));
+        }
+
+        private static void AddWatermark(WatermarkingEventArgs args)
+        {
+            var modeSpecified = args.Query.ContainsKey("mode");
+            var size = new Size();
+            if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
+                size.Width = wParam;
+            else if (args.Query.ContainsKey("width") && int.TryParse(args.Query["width"], out var widthParam))
+                size.Width = widthParam;
+            if (args.Query.ContainsKey("h") && int.TryParse(args.Query["h"], out var hParam))
+                size.Height = hParam;
+            else if (args.Query.ContainsKey("height") && int.TryParse(args.Query["height"], out var heightParam))
+                size.Width = heightParam;
+
+            var imageSizeRequiresWatermark = size.Width < 1 || size.Height < 1 || (size.Width > 1000 || size.Height > 1000);
+            var referer = args.Context.Request.GetTypedHeaders().Referer;
+            var isLocalReferer = referer != null && referer.Host.Equals(args.Context.Request.Host.Host, StringComparison.CurrentCultureIgnoreCase);
+            if (modeSpecified && isLocalReferer && !imageSizeRequiresWatermark)
+                return;
+
+            // the watermark needs to be a bit bigger when displayed on portrait format images
+            var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
+            args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
+                new WatermarkOptions()
+                    .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
+                    .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
         }
         #endregion
     }
