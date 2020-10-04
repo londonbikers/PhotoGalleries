@@ -38,6 +38,7 @@ namespace LB.PhotoGalleries.Application
         internal IConfiguration Configuration { get; set; }
         internal CosmosClient CosmosClient { get; set; }
         internal Database Database { get; set; }
+        internal BlobServiceClient BlobServiceClient { get; set; }
         #endregion
 
         #region constructors
@@ -130,13 +131,12 @@ namespace LB.PhotoGalleries.Application
         /// </summary>
         private async Task InitialiseStorageAsync()
         {
-            var storageConnectionString = Configuration["Storage:ConnectionString"];
-            var blobServiceClient = new BlobServiceClient(storageConnectionString);
+            BlobServiceClient = new BlobServiceClient(Configuration["Storage:ConnectionString"]);
 
             // create containers as necessary
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(Constants.StorageOriginalContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(Constants.StorageOriginalContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageOriginalContainerName}");
             }
             catch (RequestFailedException e)
@@ -151,7 +151,7 @@ namespace LB.PhotoGalleries.Application
             var spec3840 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec3840);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(spec3840.ContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(spec3840.ContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec3840.ContainerName}");
             }
             catch (RequestFailedException e)
@@ -166,7 +166,7 @@ namespace LB.PhotoGalleries.Application
             var spec1440 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec2560);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(spec1440.ContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(spec1440.ContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1440.ContainerName}");
             }
             catch (RequestFailedException e)
@@ -181,7 +181,7 @@ namespace LB.PhotoGalleries.Application
             var spec1080 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec1920);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(spec1080.ContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(spec1080.ContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1080.ContainerName}");
             }
             catch (RequestFailedException e)
@@ -196,7 +196,7 @@ namespace LB.PhotoGalleries.Application
             var spec800 = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.Spec800);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(spec800.ContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(spec800.ContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec800.ContainerName}");
             }
             catch (RequestFailedException e)
@@ -211,7 +211,7 @@ namespace LB.PhotoGalleries.Application
             var specLowres = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
             try
             {
-                await blobServiceClient.CreateBlobContainerAsync(specLowres.ContainerName);
+                await BlobServiceClient.CreateBlobContainerAsync(specLowres.ContainerName);
                 Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowres.ContainerName}");
             }
             catch (RequestFailedException e)

@@ -13,7 +13,6 @@ using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -26,14 +25,9 @@ namespace LB.PhotoGalleries.Application.Servers
 {
     public class ImageServer
     {
-        #region members
-        private static BlobServiceClient _blobServiceClient;
-        #endregion
-
         #region constructors
         internal ImageServer()
         {
-            _blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
         }
         #endregion
 
@@ -78,7 +72,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
 
                 // upload the original file to storage
-                var originalContainerClient = _blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+                var originalContainerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
                 await originalContainerClient.UploadBlobAsync(image.Files.OriginalId, imageStream);
 
                 // create the database record
@@ -560,7 +554,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             if (!string.IsNullOrEmpty(storageId))
             {
-                var container = _blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
+                var container = Server.Instance.BlobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
                 var response = await container.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
                 Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
                 return;
