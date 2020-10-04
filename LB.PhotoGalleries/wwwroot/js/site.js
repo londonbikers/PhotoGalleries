@@ -46,3 +46,9 @@ function GetImageThumbnailUrl(files, element) {
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 }
+
+function GetGalleryUrl(categoryName, galleryId, name) {
+    var encodedName = EncodeParamForUrl(name);
+    var encodedCategoryName = EncodeParamForUrl(categoryName);
+    return `/g/${encodedCategoryName}/${galleryId}/${encodedName}`;
+}

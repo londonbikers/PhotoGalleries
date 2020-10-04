@@ -17,10 +17,15 @@ namespace LB.PhotoGalleries.Controllers
             return View();
         }
 
-        // GET: /g/<categoryId>/<galleryId>/<name>
-        public async Task<ActionResult> Details(string categoryId, string galleryId, string name)
+        // GET: /g/<category>/<galleryId>/<name>
+        public async Task<ActionResult> Details(string categoryName, string galleryId, string name)
         {
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            var decodedCategoryName = Helpers.DecodeParameterFromUrl(categoryName);
+            var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(decodedCategoryName, StringComparison.CurrentCultureIgnoreCase));
+            if (category == null)
+                return RedirectToAction("Index");
+
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(category.Id, galleryId);
             if (gallery == null)
                 return RedirectToAction("Index");
             
