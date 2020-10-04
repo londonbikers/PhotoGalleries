@@ -50,7 +50,7 @@ namespace LB.PhotoGalleries.Worker
             _log = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File("logs\\lb.photogalleries.worker.log", rollingInterval: RollingInterval.Day)
+                .WriteTo.File("logs/lb.photogalleries.worker.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
             try
