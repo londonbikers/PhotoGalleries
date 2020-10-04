@@ -11,7 +11,7 @@ namespace LB.PhotoGalleries.Controllers
         // GET: /categories/motorcycles
         public async Task<ActionResult> Details(string name, int p = 1)
         {
-            name = Utilities.DecodeParameterFromUrl(name);
+            name = Helpers.DecodeParameterFromUrl(name);
             var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             if (category == null)
                 return RedirectToAction("Index", "Home");

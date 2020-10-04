@@ -33,8 +33,8 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         {
             try
             {
-                gallery.Id = Utilities.CreateNewId();
-                gallery.CreatedByUserId = Utilities.GetUserId(User);
+                gallery.Id = Helpers.CreateNewId();
+                gallery.CreatedByUserId = Helpers.GetUserId(User);
                 await Server.Instance.Galleries.CreateGalleryAsync(gallery);
                 return RedirectToAction(nameof(Edit), new { pk = gallery.CategoryId, id = gallery.Id });
             }
@@ -53,7 +53,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, createdByUser.Id);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser.Id);
             return View();
         }
 
@@ -65,13 +65,13 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var appGallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
             var createdByUser = await Server.Instance.Users.GetUserAsync(appGallery.CreatedByUserId);
             var images = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, createdByUser.Id);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser.Id);
             var inErrorState = false;
 
             try
             {
                 // check that the user is authorised to edit the gallery, i.e. they're an administrator or the creator of the gallery
-                if (!Utilities.CanUserEditObject(User, appGallery.CreatedByUserId))
+                if (!Helpers.CanUserEditObject(User, appGallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
                     inErrorState = true;
@@ -137,7 +137,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, gallery.CreatedByUserId);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
             ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             return View();
@@ -154,14 +154,14 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Utilities.GetUserId(User);
+            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Helpers.GetUserId(User);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
             ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
 
             try
             {
                 // check the user is authorised to delete the gallery
-                if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+                if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
                     return View();

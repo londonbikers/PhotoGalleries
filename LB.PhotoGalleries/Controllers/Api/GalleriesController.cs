@@ -27,7 +27,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             var galleryComment = new Comment
             {
-                CreatedByUserId = Utilities.GetUserId(User),
+                CreatedByUserId = Helpers.GetUserId(User),
                 Text = comment.Trim()
             };
 
@@ -49,7 +49,7 @@ namespace LB.PhotoGalleries.Controllers.Api
                 return NoContent();
             }
 
-            if (!Utilities.CanUserEditComment(comment, gallery, User))
+            if (!Helpers.CanUserEditComment(comment, gallery, User))
                 return BadRequest("Apologies, you're not authorised to do that.");
 
             var removed = gallery.Comments.Remove(comment);

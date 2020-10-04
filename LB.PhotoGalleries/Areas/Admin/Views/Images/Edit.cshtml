@@ -21,7 +21,7 @@
         <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
     </div>
     <div class="col text-right">
-        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Utilities.EncodeParamForUrl(Model.Name)">View public image</a>
+        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)">View public image</a>
     </div>
 </div>
 

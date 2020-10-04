@@ -31,7 +31,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
             ViewData["tags"] = string.Join(',', image.Tags);
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, gallery.CreatedByUserId);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
             return View();
         }
@@ -45,7 +45,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
-            ViewData["isAuthorisedToEdit"] = Utilities.CanUserEditObject(User, gallery.CreatedByUserId);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
 
             try
@@ -98,7 +98,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             try
             {
                 // check that the user is authorised to delete the image, i.e. they're an administrator or the creator of the gallery
-                if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+                if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 {
                     ViewData["error"] = "Sorry, you are not authorised to delete this image. You did not create this gallery.";
                     return View();

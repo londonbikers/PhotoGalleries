@@ -13,6 +13,7 @@ using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -226,9 +227,12 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
-        /// Causes an Image to be permanently deleted from storage and database. Will also result in some images being re-ordered to avoid holes in positions.
+        /// Causes an Image to be permanently deleted from storage and database.
+        /// Will result in some images being re-ordered to avoid holes in positions.
         /// </summary>
-        public async Task DeleteImageAsync(Image image, bool performReordering = true)
+        /// <param name="image">The Image to be deleted.</param>
+        /// <param name="isGalleryBeingDeleted">Will disable all re-ordering and gallery thumbnail tasks if the gallery is being deleted.</param>
+        public async Task DeleteImageAsync(Image image, bool isGalleryBeingDeleted = false)
         {
             // delete all image files
             var deleteTasks = new List<Task>
@@ -247,49 +251,58 @@ namespace LB.PhotoGalleries.Application.Servers
             var galleryId = image.GalleryId;
 
             // finally, delete the database record
-            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
-            var response = await container.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {response.RequestCharge}");
+            var imagesContainer = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var deleteResponse = await imagesContainer.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
+            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {deleteResponse.RequestCharge}");
 
             // if necessary, re-order photos down-position from where the deleted photo used to be
-            if (position.HasValue && performReordering)
+            if (!isGalleryBeingDeleted)
             {
-                var originalPosition = position.Value;
-                Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
-
-                // get the ids of images that have a position down from where our deleted image used to be
-                var queryDefinition = new QueryDefinition("SELECT c.id AS Id, c.GalleryId AS PartitionKey FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position ORDER BY c.Position")
-                    .WithParameter("@galleryId", galleryId)
-                    .WithParameter("@position", position.Value);
-
-                var ids = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
-                Image newThumbnailImage = null;
-
-                for (var index = 0; index < ids.Count; index++)
+                if (position.HasValue)
                 {
-                    var id = ids[index].Id;
-                    var affectedImage = await GetImageAsync(galleryId, id);
+                    Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
 
-                    if (index == 0 && originalPosition == 0)
-                        newThumbnailImage = affectedImage;
+                    // get the ids of images that have a position down from where our deleted image used to be
+                    var queryDefinition = new QueryDefinition("SELECT c.id AS Id, c.GalleryId AS PartitionKey FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position ORDER BY c.Position")
+                        .WithParameter("@galleryId", galleryId)
+                        .WithParameter("@position", position.Value);
 
-                    // this check shouldn't be required as if one image has a position then all should
-                    // but life experience suggests it's best to be sure.
-                    if (affectedImage.Position == null)
-                        continue;
+                    var ids = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+                    foreach (var databaseId in ids)
+                    {
+                        var affectedImage = await GetImageAsync(galleryId, databaseId.Id);
 
-                    affectedImage.Position = position;
-                    await UpdateImageAsync(affectedImage);
-                    position += 1;
+                        // this check shouldn't be required as if one image has a position then all should
+                        // but life experience suggests it's best to be sure.
+                        if (affectedImage.Position == null)
+                            continue;
+
+                        affectedImage.Position = position;
+                        await UpdateImageAsync(affectedImage);
+                        position += 1;
+                    }
                 }
+                
+                // do we need to update the gallery thumbnail after we delete this image?
+                var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
+                var newThumbnailNeeded = gallery.ThumbnailStorageId == image.Files.Spec800Id;
 
-                // update the gallery thumbnail if we deleted the first image
-                if (originalPosition == 0 && newThumbnailImage != null)
+                if (newThumbnailNeeded)
                 {
-                    Debug.WriteLine("ImageServer.DeleteImageAsync: New thumbnail image detected, updating gallery...");
-                    var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-                    gallery.ThumbnailStorageId = newThumbnailImage.Files.Spec800Id;
+                    var images = await GetGalleryImagesAsync(gallery.Id);
+                    if (images.Count > 0)
+                    {
+                        var orderedImages = Utilities.OrderImages(images);
+                        gallery.ThumbnailStorageId = orderedImages.First().Files.Spec800Id;
+
+                    }
+                    else
+                    {
+                        gallery.ThumbnailStorageId = null;
+                    }
+
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailStorageId}");
                 }
             }
         }

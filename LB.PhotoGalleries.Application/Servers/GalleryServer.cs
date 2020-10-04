@@ -196,7 +196,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // delete all images docs and files. can't be done in bulk unfortunately.
             foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id))
-                await Server.Instance.Images.DeleteImageAsync(image, false);
+                await Server.Instance.Images.DeleteImageAsync(image, true);
 
             // delete the gallery doc
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);

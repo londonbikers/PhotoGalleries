@@ -18,7 +18,7 @@
     <div class="row mb-3">
         <div class="col">
             <small class="text-muted">
-                Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Utilities.EncodeParamForUrl(category.Name)">@category.Name</a>
+                Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a>
                 - Created @ViewData.Model.Created.ToShortDateString()
                 - by @user.Name
                 - @images.Count photos
@@ -78,7 +78,7 @@
                         <div class="text-small">
                             <b>@commentUser.Name</b><br />
                             <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
-                            @if (Utilities.CanUserEditComment(comment, Model, User))
+                            @if (Helpers.CanUserEditComment(comment, Model, User))
                             {
                                 <text>-</text>
                                 <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>

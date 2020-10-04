@@ -44,7 +44,7 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             // is the user authorised to edit these images?
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
-            if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 return Unauthorized("You are not authorised to update these images.");
 
             var credit = Request.Form["credit"].FirstOrDefault();
@@ -98,7 +98,7 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             // is the user authorised to perform this operation?
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
-            if (!Utilities.CanUserEditObject(User, gallery.CreatedByUserId))
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 return Unauthorized("You are not authorised to do mark that upload as complete.");
 
             // update image count
@@ -152,7 +152,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             var imageComment = new Comment
             {
-                CreatedByUserId = Utilities.GetUserId(User),
+                CreatedByUserId = Helpers.GetUserId(User),
                 Text = comment.Trim()
             };
 
@@ -175,7 +175,7 @@ namespace LB.PhotoGalleries.Controllers.Api
                 return NoContent();
             }
 
-            if (!Utilities.CanUserEditComment(comment, gallery, User))
+            if (!Helpers.CanUserEditComment(comment, gallery, User))
                 return BadRequest("Apologies, you're not authorised to do that.");
 
             var removed = image.Comments.Remove(comment);
