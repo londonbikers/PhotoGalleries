@@ -227,14 +227,17 @@ namespace LB.PhotoGalleries.Application.Servers
         public async Task DeleteImageAsync(Image image, bool performReordering = true)
         {
             // delete all image files
-            // todo: optimise this by running in parallel
             var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient);
-            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient);
+            var deleteTasks = new List<Task>
+            {
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient)
+            };
+            await Task.WhenAll(deleteTasks);
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
