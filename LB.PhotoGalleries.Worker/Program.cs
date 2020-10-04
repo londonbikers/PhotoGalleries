@@ -39,9 +39,16 @@ namespace LB.PhotoGalleries.Worker
         {
             Console.WriteLine("Starting worker...");
 
+            if (args == null || args.Length == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No configuration filename argument supplied. Cannot continue.");
+                return;
+            }
+
             // setup configuration
             _configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile(args[0], optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .AddCommandLine(args)
                 .Build();
