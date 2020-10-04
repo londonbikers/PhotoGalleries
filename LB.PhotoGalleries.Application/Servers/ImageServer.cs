@@ -442,23 +442,8 @@ namespace LB.PhotoGalleries.Application.Servers
         public async Task DeletePreGenImageFilesAsync(string galleryId)
         {
             var images = await GetGalleryImagesAsync(galleryId);
-
-            Parallel.ForEach(images, image =>
-            {
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840)).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560)).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920)).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800)).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes)).GetAwaiter().GetResult();
-
-                image.Files.Spec3840Id = null;
-                image.Files.Spec2560Id = null;
-                image.Files.Spec1920Id = null;
-                image.Files.Spec800Id = null;
-                image.Files.SpecLowResId = null;
-
-                UpdateImageAsync(image).GetAwaiter().GetResult();
-            });
+            var tasks = images.Select(HandleDeletePreGenImagesAsync).ToList();
+            await Task.WhenAll(tasks);
         }
         #endregion
 
@@ -491,6 +476,23 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region private methods
+        private async Task HandleDeletePreGenImagesAsync(Image image)
+        {
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840));
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560));
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920));
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800));
+            await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes));
+
+            image.Files.Spec3840Id = null;
+            image.Files.Spec2560Id = null;
+            image.Files.Spec1920Id = null;
+            image.Files.Spec800Id = null;
+            image.Files.SpecLowResId = null;
+
+            await UpdateImageAsync(image);
+        }
+
         private static async Task<List<Image>> GetImagesByQueryAsync(QueryDefinition queryDefinition)
         {
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
