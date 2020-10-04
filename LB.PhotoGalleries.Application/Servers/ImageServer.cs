@@ -25,9 +25,14 @@ namespace LB.PhotoGalleries.Application.Servers
 {
     public class ImageServer
     {
+        #region members
+        private static BlobServiceClient _blobServiceClient;
+        #endregion
+
         #region constructors
         internal ImageServer()
         {
+            _blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
         }
         #endregion
 
@@ -72,8 +77,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
 
                 // upload the original file to storage
-                var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
-                var originalContainerClient = blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+                var originalContainerClient = _blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
                 await originalContainerClient.UploadBlobAsync(image.Files.OriginalId, imageStream);
 
                 // create the database record
@@ -227,15 +231,14 @@ namespace LB.PhotoGalleries.Application.Servers
         public async Task DeleteImageAsync(Image image, bool performReordering = true)
         {
             // delete all image files
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var deleteTasks = new List<Task>
             {
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal), blobServiceClient),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient)
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes))
             };
             await Task.WhenAll(deleteTasks);
 
@@ -431,15 +434,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         public async Task DeletePreGenImageFilesAsync(string galleryId)
         {
-            var blobServiceClient = new BlobServiceClient(Server.Instance.Configuration["Storage:ConnectionString"]);
             var images = await GetGalleryImagesAsync(galleryId);
+
             Parallel.ForEach(images, image =>
             {
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800), blobServiceClient).GetAwaiter().GetResult();
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes), blobServiceClient).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840)).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560)).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920)).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800)).GetAwaiter().GetResult();
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes)).GetAwaiter().GetResult();
 
                 image.Files.Spec3840Id = null;
                 image.Files.Spec2560Id = null;
@@ -526,7 +529,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Handles deleting a specific version of an image file according to file spec.
         /// </summary>
-        private async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec, BlobServiceClient client)
+        private async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec)
         {
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
@@ -544,7 +547,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             if (!string.IsNullOrEmpty(storageId))
             {
-                var container = client.GetBlobContainerClient(imageFileSpec.ContainerName);
+                var container = _blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
                 var response = await container.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
                 Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
                 return;
