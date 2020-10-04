@@ -1,5 +1,4 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
+﻿using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
