@@ -2,6 +2,7 @@
 using Azure.Storage.Queues;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Exceptions;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using MetadataExtractor;
@@ -593,6 +594,9 @@ namespace LB.PhotoGalleries.Application.Servers
             using var bm = new Bitmap(imageStream);
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
+
+            if (image.Metadata.Width <= 800 || image.Metadata.Height <= 800)
+                throw new ImageTooSmallException("Image must be bigger than 800 x 800 pixels in size.");
 
             if (imageStream.CanSeek && imageStream.Position != 0)
                 imageStream.Position = 0;

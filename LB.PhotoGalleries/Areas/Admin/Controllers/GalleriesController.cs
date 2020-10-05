@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -125,7 +126,21 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return NoContent();
 
             var stream = file.OpenReadStream();
-            await Server.Instance.Images.CreateImageAsync(categoryId, galleryId, stream, file.FileName);
+
+            try
+            {
+                await Server.Instance.Images.CreateImageAsync(categoryId, galleryId, stream, file.FileName);
+            }
+            catch (ImageTooSmallException e)
+            {
+                return BadRequest(e.Message);
+            }
+            finally
+            {
+                if (stream != null)
+                    await stream.DisposeAsync();
+            }
+
             return Ok();
         }
 
