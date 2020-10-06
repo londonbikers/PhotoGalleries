@@ -136,7 +136,7 @@
 
         @if (User.IsInRole(Roles.Administrator.ToString()))
         {
-            <button data-bind="click: function() { GenerateMissingImageFiles(); }" class="btn btn-secondary btn-sm">Generate missing images</button>
+            <button data-bind="click: function() { GenerateImageFiles(); }" class="btn btn-secondary btn-sm">Generate images</button>
             <button data-bind="click: function() { DeletePreGenImages(); }" class="btn btn-secondary btn-sm">Delete pre-gen images</button>
         }
 
@@ -283,15 +283,15 @@
                     });
             }
 
-            this.GenerateMissingImageFiles = function() {
-                console.log('GenerateMissingImageFiles()');
-                $.post('/api/images/generate-missing-image-files?galleryId=@Model.Id')
+            this.GenerateImageFiles = function() {
+                console.log('GenerateImageFiles()');
+                $.post('/api/images/generate-image-files?galleryId=@Model.Id')
                     .done(function (responses) {
-                        console.log("GenerateMissingImageFiles(): done");
+                        console.log("GenerateImageFiles(): done");
                         console.log(responses);
                     })
                     .fail(function() {
-                        console.log("GenerateMissingImageFiles(): something went wrong");
+                        console.log("GenerateImageFiles(): something went wrong");
                     });
             }
 

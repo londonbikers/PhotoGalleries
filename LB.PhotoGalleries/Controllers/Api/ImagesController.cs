@@ -111,18 +111,17 @@ namespace LB.PhotoGalleries.Controllers.Api
         }
 
         /// <summary>
-        /// If we add new types of generated images to the app then new image files will need generating, this method will do that.
+        /// Causes image files to be regenerated for all images in a gallery.
         /// </summary>
-        /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
-        /// <returns>A set of responses for each image generated.</returns>
-        [HttpPost("/api/images/generate-missing-image-files")]
+        /// <param name="galleryId">The unique identifier for the gallery to generate image files for.</param>
+        [HttpPost("/api/images/generate-image-files")]
         [Authorize(Roles = "Administrator")]
-        public async Task<ActionResult> GenerateMissingImageFiles(string galleryId)
+        public async Task<ActionResult> GenerateImageFiles(string galleryId)
         {
             if (string.IsNullOrEmpty(galleryId))
                 return BadRequest("galleryId value missing");
 
-            await Server.Instance.Images.GenerateMissingImagesAsync(galleryId);
+            await Server.Instance.Images.RegenerateImageFiles(galleryId);
             return Ok();
         }
 

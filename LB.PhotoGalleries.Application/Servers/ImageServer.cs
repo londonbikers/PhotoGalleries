@@ -418,18 +418,13 @@ namespace LB.PhotoGalleries.Application.Servers
 
         #region admin methods
         /// <summary>
-        /// If we add new types of generated images to the app then new image files will need generating.
-        /// This method will re-generate all pre-generated images including new ones.
+        /// After deleting pre-generated image files you can use this method to regenerate image files for a whole gallery of images.
         /// </summary>
-        /// <param name="galleryId">The unique identifier for the gallery to generate missing image files for.</param>
-        /// <returns>A set of responses for each image generated.</returns>
-        public async Task GenerateMissingImagesAsync(string galleryId)
+        /// <param name="galleryId">The unique identifier for the gallery to generate image files for.</param>
+        public async Task RegenerateImageFiles(string galleryId)
         {
             if (string.IsNullOrEmpty(galleryId))
                 throw new ArgumentException("galleryId is invalid", nameof(galleryId));
-
-            // make sure you update the file specs in LB.PhotoGalleries.Functions.ImageProcessing class so it knows to generate new images
-            // todo: modify queue usage so the message says what file specs to generate, making this a more efficient process, i.e. only generate missing image files
 
             var images = await GetGalleryImagesAsync(galleryId);
             foreach (var image in images)
