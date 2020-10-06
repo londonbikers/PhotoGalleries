@@ -56,16 +56,6 @@ namespace LB.PhotoGalleries.Models
         [Required]
         
         public DateTime Created { get; set; }
-        
-        /// <summary>
-        /// The storage id of the first image in the gallery, which will be used as a thumbnail for the gallery.
-        /// </summary>
-        /// <remarks>
-        /// Needs to be set when the first image in a gallery is uploaded and when the gallery is updated.
-        /// </remarks>
-        [DisplayName("Thumbnail Storage Id")]
-        [Obsolete("Use ThumbnailFiles instead")]
-        public string ThumbnailStorageId { get; set; }
 
         /// <summary>
         /// A copy of the Image.Files collection of file storage ids for the thumbnail image.

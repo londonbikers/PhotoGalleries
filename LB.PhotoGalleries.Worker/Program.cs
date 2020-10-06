@@ -324,10 +324,9 @@ namespace LB.PhotoGalleries.Worker
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
             var gallery = getGalleryResponse.Resource;
 
-            if (string.IsNullOrEmpty(gallery.ThumbnailStorageId))
+            if (gallery.ThumbnailFiles == null)
             {
-                // todo: change this so we write the whole Files property to the gallery so we can choose high-res versions as needed
-                gallery.ThumbnailStorageId = image.Files.Spec800Id;
+                gallery.ThumbnailFiles = image.Files;
 
                 // update the gallery in the db
                 var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));

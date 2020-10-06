@@ -278,7 +278,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 
                 // do we need to update the gallery thumbnail after we delete this image?
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-                var newThumbnailNeeded = gallery.ThumbnailStorageId == image.Files.Spec800Id;
+                var newThumbnailNeeded = gallery.ThumbnailFiles.OriginalId == image.Files.OriginalId;
 
                 if (newThumbnailNeeded)
                 {
@@ -286,16 +286,16 @@ namespace LB.PhotoGalleries.Application.Servers
                     if (images.Count > 0)
                     {
                         var orderedImages = Utilities.OrderImages(images);
-                        gallery.ThumbnailStorageId = orderedImages.First().Files.Spec800Id;
+                        gallery.ThumbnailFiles = orderedImages.First().Files;
 
                     }
                     else
                     {
-                        gallery.ThumbnailStorageId = null;
+                        gallery.ThumbnailFiles = null;
                     }
 
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailStorageId}");
+                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailFiles.Spec800Id}");
                 }
             }
         }
@@ -348,7 +348,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 Debug.WriteLine("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(imageBeingOrdered.GalleryCategoryId, imageBeingOrdered.GalleryId);
-                gallery.ThumbnailStorageId = imageBeingOrdered.Files.Spec800Id;
+                gallery.ThumbnailFiles = imageBeingOrdered.Files;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             }
         }

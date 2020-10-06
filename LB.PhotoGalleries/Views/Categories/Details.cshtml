@@ -32,7 +32,7 @@
     <div class="row mt-3" data-bind="foreach: Galleries">
         <div class="col-md-4">
             <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(ThumbnailStorageId, $element) }" class="img-fluid" /></a>
+                <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
                 <div class="card-body">
                     <p class="card-text" data-bind="text: Name"></p>
                     <div class="d-flex justify-content-between align-items-center">
@@ -62,21 +62,10 @@
                           g.CategoryId,
                           g.Id,
                           g.Name,
-                          g.ThumbnailStorageId,
+                          g.ThumbnailFiles,
                           g.ImageCount,
                           CategoryName = Model.Name
                       })));
-
-        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
-        // this ensures images are as crisp as they can be for each client device.
-        function GetThumbnailUrl(storageId, element) {
-            var cardInnerWidth = $(element).parent().parent().innerWidth();
-            var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
-            var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
-            var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
-            var url = `/di800/${storageId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            return url;
-        }
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
