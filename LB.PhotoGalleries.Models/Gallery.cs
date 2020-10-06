@@ -39,17 +39,17 @@ namespace LB.PhotoGalleries.Models
         [DisplayName("Created by")]
         public string CreatedByUserId { get; set; }
         
-        // <summary>
-        // The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
-        // Useful for URL conversion/redirects.
-        // </summary>
+        /// <summary>
+        /// The numeric id of the gallery when it was stored in the old londonbikers_v5 database.
+        /// Useful for URL conversion/redirects.
+        /// </summary>
         [DisplayName("Legacy Number ID")]
         public int? LegacyNumId { get; set; }
         
-        // <summary>
-        // The guid id of the gallery when it was stored in the old londonbikers_v5 database.
-        // Useful for URL conversion/redirects.
-        // </summary>
+        /// <summary>
+        /// The guid id of the gallery when it was stored in the old londonbikers_v5 database.
+        /// Useful for URL conversion/redirects.
+        /// </summary>
         [DisplayName("Legacy Guid ID")]
         
         public Guid? LegacyGuidId { get; set; }
@@ -57,12 +57,12 @@ namespace LB.PhotoGalleries.Models
         
         public DateTime Created { get; set; }
         
-        // <summary>
-        // The storage id of the first image in the gallery, which will be used as a thumbnail for the gallery.
-        // </summary>
-        // <remarks>
-        // Needs to be set when the first image in a gallery is uploaded and when the gallery is updated.
-        // </remarks>
+        /// <summary>
+        /// The storage id of the first image in the gallery, which will be used as a thumbnail for the gallery.
+        /// </summary>
+        /// <remarks>
+        /// Needs to be set when the first image in a gallery is uploaded and when the gallery is updated.
+        /// </remarks>
         [DisplayName("Thumbnail Storage Id")]
         [Obsolete("Use ThumbnailFiles instead")]
         public string ThumbnailStorageId { get; set; }
