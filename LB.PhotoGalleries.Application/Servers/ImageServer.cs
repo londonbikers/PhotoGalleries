@@ -565,13 +565,10 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         private static async Task PostProcessImagesAsync(Image image)
         {
-            // instantiate a QueueClient which will be used to create and manipulate the queue
-            var queueClient = new QueueClient(Server.Instance.Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
-
-            // Create the message and send to the queue
+            // create the message and send to the Azure Storage queue
             var ids = image.Id + ":" + image.GalleryId;
             var messageText = Utilities.Base64Encode(ids);
-            await queueClient.SendMessageAsync(messageText);
+            await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
         #endregion
 

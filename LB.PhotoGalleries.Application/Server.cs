@@ -31,6 +31,7 @@ namespace LB.PhotoGalleries.Application
         public GalleryServer Galleries { get; internal set; }
         public ImageServer Images { get; internal set; }
         public UserServer Users { get; internal set; }
+
         /// <summary>
         /// Provides access to application configuration data, i.e. connection strings.
         /// Needs to be set on startup by the client using SetConfiguration().
@@ -39,6 +40,7 @@ namespace LB.PhotoGalleries.Application
         internal CosmosClient CosmosClient { get; set; }
         internal Database Database { get; set; }
         internal BlobServiceClient BlobServiceClient { get; set; }
+        internal QueueClient ImageProcessingQueueClient { get; set; }
         #endregion
 
         #region constructors
@@ -229,17 +231,14 @@ namespace LB.PhotoGalleries.Application
         /// </summary>
         private async Task InitialiseQueuesAsync()
         {
-            var storageConnectionString = Configuration["Storage:ConnectionString"];
-
-            // Instantiate a QueueClient which will be used to create and manipulate the queue
-            var queueClient = new QueueClient(storageConnectionString, Constants.QueueImagesToProcess);
+            ImageProcessingQueueClient = new QueueClient(Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
 
             // Create the queue
-            var response = await queueClient.CreateIfNotExistsAsync();
+            var response = await ImageProcessingQueueClient.CreateIfNotExistsAsync();
 
             Debug.WriteLine(response != null
-                ? $"Server.InitialiseQueuesAsync: Created {queueClient.Name} queue? {response.ReasonPhrase}"
-                : $"Server.InitialiseQueuesAsync: {queueClient.Name} already exists.");
+                ? $"Server.InitialiseQueuesAsync: Created {ImageProcessingQueueClient.Name} queue? {response.ReasonPhrase}"
+                : $"Server.InitialiseQueuesAsync: {ImageProcessingQueueClient.Name} already exists.");
         }
         #endregion
     }
