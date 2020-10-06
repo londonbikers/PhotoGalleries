@@ -64,14 +64,23 @@ namespace LB.PhotoGalleries.Models
         // Needs to be set when the first image in a gallery is uploaded and when the gallery is updated.
         // </remarks>
         [DisplayName("Thumbnail Storage Id")]
+        [Obsolete("Use ThumbnailFiles instead")]
         public string ThumbnailStorageId { get; set; }
+
+        /// <summary>
+        /// A copy of the Image.Files collection of file storage ids for the thumbnail image.
+        /// </summary>
+        /// <remarks>
+        /// Saves on having to request the gallery and an image from the database.
+        /// </remarks>
+        public ImageFiles ThumbnailFiles { get; set; }
         
-        // <summary>
-        // The number of images in this gallery.
-        // </summary>
-        // <remarks>
-        // Needs to be updated on completion of each image upload batch or any gallery update.
-        // </remarks>
+        /// <summary>
+        /// The number of images in this gallery.
+        /// </summary>
+        /// <remarks>
+        /// Needs to be updated on completion of each image upload batch or any gallery update.
+        /// </remarks>
         [DisplayName("Image Count")]
         public int ImageCount { get; set; }
         #endregion
