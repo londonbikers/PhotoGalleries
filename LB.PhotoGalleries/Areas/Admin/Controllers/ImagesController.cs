@@ -1,4 +1,5 @@
 ﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,37 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             _configuration = configuration;
         }
         #endregion
+
+        [HttpPost]
+        [RequestSizeLimit(104857600)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
+        public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)
+        {
+            // RequestSizeLimit: 104857600 = 100MB
+            // store the file in cloud storage and post-process
+            // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
+
+            if (file.Length == 0)
+                return NoContent();
+
+            var stream = file.OpenReadStream();
+
+            try
+            {
+                await Server.Instance.Images.CreateImageAsync(categoryId, galleryId, stream, file.FileName);
+            }
+            catch (ImageTooSmallException e)
+            {
+                return BadRequest(e.Message);
+            }
+            finally
+            {
+                if (stream != null)
+                    await stream.DisposeAsync();
+            }
+
+            return Ok();
+        }
 
         // GET: /admin/images/edit/5/5/7
         public async Task<ActionResult> Edit(string categoryId, string galleryId, string imageId)

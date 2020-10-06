@@ -146,7 +146,7 @@
 <div class="row">
     <div class="col pb-2">
         <div id="dropzone">
-            <form asp-action="Upload" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
+            <form asp-controller="Images" asp-action="Upload" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
                 <div class="dz-message needsclick">
                     Drop files here or click to upload.<br>
                 </div>
