@@ -44,7 +44,7 @@ namespace LB.PhotoGalleries.Models
         /// Useful for URL conversion/redirects.
         /// </summary>
         [DisplayName("Legacy Number ID")]
-        public int? LegacyNumId { get; set; }
+        public long? LegacyNumId { get; set; }
         
         /// <summary>
         /// The guid id of the gallery when it was stored in the old londonbikers_v5 database.
