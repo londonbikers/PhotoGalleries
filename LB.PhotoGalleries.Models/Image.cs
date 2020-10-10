@@ -46,7 +46,7 @@ namespace LB.PhotoGalleries.Models
         /// Useful for URL conversion/redirects.
         /// </summary>
         [DisplayName("Legacy Number Id")]
-        public int? LegacyNumId { get; set; }
+        public long? LegacyNumId { get; set; }
 
         /// <summary>
         /// The guid id of the image when it was stored in the old londonbikers_v5 database.
@@ -75,6 +75,11 @@ namespace LB.PhotoGalleries.Models
         /// We have different images for different size screens and use-cases.
         /// </summary>
         public ImageFiles Files { get; set; }
+
+        /// <summary>
+        /// How many times this image has been viewed by people
+        /// </summary>
+        public long Views { get; set; }
         #endregion
 
         #region constructors

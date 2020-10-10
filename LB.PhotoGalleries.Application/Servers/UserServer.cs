@@ -92,6 +92,15 @@ namespace LB.PhotoGalleries.Application.Servers
             return response.Resource;
         }
 
+        public async Task<User> GetUserByLegacyIdAsync(Guid legacyApolloId)
+        {
+            var queryDefinition = new QueryDefinition("SELECT * FROM u WHERE u.LegacyApolloId = @legacyApolloId").WithParameter("@legacyApolloId", legacyApolloId);
+            var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
+            var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
+            var response = await queryResult.ReadNextAsync();
+            return response.FirstOrDefault();
+        }
+
         public async Task<List<User>> GetLatestUsersAsync(int maxResults)
         {
             // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges

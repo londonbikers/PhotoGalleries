@@ -52,12 +52,17 @@
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Active)
         </dd>
-        <dt class = "col-sm-10">
-            @Html.DisplayNameFor(model => model.CreatedByUserId)
-        </dt>
-        <dd class = "col-sm-10">
-            <a asp-action="Details" asp-controller="Users" asp-route-id="@createdByUser.Id">@createdByUser.Name</a>
-        </dd>
+        
+        @if (createdByUser != null)
+        {
+            <dt class = "col-sm-10">
+                @Html.DisplayNameFor(model => model.CreatedByUserId)
+            </dt>
+            <dd class = "col-sm-10">
+                <a asp-action="Details" asp-controller="Users" asp-route-id="@createdByUser.Id">@createdByUser.Name</a>
+            </dd>
+        }
+        
         <dt class = "col-sm-10">
             @Html.DisplayNameFor(model => model.LegacyNumId)
         </dt>

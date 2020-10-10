@@ -38,7 +38,8 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="galleryId">The gallery this image is going to be contained within.</param>
         /// <param name="imageStream">The stream for the uploaded image file.</param>
         /// <param name="filename">The original filename provided by the client.</param>
-        public async Task CreateImageAsync(string galleryCategoryId, string galleryId, Stream imageStream, string filename)
+        /// <param name="image">Optionally supply a pre-populated Image object.</param>
+        public async Task CreateImageAsync(string galleryCategoryId, string galleryId, Stream imageStream, string filename, Image image = null)
         {
             try
             {
@@ -51,19 +52,36 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (string.IsNullOrEmpty(filename))
                     throw new ArgumentNullException(nameof(filename));
 
-                // create the Image object
-                // note: we don't set a position as there's no efficient way to do this at this point. instead
-                // we let the clients order by created date initially and then when/if a photographer orders the photos
-                // then the position attribute is used to order images.
-                var id = Utilities.GenerateId();
-                var image = new Image
+                if (image != null)
                 {
-                    Id = id,
-                    Name = Path.GetFileNameWithoutExtension(filename),
-                    GalleryCategoryId = galleryCategoryId,
-                    GalleryId = galleryId,
-                    Files = { OriginalId = id + Path.GetExtension(filename).ToLower() }
-                };
+                    // the Image already exists but may not be sufficiently populated...
+                    if (!image.Id.HasValue())
+                        image.Id = Utilities.GenerateId();
+                    if (!image.Name.HasValue())
+                        Path.GetFileNameWithoutExtension(filename);
+                    if (!image.GalleryCategoryId.HasValue())
+                        image.GalleryCategoryId = galleryCategoryId;
+                    if (!image.GalleryId.HasValue())
+                        image.GalleryId = galleryId;
+                    if (!image.Files.OriginalId.HasValue())
+                        image.Files.OriginalId = image.Id + Path.GetExtension(filename).ToLower();
+                }
+                else
+                {
+                    // create the Image object
+                    // note: we don't set a position as there's no efficient way to do this at this point. instead
+                    // we let the clients order by created date initially and then when/if a photographer orders the photos
+                    // then the position attribute is used to order images.
+                    var id = Utilities.GenerateId();
+                    image = new Image
+                    {
+                        Id = id,
+                        Name = Path.GetFileNameWithoutExtension(filename),
+                        GalleryCategoryId = galleryCategoryId,
+                        GalleryId = galleryId,
+                        Files = { OriginalId = id + Path.GetExtension(filename).ToLower() }
+                    };
+                }
 
                 ParseAndAssignImageMetadata(image, imageStream);
 
@@ -79,13 +97,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
                 Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
 
-                // have the pre-gen images created by an Azure Function
+                // have the pre-gen images created by a background process
                 await PostProcessImagesAsync(image);
-            }
-            catch (Exception ex)
-            {
-                var m = ex.Message;
-                throw;
             }
             finally
             {
@@ -586,8 +599,8 @@ namespace LB.PhotoGalleries.Application.Servers
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
 
-            if (image.Metadata.Width <= 800 || image.Metadata.Height <= 800)
-                throw new ImageTooSmallException("Image must be bigger than 800 x 800 pixels in size.");
+            if (image.Metadata.Width < 768 || image.Metadata.Height < 768)
+                throw new ImageTooSmallException("Image must be equal or bigger than 768 x 768 pixels in size.");
 
             if (imageStream.CanSeek && imageStream.Position != 0)
                 imageStream.Position = 0;
@@ -618,9 +631,12 @@ namespace LB.PhotoGalleries.Application.Servers
             if (iso.HasValue)
                 image.Metadata.Iso = iso.Value;
 
-            var credit = GetImageCredit(directories);
-            if (credit.HasValue())
-                image.Credit = credit;
+            if (!image.Credit.HasValue())
+            {
+                var credit = GetImageCredit(directories);
+                if (credit.HasValue())
+                    image.Credit = credit;
+            }
 
             var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
             if (exifIfd0Directory != null)
@@ -635,10 +651,13 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (model != null && model.Description.HasValue())
                     image.Metadata.CameraModel = model.Description;
 
-                var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (imageDescription != null && imageDescription.Description.HasValue())
-                    image.Caption = imageDescription.Description;
+                if (!image.Caption.HasValue())
+                {
+                    var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                    if (imageDescription != null && imageDescription.Description.HasValue())
+                        image.Caption = imageDescription.Description;
+                }
             }
 
             var exifSubIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
@@ -706,10 +725,13 @@ namespace LB.PhotoGalleries.Application.Servers
             var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
             if (iptcDirectory != null)
             {
-                var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (objectName != null && objectName.Description.HasValue())
-                    image.Name = objectName.Description;
+                if (!image.Name.HasValue())
+                {
+                    var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
+                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
+                    if (objectName != null && objectName.Description.HasValue())
+                        image.Name = objectName.Description;
+                }
 
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)

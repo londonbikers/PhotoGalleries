@@ -94,8 +94,7 @@ namespace LB.PhotoGalleries.Models
             if (string.IsNullOrEmpty(Id) ||
                 string.IsNullOrEmpty(Name) ||
                 string.IsNullOrEmpty(Description) ||
-                string.IsNullOrEmpty(CategoryId) ||
-                string.IsNullOrEmpty(CreatedByUserId))
+                string.IsNullOrEmpty(CategoryId))
                 return false;
 
             return true;

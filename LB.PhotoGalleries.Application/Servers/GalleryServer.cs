@@ -103,8 +103,10 @@ namespace LB.PhotoGalleries.Application.Servers
             if (page == pagedResultSet.TotalPages)
                 itemsToGet = pagedResultSet.TotalResults - offset;
 
-            var pageIds = ids.GetRange(offset, itemsToGet);
+            if (ids.Count == 0)
+                return null;
 
+            var pageIds = ids.GetRange(offset, itemsToGet);
             foreach (var id in pageIds)
                 pagedResultSet.Results.Add(await GetGalleryAsync(id.PartitionKey, id.Id));
 

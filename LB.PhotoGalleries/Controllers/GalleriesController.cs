@@ -30,7 +30,13 @@ namespace LB.PhotoGalleries.Controllers
                 return RedirectToAction("Index");
             
             ViewData["images"] = Utilities.OrderImages(await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id)).ToList();
-            ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+
+            if (gallery.CreatedByUserId.HasValue())
+            {
+                // migrated galleries won't have a user id
+                ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            }
+
             ViewData.Model = gallery;
 
             long pixels = 0;

@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries
 {
@@ -33,7 +34,7 @@ namespace LB.PhotoGalleries
             if (user.IsInRole(Roles.Administrator.ToString()))
                 return true;
 
-            if (GetUserId(user) == objectCreatedByUserId)
+            if (objectCreatedByUserId.HasValue() && GetUserId(user) == objectCreatedByUserId)
                 return true;
 
             return false;

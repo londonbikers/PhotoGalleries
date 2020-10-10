@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -116,13 +117,13 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         public async Task<ActionResult> Delete(string pk, string id)
         {
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
-            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            if (gallery.CreatedByUserId.HasValue())
+                ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
-            ViewData["username"] = createdByUser.Name;
             ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
-            ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             return View();
         }
 
@@ -133,13 +134,20 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         {
             // set the view up in case we have to error out to it
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
-            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+
+            if (gallery.CreatedByUserId.HasValue())
+            {
+                ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+                ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Helpers.GetUserId(User);
+            }
+            else
+            {
+                ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator");
+            }
+
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
-            ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = User.IsInRole("Administrator") || gallery.CreatedByUserId == Helpers.GetUserId(User);
             ViewData["category"] = Server.Instance.Categories.Categories.Single(q => q.Id == gallery.CategoryId);
-            ViewData["createdByUser"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
 
             try
             {

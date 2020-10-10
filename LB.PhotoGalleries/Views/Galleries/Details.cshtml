@@ -20,7 +20,10 @@
             <small class="text-muted">
                 Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a>
                 - Created @ViewData.Model.Created.ToShortDateString()
-                - by @user.Name
+                @if (user != null)
+                {
+                    <text>-by </text>@user.Name
+                }
                 - @images.Count photos
                 -
                 <span style="white-space: nowrap;">

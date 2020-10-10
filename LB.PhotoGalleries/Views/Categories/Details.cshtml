@@ -26,27 +26,37 @@
         </div>
     </div>
     <hr />
+    
+    @if (galleries != null)
+    {
+        @await Component.InvokeAsync("GalleryPaginator", new { pagedResultSet = galleries })
 
-    @await Component.InvokeAsync("GalleryPaginator", new { pagedResultSet = galleries })
-
-    <div class="row mt-3" data-bind="foreach: Galleries">
-        <div class="col-md-4">
-            <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
-                <div class="card-body">
-                    <p class="card-text" data-bind="text: Name"></p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small data-bind="text: CategoryName" class="text-muted"></small>
-                        <small class="text-muted"><span data-bind="text: ImageCount"></span> photos</small>
+        <div class="row mt-3" data-bind="foreach: Galleries">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
+                    <div class="card-body">
+                        <p class="card-text" data-bind="text: Name"></p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small data-bind="text: CategoryName" class="text-muted"></small>
+                            <small class="text-muted"><span data-bind="text: ImageCount"></span> photos</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="pb-3">
-        @await Component.InvokeAsync("GalleryPaginator", new { pagedResultSet = galleries })
-    </div>
+        <div class="pb-3">
+            @await Component.InvokeAsync("GalleryPaginator", new { pagedResultSet = galleries })
+        </div>
+    }
+    else
+    {
+        <p class="lead">
+            Waiting for first gallery in this category...
+        </p>
+    }
+
 
 </div>
 @section Scripts
@@ -57,15 +67,18 @@
 
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Results.Select(g => new
+        var payload = @if (galleries != null)
                       {
-                          g.CategoryId,
-                          g.Id,
-                          g.Name,
-                          g.ThumbnailFiles,
-                          g.ImageCount,
-                          CategoryName = Model.Name
-                      })));
+                          @Html.Raw(JsonConvert.SerializeObject(galleries.Results.Select(g => new
+                          {
+                              g.CategoryId,
+                              g.Id,
+                              g.Name,
+                              g.ThumbnailFiles,
+                              g.ImageCount,
+                              CategoryName = Model.Name
+                          })))
+                      };
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
