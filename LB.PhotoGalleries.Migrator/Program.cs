@@ -176,9 +176,11 @@ namespace LB.PhotoGalleries.Migrator
                         Description = (string)galleriesReader["f_description"],
                         Created = (DateTime)galleriesReader["f_creation_date"],
                         Active = (byte)galleriesReader["f_status"] == 1,
-                        LegacyNumId = (long)galleriesReader["ID"],
-                        LegacyGuidId = (Guid)galleriesReader["f_uid"]
+                        LegacyNumId = (long)galleriesReader["ID"]
                     };
+
+                    if (galleriesReader["f_uid"] != DBNull.Value)
+                        gallery.LegacyGuidId = (Guid)galleriesReader["f_uid"];
 
                     // add gallery comments to gallery object
                     await AddGalleryCommentsAsync(gallery);
@@ -222,8 +224,8 @@ namespace LB.PhotoGalleries.Migrator
                 var userId = await GetUserIdAsync((Guid)galleryCommentsReader["AuthorID"]);
                 var comment = new Comment
                 {
-                    Created = (DateTime) galleryCommentsReader["Created"],
-                    Text = (string) galleryCommentsReader["Comment"],
+                    Created = (DateTime)galleryCommentsReader["Created"],
+                    Text = (string)galleryCommentsReader["Comment"],
                     CreatedByUserId = userId
                 };
                 gallery.Comments.Add(comment);
@@ -331,8 +333,8 @@ namespace LB.PhotoGalleries.Migrator
                 var userId = await GetUserIdAsync((Guid)reader["AuthorID"]);
                 var comment = new Comment
                 {
-                    Created = (DateTime) reader["Created"],
-                    Text = (string) reader["Comment"],
+                    Created = (DateTime)reader["Created"],
+                    Text = (string)reader["Comment"],
                     CreatedByUserId = userId
                 };
                 image.Comments.Add(comment);

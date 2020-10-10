@@ -599,8 +599,8 @@ namespace LB.PhotoGalleries.Application.Servers
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
 
-            if (image.Metadata.Width < 768 || image.Metadata.Height < 768)
-                throw new ImageTooSmallException("Image must be equal or bigger than 768 x 768 pixels in size.");
+            if (image.Metadata.Width < 500 || image.Metadata.Height < 500)
+                throw new ImageTooSmallException($"Image must be equal or bigger than 500 x 500 pixels in size. Detected size {image.Metadata.Width}x{image.Metadata.Height}");
 
             if (imageStream.CanSeek && imageStream.Position != 0)
                 imageStream.Position = 0;
