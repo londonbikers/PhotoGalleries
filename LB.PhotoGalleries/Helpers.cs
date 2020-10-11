@@ -1,8 +1,8 @@
 ﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries
 {
@@ -36,6 +36,21 @@ namespace LB.PhotoGalleries
 
             if (objectCreatedByUserId.HasValue() && GetUserId(user) == objectCreatedByUserId)
                 return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a user is authorised to edit or delete a photos object.
+        /// </summary>
+        public static bool CanUserEditObject(ClaimsPrincipal user, User objectCreatedByUser)
+        {
+            // users must be an administrator or have created the object to edit (and delete) a photos object
+            if (user.IsInRole(Roles.Administrator.ToString()))
+                return true;
+
+            if (objectCreatedByUser != null)
+                return CanUserEditObject(user, objectCreatedByUser.Id);
 
             return false;
         }

@@ -53,8 +53,8 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
             ViewData.Model = gallery;
             ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
-            ViewData["username"] = createdByUser.Name;
-            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser.Id);
+            ViewData["createdByUser"] = createdByUser;
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser);
             return View();
         }
 

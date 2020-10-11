@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Shared;
 using User = LB.PhotoGalleries.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -86,6 +87,9 @@ namespace LB.PhotoGalleries.Application.Servers
 
         public async Task<User> GetUserAsync(string userId)
         {
+            if (!userId.HasValue())
+                return null;
+
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
             Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
