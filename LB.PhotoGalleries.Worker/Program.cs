@@ -309,29 +309,17 @@ namespace LB.PhotoGalleries.Worker
             return null;
         }
 
+        /// <summary>
+        /// After creating various smaller image files we need to update the database with the new filenames.
+        /// </summary>
         private static async Task UpdateModelsAsync(Image image)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            // update Image in the db
+            // update Image in the db with the new Files references we've created
             var replaceResult = await _imagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
-
-            // update the gallery thumbnail if this is the first image being added to the gallery
-            var galleryContainer = _database.GetContainer(Constants.GalleriesContainerName);
-            var getGalleryResponse = await galleryContainer.ReadItemAsync<Gallery>(image.GalleryId, new PartitionKey(image.GalleryCategoryId));
-            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Get gallery request charge: {getGalleryResponse.RequestCharge}");
-            var gallery = getGalleryResponse.Resource;
-
-            if (gallery.ThumbnailFiles == null)
-            {
-                gallery.ThumbnailFiles = image.Files;
-
-                // update the gallery in the db
-                var updateGalleryResponse = await galleryContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
-                _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - First image, setting gallery thumbnail. galleryId {gallery.Id}, galleryCategoryId {gallery.CategoryId}. Request charge: {updateGalleryResponse.RequestCharge}");
-            }
 
             stopwatch.Stop();
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Elapsed time: {stopwatch.ElapsedMilliseconds}ms");

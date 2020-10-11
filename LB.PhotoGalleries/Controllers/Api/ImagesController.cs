@@ -104,8 +104,8 @@ namespace LB.PhotoGalleries.Controllers.Api
             // update image count
             await Server.Instance.Galleries.UpdateGalleryImageCount(categoryId, galleryId);
 
-            // order images if necessary
-            await Server.Instance.Images.UpdateImagePositionsAsync(galleryId);
+            // order images
+            await Server.Instance.Images.DateOrderGalleryImages(galleryId);
 
             return Ok();
         }

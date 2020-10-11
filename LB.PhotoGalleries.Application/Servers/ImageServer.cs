@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Models.Image;
@@ -68,10 +69,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
                 else
                 {
-                    // create the Image object
-                    // note: we don't set a position as there's no efficient way to do this at this point. instead
-                    // we let the clients order by created date initially and then when/if a photographer orders the photos
-                    // then the position attribute is used to order images.
+                    // create the Image object anew
                     var id = Utilities.GenerateId();
                     image = new Image
                     {
@@ -155,10 +153,24 @@ namespace LB.PhotoGalleries.Application.Servers
                 return null;
             }
 
-            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
-            var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
-            Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
-            return response.Resource;
+            try
+            {
+                var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+                var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
+                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
+                return response.Resource;
+            }
+            catch (CosmosException e)
+            {
+                if (e.StatusCode == HttpStatusCode.NotFound)
+                {
+                    Debug.WriteLine($"Image not found in db. GalleryId {galleryId}, ImageId {imageId}");
+                    return null;
+                }
+
+                // some other unexpected exception
+                throw;
+            }
         }
 
         /// <summary>
@@ -300,15 +312,15 @@ namespace LB.PhotoGalleries.Application.Servers
                     {
                         var orderedImages = Utilities.OrderImages(images);
                         gallery.ThumbnailFiles = orderedImages.First().Files;
-
+                        Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailFiles.Spec800Id}");
                     }
                     else
                     {
                         gallery.ThumbnailFiles = null;
+                        Debug.WriteLine("ImageServer.DeleteImageAsync: New gallery thumbnail was needed but no images to choose from.");
                     }
 
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                    Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailFiles.Spec800Id}");
                 }
             }
         }
@@ -367,27 +379,17 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
-        /// Checks to see if any images in a gallery need a position setting, i.e. to accomodate new uploads and then sets the necessary positions.
+        /// Sets a position value on a gallery of images. To be used after upload.
         /// </summary>
-        /// <param name="galleryId">The id of the gallery to check the positions on.</param>
-        public async Task UpdateImagePositionsAsync(string galleryId)
+        /// <param name="galleryId">The id of the gallery to set the image positions on.</param>
+        public async Task DateOrderGalleryImages(string galleryId)
         {
             var images = await GetGalleryImagesAsync(galleryId);
-            if (images.Any(i => i.Position.HasValue))
+            var dateOrderedImages = images.OrderBy(i => i.Created).ToList();
+            for (var i = 0; i < dateOrderedImages.Count(); i++)
             {
-                // some images have been ordered, order the rest
-                var orderedImages = images.Where(i => i.Position.HasValue).OrderBy(i => i.Position.Value);
-                var unorderedImages = images.Where(i => i.Position.HasValue == false).OrderBy(i => i.Created);
-
-                // ReSharper disable once PossibleInvalidOperationException - cannot contain images without positions
-                var newPosition = orderedImages.Max(i => i.Position.Value) + 1;
-                foreach (var image in unorderedImages)
-                {
-                    image.Position = newPosition;
-                    newPosition += 1;
-
-                    await UpdateImageAsync(image);
-                }
+                dateOrderedImages[i].Position = i;
+                await UpdateImageAsync(dateOrderedImages[i]);
             }
         }
 
@@ -477,6 +479,9 @@ namespace LB.PhotoGalleries.Application.Servers
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Query: {queryDefinition.QueryText}");
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}");
+
+            if (resultSet.Resource == null || !resultSet.Resource.Any())
+                return -1;
 
             return Convert.ToInt32(resultSet.Resource.First());
         }

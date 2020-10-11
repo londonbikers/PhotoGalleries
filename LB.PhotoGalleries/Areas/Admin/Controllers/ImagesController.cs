@@ -110,6 +110,12 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         public async Task<ActionResult> Delete(string categoryId, string galleryId, string imageId)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            if (image == null)
+            {
+                // image has already been deleted, redirect to gallery
+                return RedirectToAction("Edit", "Galleries", new { pk = categoryId, id = galleryId });
+            }
+
             ViewData.Model = image;
             ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];

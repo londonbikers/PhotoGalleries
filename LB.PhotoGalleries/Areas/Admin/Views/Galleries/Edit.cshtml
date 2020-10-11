@@ -324,10 +324,13 @@
                 this.on("queuecomplete",
                     function() {
                         // the uploads are done, tell the server we're done so it can reconcile the additions
-                        $.post('/api/images/upload-complete?categoryId=@Model.CategoryId&galleryId=@Model.Id');
+                        $.post('/api/images/upload-complete?categoryId=@Model.CategoryId&galleryId=@Model.Id').done(
+                            function() {
+                                console.log("Upload complete");
 
-                        // now refresh the page so we clear down the uploader and show the new images properly
-                        location.reload();
+                                // now refresh the page so we clear down the uploader and show the new images properly
+                                location.reload();
+                            });
                     });
             }
         };
