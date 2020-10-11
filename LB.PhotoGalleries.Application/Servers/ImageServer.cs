@@ -381,16 +381,23 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Sets a position value on a gallery of images. To be used after upload.
         /// </summary>
+        /// <param name="categoryId">The id of the category the gallery resides in.</param>
         /// <param name="galleryId">The id of the gallery to set the image positions on.</param>
-        public async Task DateOrderGalleryImages(string galleryId)
+        public async Task DateOrderGalleryImages(string categoryId, string galleryId)
         {
+            // set the image positions
             var images = await GetGalleryImagesAsync(galleryId);
             var dateOrderedImages = images.OrderBy(i => i.Created).ToList();
-            for (var i = 0; i < dateOrderedImages.Count(); i++)
+            for (var i = 0; i < dateOrderedImages.Count; i++)
             {
                 dateOrderedImages[i].Position = i;
                 await UpdateImageAsync(dateOrderedImages[i]);
             }
+
+            // set the gallery thumbnail now we've changed the order of photos
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            gallery.ThumbnailFiles = dateOrderedImages[0].Files;
+            await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
         }
 
         /// <summary>
