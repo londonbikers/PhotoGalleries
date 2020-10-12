@@ -80,6 +80,8 @@ namespace LB.PhotoGalleries.Migrator
                     Description = (string)categoriesReader["f_description"]
                 };
 
+                c.Description = CleanText(c.Description);
+
                 // has this category already been migrated?
                 if (!Server.Instance.Categories.Categories.Any(cat => cat.Name.Equals(c.Name, StringComparison.CurrentCultureIgnoreCase)))
                 {
@@ -149,7 +151,10 @@ namespace LB.PhotoGalleries.Migrator
 	            gc.f_name as [CategoryName]
 	            FROM [dbo].[apollo_galleries] g
 	            INNER JOIN apollo_gallery_category_gallery_relations gcr ON gcr.GalleryID = g.ID
-	            INNER JOIN apollo_gallery_categories gc ON gc.ID = gcr.CategoryID WHERE Photos{_configuration["EnvironmentName"]}ImagesDone IS NULL";
+	            INNER JOIN apollo_gallery_categories gc ON gc.ID = gcr.CategoryID 
+                WHERE 
+                Photos{_configuration["EnvironmentName"]}ImagesDone IS NULL
+                ORDER BY g.f_creation_date";
             await using var galleriesCommand = new SqlCommand(galleriesQuery, galleriesConnection);
             await using var galleriesReader = await galleriesCommand.ExecuteReaderAsync();
 
@@ -182,6 +187,9 @@ namespace LB.PhotoGalleries.Migrator
                     if (galleriesReader["f_uid"] != DBNull.Value)
                         gallery.LegacyGuidId = (Guid)galleriesReader["f_uid"];
 
+                    if (gallery.Description.HasValue())
+                        gallery.Description = CleanText(gallery.Description);
+
                     // add gallery comments to gallery object
                     await AddGalleryCommentsAsync(gallery);
 
@@ -202,7 +210,12 @@ namespace LB.PhotoGalleries.Migrator
                 }
 
                 // create images
-                await CreateGalleryImagesAsync(gallery);
+                var thumbnailImage = await CreateGalleryImagesAsync(gallery);
+
+                // set the gallery thumbnail
+                gallery.ThumbnailFiles = thumbnailImage.Files;
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                _log.Information($"Set gallery {gallery.LegacyNumId} thumbnail files");
 
                 // update legacy gallery as done
                 legacyGalleriesUpdateCommand.CommandText = $"update apollo_galleries set Photos{_configuration["EnvironmentName"]}ImagesDone = 1 where ID = {galleriesReader["ID"]}";
@@ -245,12 +258,17 @@ namespace LB.PhotoGalleries.Migrator
             return u.Id;
         }
 
-        private static async Task CreateGalleryImagesAsync(Gallery gallery)
+        /// <summary>
+        /// Migrates gallery images.
+        /// </summary>
+        /// <param name="gallery">The gallery to create the images for.</param>
+        /// <returns>The first image, i.e. the thumbnail candidate</returns>
+        private static async Task<Image> CreateGalleryImagesAsync(Gallery gallery)
         {
             // get legacy images
             await using var imagesConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
             await imagesConnection.OpenAsync();
-            var galleryImagesQuery = $"SELECT * FROM [dbo].[GalleryImages] WHERE [GalleryID] = {gallery.LegacyNumId} AND Photos{_configuration["EnvironmentName"]}Migrated IS NULL AND (Filename1600 <> '' OR Filename1024 <> '') ORDER BY CreationDate";
+            var galleryImagesQuery = $"SELECT * FROM [dbo].[GalleryImages] WHERE [GalleryID] = {gallery.LegacyNumId} AND Photos{_configuration["EnvironmentName"]}Migrated IS NULL ORDER BY CreationDate";
             await using var imagesCommand = new SqlCommand(galleryImagesQuery, imagesConnection);
             await using var imagesReader = await imagesCommand.ExecuteReaderAsync();
 
@@ -263,6 +281,7 @@ namespace LB.PhotoGalleries.Migrator
             // ReSharper disable once PossibleInvalidOperationException - we've created the images so we know we've already set a position
             var position = galleryImages.Count > 0 ? galleryImages.Max(gi => gi.Position.Value) : 0;
 
+            Image thumbnailImage = null;
             while (await imagesReader.ReadAsync())
             {
                 // does the image file exist? find out now before we do anything else
@@ -307,6 +326,9 @@ namespace LB.PhotoGalleries.Migrator
                 var updateImageCommand = new SqlCommand($"UPDATE GalleryImages SET Photos{_configuration["EnvironmentName"]}Migrated = 1 WHERE ID = {i.LegacyNumId}", secondaryConnection);
                 await updateImageCommand.ExecuteNonQueryAsync();
 
+                if (i.Position == 0)
+                    thumbnailImage = i;
+
                 _log.Information($"Migrated image: {path} in gallery legacy id {gallery.LegacyNumId}");
                 position += 1;
             }
@@ -320,6 +342,8 @@ namespace LB.PhotoGalleries.Migrator
             var updateGalleryCommand = new SqlCommand($"UPDATE apollo_galleries SET Photos{_configuration["EnvironmentName"]}ImagesDone = 1 WHERE ID = {gallery.LegacyNumId}", secondaryConnection);
             await updateGalleryCommand.ExecuteNonQueryAsync();
             _log.Information("Finalised gallery legacy id " + gallery.LegacyNumId);
+
+            return thumbnailImage;
         }
 
         private static async Task AddImageCommentsAsync(Image image, SqlConnection connection)
@@ -340,6 +364,14 @@ namespace LB.PhotoGalleries.Migrator
                 image.Comments.Add(comment);
                 _log.Information($"Created comment for image legacy id {image.LegacyNumId} for comment made on {comment.Created}");
             }
+        }
+
+        private static string CleanText(string text)
+        {
+            text = text.Replace(" class=\"copperlink\"", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            text = text.Replace("<b>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            text = text.Replace("</b>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            return text;
         }
     }
 }
