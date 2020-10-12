@@ -8,8 +8,11 @@ function EncodeParamForUrl(parameter)
     // remove some characters
     parameter = parameter.replace(/\(|\)|'/g, "");
 
+    // replace hyphens with underscores
+    parameter = parameter.replace("-", "_");
+
     // replace others with hyphens
-    parameter = parameter.replace(/-| |\.|_|\//g, "-");
+    parameter = parameter.replace(/-| |\.|\//g, "-");
 
     // make sure we haven't doubled up hyphens
     parameter = parameter.replace(/-{2,}/g, "-");
