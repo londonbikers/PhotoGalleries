@@ -32,7 +32,9 @@ namespace LB.PhotoGalleries.Worker
         private static BlobServiceClient _blobServiceClient;
         private static Database _database;
         private static Container _imagesContainer;
+        private static Container _galleriesContainer;
         private static ILogger _log;
+        private static DatabaseId _galleryId;
         #endregion
 
         private static async Task Main(string[] args)
@@ -67,6 +69,7 @@ namespace LB.PhotoGalleries.Worker
                 _blobServiceClient = new BlobServiceClient(_configuration["Storage:ConnectionString"]);
                 _database = _cosmosClient.GetDatabase(_configuration["CosmosDB:DatabaseName"]);
                 _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
+                _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
 
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
@@ -99,6 +102,9 @@ namespace LB.PhotoGalleries.Worker
                         Parallel.ForEach(messages.Value, message => {
                             HandleMessageAsync(message).GetAwaiter().GetResult();
                         });
+
+                        // assign a gallery thumbnail if one is missing
+                        await AssignGalleryThumbnailAsync();
                     }
 
                     // if we we received messages this iteration then there's a good chance there's more to process so don't pause between polls
@@ -140,6 +146,18 @@ namespace LB.PhotoGalleries.Worker
             var ids = Utilities.Base64Decode(message).Split(':');
             var imageId = ids[0];
             var galleryId = ids[1];
+            var categoryId = ids[2];
+
+            // keep track of the gallery id so we can work on the gallery after the message batch is processed
+            if (_galleryId == null)
+            {
+                _galleryId = new DatabaseId(galleryId, categoryId);
+            }
+            else if (_galleryId.Id != galleryId)
+            {
+                _galleryId.Id = galleryId;
+                _galleryId.PartitionKey = categoryId;
+            }
 
             // retrieve Image object and bytes
             var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
@@ -325,6 +343,74 @@ namespace LB.PhotoGalleries.Worker
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
 
             // todo: in the future: expire Image cache item when we implement domain caching
+        }
+
+        /// <summary>
+        /// Galleries need a copy of the first image's ImageFiles object so it can efficiently render high-resolution thumbnails without
+        /// making sub-queries for this data. This method finds the first gallery image thumbnail data and updates the gallery with it.
+        /// </summary>
+        private static async Task AssignGalleryThumbnailAsync()
+        {
+            var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(_galleryId.Id, new PartitionKey(_galleryId.PartitionKey));
+            var g = readItemResponse.Resource;
+
+            if (g.ThumbnailFiles == null)
+            {
+                // get the first image
+                // try and get where position = 0 first
+                // if no results, then get where date created is earliest
+
+                var query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId AND i.Position = 0";
+                var queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", g.Id);
+                var queryResult = _imagesContainer.GetItemQueryIterator<Image>(queryDefinition);
+                ImageFiles imageFiles = null;
+
+                while (queryResult.HasMoreResults)
+                {
+                    var queryResponse = await queryResult.ReadNextAsync();
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}");
+
+                    foreach (var item in queryResponse.Resource)
+                    {
+                        imageFiles = item.Files;
+                        break;
+                    }
+                }
+
+                if (imageFiles == null)
+                {
+                    // no position value set on images, get first image created
+                    query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId ORDER BY i.Created";
+                    queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", g.Id);
+                    queryResult = _imagesContainer.GetItemQueryIterator<Image>(queryDefinition);
+
+                    while (queryResult.HasMoreResults)
+                    {
+                        var queryResponse = await queryResult.ReadNextAsync();
+                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge}");
+
+                        foreach (var item in queryResponse.Resource)
+                        {
+                            imageFiles = item.Files;
+                            break;
+                        }
+                    }
+                }
+
+                if (imageFiles == null)
+                {
+                    _log.Error($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Couldn't retrieve first image in gallery. imageFiles is null. GalleryID: {g.Id}");
+                    return;
+                }
+
+                g.ThumbnailFiles = imageFiles;
+                var replaceResponse = await _galleriesContainer.ReplaceItemAsync(g, g.Id, new PartitionKey(g.CategoryId));
+                _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Gallery updated. Charge: {replaceResponse.RequestCharge}");
+            }
+            else
+            {
+                _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Gallery ThumbnailFiles already set on gallery {g.Id}");
+            }
         }
         #endregion
     }

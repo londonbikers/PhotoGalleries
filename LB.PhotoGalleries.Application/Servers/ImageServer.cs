@@ -383,6 +383,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         /// <param name="categoryId">The id of the category the gallery resides in.</param>
         /// <param name="galleryId">The id of the gallery to set the image positions on.</param>
+        [Obsolete("Cannot order without setting gallery thumbnail which we can't do after upload as images stand a good chance of not being processed fully")]
         public async Task DateOrderGalleryImages(string categoryId, string galleryId)
         {
             // set the image positions
@@ -590,7 +591,7 @@ namespace LB.PhotoGalleries.Application.Servers
         private static async Task PostProcessImagesAsync(Image image)
         {
             // create the message and send to the Azure Storage queue
-            var ids = image.Id + ":" + image.GalleryId;
+            var ids = $"{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}";
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
