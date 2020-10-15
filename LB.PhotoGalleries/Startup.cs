@@ -148,7 +148,7 @@ namespace LB.PhotoGalleries
                 endpoints.MapAreaControllerRoute(
                     name: "AdminGalleryImages",
                     areaName: "Admin",
-                    pattern: "Admin/{controller=Home}/{action=Index}/{categoryId}/{galleryId}/{imageId}");
+                    pattern: "{area:exists}/{controller=Home}/{action=Index}/{categoryId}/{galleryId}/{imageId}");
                 endpoints.MapControllerRoute(
                     name: "AdminWithPartitionKey",
                     pattern: "{area:exists}/{controller=Home}/{action=Index}/{pk}/{id}");

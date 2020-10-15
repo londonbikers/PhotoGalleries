@@ -113,6 +113,36 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
+        // GET: /admin/galleries/changecategory/5/6
+        public async Task<ActionResult> ChangeCategory(string pk, string id)
+        {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser.Id);
+            ViewData.Model = gallery;
+            return View();
+        }
+
+        // POST: /admin/galleries/changecategory/5/6
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ChangeCategory(string pk, string id, IFormCollection collection)
+        {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+            var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+            var isAuthorisedToEdit = Helpers.CanUserEditObject(User, createdByUser.Id);
+            var newCategoryId = collection["CategoryId"];
+            ViewData["isAuthorisedToEdit"] = isAuthorisedToEdit;
+            ViewData.Model = gallery;
+
+            if (!isAuthorisedToEdit)
+                return View();
+
+            // change gallery category
+            await Server.Instance.Galleries.ChangeGalleryCategoryAsync(pk, id, newCategoryId);
+            return RedirectToAction(nameof(Edit), new { pk = newCategoryId, id = gallery.Id });
+        }
+
         // GET: /admin/galleries/delete/5/6
         public async Task<ActionResult> Delete(string pk, string id)
         {

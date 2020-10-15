@@ -1,0 +1,33 @@
+﻿@using LB.PhotoGalleries.Application
+@model Gallery
+@{
+    ViewData["Title"] = "Change Category";
+    var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
+}
+
+<h1>Change Category</h1>
+<div>
+    <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@Model.CategoryId" asp-route-id="@Model.Id">Back to Gallery</a>
+</div>
+<hr />
+
+@if (!isAuthorisedToEdit)
+{
+    <text>Sorry, you're not authorised to change this gallery's category.</text>
+}
+else
+{ 
+    <h3>@Model.Name</h3>
+    <p>You can change the category the gallery resides in below. 
+        Note that doing so changes the URL of the gallery so if the gallery has already been published use carefully as it'll break links to the gallery other people have made and damage the user experience/SEO.</p>
+
+    <form asp-action="ChangeCategory">
+        <div class="form-group">
+            <label asp-for="@Model.CategoryId" class="control-label"></label>
+            <select class="form-control" asp-for="@Model.CategoryId" asp-items="@(new SelectList(Server.Instance.Categories.Categories, "Id", "Name"))">
+                <option></option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+}

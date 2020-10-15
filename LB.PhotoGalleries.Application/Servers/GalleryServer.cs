@@ -206,6 +206,29 @@ namespace LB.PhotoGalleries.Application.Servers
             Debug.WriteLine("GalleryServer.DeleteGalleryAsync: Request charge: " + response.RequestCharge);
         }
 
+        public async Task ChangeGalleryCategoryAsync(string currentCategoryId, string galleryId, string newCategoryId)
+        {
+            // delete old gallery database object
+            // create new gallery database object
+            // update image category database object references
+
+            var g = await GetGalleryAsync(currentCategoryId, galleryId);
+            g.CategoryId = newCategoryId;
+
+            var galleryContainer = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
+            await galleryContainer.DeleteItemAsync<Gallery>(g.Id, new PartitionKey(currentCategoryId));
+
+            // should we pause here to wait for replication to take effect?
+            await galleryContainer.CreateItemAsync(g, new PartitionKey(g.CategoryId));
+
+            var images = await Server.Instance.Images.GetGalleryImagesAsync(g.Id);
+            foreach (var i in images)
+            {
+                i.GalleryCategoryId = g.CategoryId;
+                await Server.Instance.Images.UpdateImageAsync(i);
+            }
+        }
+
         /// <summary>
         /// Updates the count we keep on a gallery for the number of images it contains.
         /// This avoids having to collect the big image objects from the database every time we just want a simple count of the number of images in the gallery.
