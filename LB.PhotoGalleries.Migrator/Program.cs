@@ -356,9 +356,12 @@ namespace LB.PhotoGalleries.Migrator
 
         private static string CleanText(string text)
         {
+            text = text.Replace(" class=\"Flat\"", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             text = text.Replace(" class=\"copperlink\"", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             text = text.Replace("<b>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             text = text.Replace("</b>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            text = text.Replace("<i>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            text = text.Replace("</i>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             return text;
         }
     }
