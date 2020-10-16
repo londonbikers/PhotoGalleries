@@ -11,6 +11,10 @@
 
 <p>
     <a asp-area="Admin" asp-controller="Galleries" asp-action="Create">Create a new gallery</a>
+    @if (User.IsInRole(Roles.Administrator.ToString()))
+    { 
+        <text>| </text><a asp-area="Admin" asp-controller="Galleries" asp-action="MissingThumbnails">Missing thumbnails</a>
+    }
 </p>
 
 <table class="table">

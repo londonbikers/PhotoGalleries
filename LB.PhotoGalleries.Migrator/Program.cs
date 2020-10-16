@@ -97,8 +97,7 @@ namespace LB.PhotoGalleries.Migrator
 
         private static async Task MigrateUsersAsync()
         {
-            lock (_userIds)
-                _userIds = new Dictionary<Guid, string>();
+            _userIds = new Dictionary<Guid, string>();
 
             // we need to create user objects for everyone who has commented on a gallery or photo
             await using var userConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
@@ -128,8 +127,7 @@ namespace LB.PhotoGalleries.Migrator
                 };
 
                 // keep track of the old and new user ids as we'll need to use them elsewhere in the migration and don't need to keep hitting the database for it
-                lock (_userIds)
-                    _userIds.Add((Guid)usersReader["f_uid"], u.Id);
+                _userIds.Add((Guid)usersReader["f_uid"], u.Id);
 
                 // create the new user object
                 await Server.Instance.Users.CreateOrUpdateUserAsync(u);

@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Missing Thumbnails";
+    var success = (string)ViewData["success"];
+}
+
+<h1>Missing Thumbnails</h1>
+<div>
+    <a asp-action="Index">Back to galleries</a>
+</div>
+<hr />
+
+<p>There are @ViewData["count"] galleries without a thumbnail.</p>
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success" role="alert">
+        @success
+    </div>
+}
+
+<form asp-action="MissingThumbnails">
+    <button type="submit" class="btn btn-primary">Assign missing thumbnails</button>
+</form>

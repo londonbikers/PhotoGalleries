@@ -197,5 +197,27 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 return View();
             }
         }
+
+        #region admin methods
+        // GET: /admin/galleries/missingthumbnails
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> MissingThumbnails()
+        {
+            ViewData["count"] = await Server.Instance.Galleries.GetMissingThumbnailGalleriesCountAsync();
+            return View();
+        }
+
+        // GET: /admin/galleries/missingthumbnails
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> MissingThumbnails(IFormCollection collection)
+        {
+            await Server.Instance.Galleries.AssignMissingThumbnailsAsync();
+            ViewData["success"] = "Thumbnails assigned!";
+            ViewData["count"] = await Server.Instance.Galleries.GetMissingThumbnailGalleriesCountAsync();
+            return View();
+        }
+        #endregion
     }
 }

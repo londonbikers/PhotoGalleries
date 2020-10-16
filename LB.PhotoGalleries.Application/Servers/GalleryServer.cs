@@ -241,6 +241,24 @@ namespace LB.PhotoGalleries.Application.Servers
         }
         #endregion
 
+        #region admin methods
+        public async Task<int> GetMissingThumbnailGalleriesCountAsync()
+        {
+            var query = new QueryDefinition("SELECT VALUE COUNT(0) FROM g WHERE IS_NULL(g.ThumbnailFiles)");
+            return await GetGalleriesScalarByQueryAsync(query);
+        }
+
+        public async Task AssignMissingThumbnailsAsync()
+        {
+            // get ids of galleries with missing thumbs
+            // try and assign thumbnail for each one
+            var query = new QueryDefinition("SELECT * FROM g WHERE IS_NULL(g.ThumbnailFiles)");
+            var galleries = await GetGalleriesByQueryAsync(query);
+            foreach (var gallery in galleries)
+                await AssignMissingThumbnailAsync(gallery);
+        }
+        #endregion
+
         #region internal methods
         internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition)
         {
@@ -326,6 +344,63 @@ namespace LB.PhotoGalleries.Application.Servers
             var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM i WHERE i.GalleryId = @galleryId").WithParameter("@galleryId", gallery.Id);
             var count = await Server.Instance.Images.GetImagesScalarByQueryAsync(query);
             return count;
+        }
+
+        private async Task AssignMissingThumbnailAsync(Gallery gallery)
+        {
+            // get the first image
+            // try and get where position = 0 first
+            // if no results, then get where date created is earliest
+
+            var query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId AND i.Position = 0";
+            var queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", gallery.Id);
+            var imagesContainer = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var queryResult = imagesContainer.GetItemQueryIterator<Image>(queryDefinition);
+            ImageFiles imageFiles = null;
+
+            while (queryResult.HasMoreResults)
+            {
+                var queryResponse = await queryResult.ReadNextAsync();
+                Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
+
+                foreach (var item in queryResponse.Resource)
+                {
+                    imageFiles = item.Files;
+                    Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gallery.Id}");
+                    break;
+                }
+            }
+
+            if (imageFiles == null)
+            {
+                // no position value set on images, get first image created
+                query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId ORDER BY i.Created";
+                queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", gallery.Id);
+                queryResult = imagesContainer.GetItemQueryIterator<Image>(queryDefinition);
+
+                while (queryResult.HasMoreResults)
+                {
+                    var queryResponse = await queryResult.ReadNextAsync();
+                    Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Date query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
+
+                    foreach (var item in queryResponse.Resource)
+                    {
+                        imageFiles = item.Files;
+                        Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via date query. GalleryId: {gallery.Id}");
+                        break;
+                    }
+                }
+            }
+
+            if (imageFiles == null)
+            {
+                Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - No thumbnail candidate, yet. GalleryId: {gallery.Id}");
+                return;
+            }
+
+            gallery.ThumbnailFiles = imageFiles;
+            await UpdateGalleryAsync(gallery);
+            Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Gallery updated. GalleryId: {gallery.Id}");
         }
         #endregion
     }

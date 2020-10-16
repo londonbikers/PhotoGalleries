@@ -90,6 +90,7 @@ namespace LB.PhotoGalleries.Worker
                 _database = _cosmosClient.GetDatabase(_configuration["CosmosDB:DatabaseName"]);
                 _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
                 _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
+                _galleryId = new DatabaseId();
 
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
@@ -169,7 +170,8 @@ namespace LB.PhotoGalleries.Worker
             var categoryId = ids[2];
 
             // keep track of the gallery id so we can work on the gallery after the message batch is processed
-            _galleryId = new DatabaseId(galleryId, categoryId);
+            lock (_galleryId)
+                _galleryId = new DatabaseId(galleryId, categoryId);
 
             // retrieve Image object and bytes
             var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
@@ -363,9 +365,18 @@ namespace LB.PhotoGalleries.Worker
         /// </summary>
         private static async Task AssignGalleryThumbnailAsync()
         {
-            var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(_galleryId.Id, new PartitionKey(_galleryId.PartitionKey));
-            var g = readItemResponse.Resource;
+            string gid;
+            string pk;
 
+            lock (_galleryId)
+            {
+                gid = _galleryId.Id;
+                pk = _galleryId.PartitionKey;
+            }
+
+            var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(gid, new PartitionKey(pk));
+            var g = readItemResponse.Resource;
+            
             if (g.ThumbnailFiles == null)
             {
                 // get the first image
@@ -380,12 +391,12 @@ namespace LB.PhotoGalleries.Worker
                 while (queryResult.HasMoreResults)
                 {
                     var queryResponse = await queryResult.ReadNextAsync();
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {_galleryId.Id}");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {gid}");
 
                     foreach (var item in queryResponse.Resource)
                     {
                         imageFiles = item.Files;
-                        _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {_galleryId.Id}");
+                        _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gid}");
                         break;
                     }
                 }
@@ -400,12 +411,12 @@ namespace LB.PhotoGalleries.Worker
                     while (queryResult.HasMoreResults)
                     {
                         var queryResponse = await queryResult.ReadNextAsync();
-                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge} GalleryId: {_galleryId.Id}");
+                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge} GalleryId: {gid}");
 
                         foreach (var item in queryResponse.Resource)
                         {
                             imageFiles = item.Files;
-                            _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via date query. GalleryId: {_galleryId.Id}");
+                            _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via date query. GalleryId: {gid}");
                             break;
                         }
                     }

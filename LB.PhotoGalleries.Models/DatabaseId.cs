@@ -14,5 +14,9 @@
             Id = id;
             PartitionKey = partitionKey;
         }
+
+        public DatabaseId()
+        {
+        }
     }
 }
