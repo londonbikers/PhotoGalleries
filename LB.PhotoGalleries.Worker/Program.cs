@@ -56,11 +56,31 @@ namespace LB.PhotoGalleries.Worker
                 .Build();
 
             // setup logging
-            _log = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.File("logs/lb.photogalleries.worker.log", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
+            var loggerConfiguration = new LoggerConfiguration();
+            var loggingMinimumLevel = _configuration["Logging:MinimumLevel"];
+            switch (loggingMinimumLevel)
+            {
+                case "Verbose":
+                    loggerConfiguration.MinimumLevel.Verbose();
+                    break;
+                case "Debug":
+                    loggerConfiguration.MinimumLevel.Debug();
+                    break;
+                case "Information":
+                    loggerConfiguration.MinimumLevel.Information();
+                    break;
+                case "Warning":
+                    loggerConfiguration.MinimumLevel.Warning();
+                    break;
+                case "Error":
+                    loggerConfiguration.MinimumLevel.Error();
+                    break;
+                case "Fatal":
+                    loggerConfiguration.MinimumLevel.Fatal();
+                    break;
+            }
+            loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
+            _log = loggerConfiguration.CreateLogger();
 
             try
             {
@@ -149,15 +169,7 @@ namespace LB.PhotoGalleries.Worker
             var categoryId = ids[2];
 
             // keep track of the gallery id so we can work on the gallery after the message batch is processed
-            if (_galleryId == null)
-            {
-                _galleryId = new DatabaseId(galleryId, categoryId);
-            }
-            else if (_galleryId.Id != galleryId)
-            {
-                _galleryId.Id = galleryId;
-                _galleryId.PartitionKey = categoryId;
-            }
+            _galleryId = new DatabaseId(galleryId, categoryId);
 
             // retrieve Image object and bytes
             var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
@@ -368,11 +380,12 @@ namespace LB.PhotoGalleries.Worker
                 while (queryResult.HasMoreResults)
                 {
                     var queryResponse = await queryResult.ReadNextAsync();
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {_galleryId.Id}");
 
                     foreach (var item in queryResponse.Resource)
                     {
                         imageFiles = item.Files;
+                        _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {_galleryId.Id}");
                         break;
                     }
                 }
@@ -387,11 +400,12 @@ namespace LB.PhotoGalleries.Worker
                     while (queryResult.HasMoreResults)
                     {
                         var queryResponse = await queryResult.ReadNextAsync();
-                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge}");
+                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge} GalleryId: {_galleryId.Id}");
 
                         foreach (var item in queryResponse.Resource)
                         {
                             imageFiles = item.Files;
+                            _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via date query. GalleryId: {_galleryId.Id}");
                             break;
                         }
                     }
