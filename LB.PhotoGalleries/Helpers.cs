@@ -79,6 +79,7 @@ namespace LB.PhotoGalleries
                 .Replace("/","-")
                 .Replace("@", string.Empty)
                 .Replace("'", string.Empty)
+                .Replace("#", string.Empty)
                 .ToLower();
         }
 

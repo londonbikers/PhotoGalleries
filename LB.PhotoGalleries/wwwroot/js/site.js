@@ -6,7 +6,7 @@
 function EncodeParamForUrl(parameter)
 {
     // remove some characters
-    parameter = parameter.replace(/\(|\)|'|@/g, "");
+    parameter = parameter.replace(/\(|\)|'|@|#/g, "");
 
     // replace hyphens with underscores
     parameter = parameter.replace("-", "_");
