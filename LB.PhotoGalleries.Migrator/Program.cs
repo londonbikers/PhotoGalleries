@@ -97,7 +97,8 @@ namespace LB.PhotoGalleries.Migrator
 
         private static async Task MigrateUsersAsync()
         {
-            _userIds = new Dictionary<Guid, string>();
+            lock (_userIds)
+                _userIds = new Dictionary<Guid, string>();
 
             // we need to create user objects for everyone who has commented on a gallery or photo
             await using var userConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
@@ -127,7 +128,8 @@ namespace LB.PhotoGalleries.Migrator
                 };
 
                 // keep track of the old and new user ids as we'll need to use them elsewhere in the migration and don't need to keep hitting the database for it
-                _userIds.Add((Guid)usersReader["f_uid"], u.Id);
+                lock (_userIds)
+                    _userIds.Add((Guid)usersReader["f_uid"], u.Id);
 
                 // create the new user object
                 await Server.Instance.Users.CreateOrUpdateUserAsync(u);
@@ -244,12 +246,15 @@ namespace LB.PhotoGalleries.Migrator
         private static async Task<string> GetUserIdAsync(Guid userLegacyId)
         {
             // user is in our cache
-            if (_userIds.ContainsKey(userLegacyId))
-                return _userIds[userLegacyId];
+            lock (_userIds)
+                if (_userIds.ContainsKey(userLegacyId))
+                    return _userIds[userLegacyId];
 
             // user is not in our cache
             var u = await Server.Instance.Users.GetUserByLegacyIdAsync(userLegacyId);
-            _userIds.Add(new Guid(u.LegacyApolloId), u.Id);
+            lock (_userIds)
+                _userIds.Add(new Guid(u.LegacyApolloId), u.Id);
+            
             return u.Id;
         }
 
@@ -362,6 +367,7 @@ namespace LB.PhotoGalleries.Migrator
             text = text.Replace("</b>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             text = text.Replace("<i>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             text = text.Replace("</i>", string.Empty, StringComparison.CurrentCultureIgnoreCase);
+            text = text.Replace("&raquo; ", string.Empty, StringComparison.CurrentCultureIgnoreCase);
             return text;
         }
     }
