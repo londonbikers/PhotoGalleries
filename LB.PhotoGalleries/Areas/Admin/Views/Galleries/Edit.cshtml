@@ -180,8 +180,15 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }"><div class="grid-square" data-bind="attr: { id: 'gi-'+Id }"><a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(Files) }" width="280" height="280" /></a></div></div>
+    <div class="row mt-3" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }">
+        <div class="col-md-4" data-bind="attr: { id: 'gi-'+Id }">
+            <div class="card mb-4 shadow-sm">
+                <a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                <div class="card-body card-body-thin text-center">
+                    <p class="card-text" data-bind="text: Name"></p>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -199,7 +206,8 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.Name, i.Files})));
+        
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
         var galleryId = '@Model.Id';
 
         // for high-dpi displays we need to request a larger image than the space we intend to view it in

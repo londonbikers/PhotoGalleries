@@ -131,7 +131,7 @@
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
-        var galleryId = '@Model.Id'
+        var galleryId = '@Model.Id';
 
         function GetImageUrl(galleryId, imageId, name) {
             var encodedName = EncodeParamForUrl(name);
