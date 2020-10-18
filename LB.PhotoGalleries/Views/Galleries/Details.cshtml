@@ -1,6 +1,7 @@
 ﻿@using LB.PhotoGalleries.Application
 @using Newtonsoft.Json
 @using System.Linq
+@using LB.PhotoGalleries.Shared
 @model Gallery
 @{
     ViewData["Title"] = ViewData.Model.Name;
@@ -9,12 +10,20 @@
     var user = (User) ViewData["user"];
     var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
     const int thumbnailSize = 280;
+    var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
+    var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
 }
 
 <div class="text-center">
     <h1 class="display-4">@ViewData.Model.Name</h1>
-    <div class="text-format text-link text-left">
-        @ViewData.Model.Description
+    <div class="text-link text-left">
+        <p>@firstParagraph @if (subsequentParagraphs.HasValue())
+                           {
+                               <span id="show-more">(<a href="#" data-bind="click: ToggleMoreDescription">see more</a>)</span>
+                           }</p>
+        @if (subsequentParagraphs.HasValue())
+        {
+        <p id="subsequent-paras" class="text-format" style="display: none;">@subsequentParagraphs <span id="show-less">(<a href="#" data-bind="click: ToggleMoreDescription">see less</a>)</span></p>}
     </div>
     <hr />
     <div class="row mb-3">
@@ -177,6 +186,19 @@
                 }).fail(function(response) {
                     console.log("something went wrong when deleting the comment: " + response);
                 });
+            }
+
+            this.ToggleMoreDescription = function () {
+                var $subsequentParas = $("#subsequent-paras");
+                if ($subsequentParas.is(":visible")) {
+                    $subsequentParas.slideUp();
+                    $("#show-less").hide();
+                    $("#show-more").show();
+                } else {
+                    $subsequentParas.slideDown();
+                    $("#show-more").hide();
+                    $("#show-less").show();
+                }
             }
         }
 

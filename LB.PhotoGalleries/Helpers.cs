@@ -119,6 +119,48 @@ namespace LB.PhotoGalleries
             // camera make doesn't seem to duplicate model so return both
             return image.Metadata.CameraMake + " " + image.Metadata.CameraModel;
         }
+
+        public static string GetFirstParagraph(string text)
+        {
+            var paragraphs = GetParagraphs(text);
+            return paragraphs != null ? paragraphs[0] : text;
+        }
+
+        public static string GetSubsequentParagraphs(string text)
+        {
+            var paragraphs = GetParagraphs(text);
+            if (paragraphs == null)
+                return null;
+
+            if (paragraphs.Length == 1)
+                return null;
+
+            var subsequentParagraphs = string.Empty;
+            for (var i = 1; i < paragraphs.Length; i++)
+                subsequentParagraphs += paragraphs[i] + "\r\n\r\n";
+
+            if (subsequentParagraphs.EndsWith("\r\n\r\n"))
+                subsequentParagraphs = subsequentParagraphs.Substring(0, subsequentParagraphs.Length - 4);
+
+            return subsequentParagraphs;
+
+        }
+
+        #region private methods
+        /// <summary>
+        /// Breaks text up into paragraphs.
+        /// </summary>
+        private static string[] GetParagraphs(string text)
+        {
+            if (text.Contains("\r\n"))
+                return text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+
+            if (text.Contains("\n\n"))
+                return text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries);
+
+            return null;
+        }
+        #endregion
     }
 
     public enum Roles
