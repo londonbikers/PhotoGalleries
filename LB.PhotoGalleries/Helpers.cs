@@ -152,11 +152,11 @@ namespace LB.PhotoGalleries
         /// </summary>
         private static string[] GetParagraphs(string text)
         {
-            if (text.Contains("\r\n"))
-                return text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+            if (text.Contains("\r\n\r\n"))
+                return text.Split("\r\n\r\n", StringSplitOptions.RemoveEmptyEntries);
 
-            if (text.Contains("\n\n"))
-                return text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries);
+            if (text.Contains("\n\n\n\n"))
+                return text.Split("\n\n\n\n", StringSplitOptions.RemoveEmptyEntries);
 
             return null;
         }
