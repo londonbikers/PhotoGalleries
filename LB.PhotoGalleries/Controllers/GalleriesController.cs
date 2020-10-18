@@ -11,12 +11,6 @@ namespace LB.PhotoGalleries.Controllers
 {
     public class GalleriesController : Controller
     {
-        // GET: /g
-        public ActionResult Index()
-        {
-            return View();
-        }
-
         // GET: /g/<category>/<galleryId>/<name>
         public async Task<ActionResult> Details(string categoryName, string galleryId, string name)
         {

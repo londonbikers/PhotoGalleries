@@ -9,7 +9,6 @@
     var images = (List<Image>) ViewData["images"];
     var user = (User) ViewData["user"];
     var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
-    const int thumbnailSize = 280;
     var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
 }
