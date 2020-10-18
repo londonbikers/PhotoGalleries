@@ -9,6 +9,8 @@
     var images = (List<Image>)ViewData["images"];
     var createdByUser = (User) ViewData["createdByUser"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
+    var categoryNameForUrl = Helpers.EncodeParamForUrl(Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId).Name);
+
 }
 
 @section Styles {
@@ -18,8 +20,13 @@
 }
 
 <h1>Edit Gallery</h1>
-<div>
-    <a asp-action="Index">Back to List</a>
+<div class="row">
+    <div class="col">
+        <a asp-action="Index">Back to List</a>
+    </div>
+    <div class="col text-right">
+        <a asp-area="" asp-controller="Galleries" asp-action="Details" asp-route-galleryId="@Model.Id" asp-route-categoryName="@categoryNameForUrl" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)">View public gallery</a>
+    </div>
 </div>
 <hr />
 

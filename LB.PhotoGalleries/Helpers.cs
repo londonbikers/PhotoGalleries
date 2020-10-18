@@ -80,6 +80,8 @@ namespace LB.PhotoGalleries
                 .Replace("@", string.Empty)
                 .Replace("'", string.Empty)
                 .Replace("#", string.Empty)
+                .Replace("(", string.Empty)
+                .Replace(")", string.Empty)
                 .ToLower();
         }
 
