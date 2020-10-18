@@ -308,6 +308,10 @@ img.image-fade, .image-fade img {
     border-radius: 0.2rem;
 }
 
+.btn-v-spaced {
+    margin-bottom: 5px;
+}
+
 .card-body-thin {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;

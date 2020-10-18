@@ -16,11 +16,11 @@
             {
                 if (category.Id == Model.Id)
                 {
-                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-secondary" role="button">@category.Name</a>
+                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-primary btn-v-spaced" role="button">@category.Name</a>
                 }
                 else
                 {
-                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-outline-primary" role="button">@category.Name</a>
+                    <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)" class="btn btn-xsm btn-outline-primary btn-v-spaced" role="button">@category.Name</a>
                 }
             }
         </div>
