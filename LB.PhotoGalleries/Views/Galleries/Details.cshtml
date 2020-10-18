@@ -48,9 +48,16 @@
             </small>
         </div>
     </div>
-
-    <div class="row pb-3">
-        <div class="col" data-bind="foreach: Images"><div class="grid-square-med rounded"><a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetThumbnailUrl(Files, Width, Height) }" width="@thumbnailSize" height="@thumbnailSize" /></a></div></div>
+    
+    <div class="row mt-3" data-bind="foreach: Images">
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                <div class="card-body card-body-thin">
+                    <p class="card-text" data-bind="text: Name"></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="mt-3 pb-2">
@@ -124,27 +131,7 @@
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
-        var galleryId = '@Model.Id';
-
-        // for high-dpi displays we need to request a larger image than the space we intend to view it in.
-        // this ensures images are as crisp as they can be for each client device.
-        function GetThumbnailUrl(files, width, height) {
-            var scaledWidth = @thumbnailSize * window.devicePixelRatio;
-            var scaledHeight = @thumbnailSize * window.devicePixelRatio;
-
-            // choose ImageFileSpec for scaled dimensions
-            if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
-                return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
-                return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
-                return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
-                return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            } else {
-                return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-            }
-        }
+        var galleryId = '@Model.Id'
 
         function GetImageUrl(galleryId, imageId, name) {
             var encodedName = EncodeParamForUrl(name);
