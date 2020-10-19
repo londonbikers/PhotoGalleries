@@ -51,19 +51,18 @@ namespace LB.PhotoGalleries
             .AddCookie("Cookies")
             .AddOpenIdConnect("oidc", options =>
             {
-                // idp configuration
+                // idp configuration (implicit grant type)
                 options.Authority = Configuration["Authentication.Authority"];
                 options.ClientId = Configuration["Authentication.ClientId"];
                 options.ClientSecret = Configuration["Authentication.ClientSecret"];
 
                 // token and claim configuration
-                options.GetClaimsFromUserInfoEndpoint = true;
-                options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.Scope.Add("openid");
                 options.Scope.Add("email");
                 options.Scope.Add("profile");
                 options.Scope.Add("role");
+                options.Scope.Add("legacy_ids");
 
                 // ensures that the name claim is used to populate ASP.NET Identity username, i.e. User.Identity.Name
                 options.TokenValidationParameters.NameClaimType = "name";
@@ -80,7 +79,8 @@ namespace LB.PhotoGalleries
                         Id = ctx.Principal.FindFirstValue("sub"),
                         Name = ctx.Principal.FindFirstValue("name"),
                         Email = ctx.Principal.FindFirstValue("email"),
-                        Picture = ctx.Principal.FindFirstValue("picture")
+                        Picture = ctx.Principal.FindFirstValue("picture"),
+                        LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
                     };
 
                     // we'll either create them or update them, which is useful if their
