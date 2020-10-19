@@ -315,7 +315,7 @@ namespace LB.PhotoGalleries.Migrator
                 await using (var fs = File.OpenRead(path))
                 {
                     // create the image
-                    await Server.Instance.Images.CreateImageAsync(gallery.CategoryId, gallery.Id, fs, Path.GetFileName(path), i);
+                    await Server.Instance.Images.CreateImageAsync(gallery.CategoryId, gallery.Id, fs, Path.GetFileName(path), i, false);
                 }
 
                 // mark the image as migrated

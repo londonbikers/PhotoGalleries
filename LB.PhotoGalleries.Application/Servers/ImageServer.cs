@@ -32,6 +32,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region public methods
+
         /// <summary>
         /// Stores an uploaded file in the storage system and adds a supporting Image object to the database.
         /// </summary>
@@ -40,7 +41,8 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="imageStream">The stream for the uploaded image file.</param>
         /// <param name="filename">The original filename provided by the client.</param>
         /// <param name="image">Optionally supply a pre-populated Image object.</param>
-        public async Task CreateImageAsync(string galleryCategoryId, string galleryId, Stream imageStream, string filename, Image image = null)
+        /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
+        public async Task CreateImageAsync(string galleryCategoryId, string galleryId, Stream imageStream, string filename, Image image = null, bool performImageDimensionsCheck = true)
         {
             try
             {
@@ -81,7 +83,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     };
                 }
 
-                ParseAndAssignImageMetadata(image, imageStream);
+                ParseAndAssignImageMetadata(image, imageStream, performImageDimensionsCheck);
 
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
@@ -605,15 +607,16 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         /// <param name="image">The Image object to assign the metadata to.</param>
         /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
-        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream)
+        /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
+        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
         {
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             using var bm = new Bitmap(imageStream);
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
 
-            //if (image.Metadata.Width < 300 || image.Metadata.Height < 300)
-            //    throw new ImageTooSmallException($"Image must be equal or bigger than 400 x 400 pixels in size. Detected size {image.Metadata.Width}x{image.Metadata.Height}");
+            if (performImageDimensionsCheck && (image.Metadata.Width < 800 || image.Metadata.Height < 800))
+                throw new ImageTooSmallException($"Image must be equal or bigger than 800 x 800 pixels in size. Detected size {image.Metadata.Width}x{image.Metadata.Height}");
 
             if (imageStream.CanSeek && imageStream.Position != 0)
                 imageStream.Position = 0;
