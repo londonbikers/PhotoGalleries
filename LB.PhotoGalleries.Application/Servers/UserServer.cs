@@ -174,10 +174,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="originalPictureUrl">The URL for the original version of the picture.</param>
         public async Task DownloadAndStoreUserPictureAsync(User user, string originalPictureUrl)
         {
-            if (!user.Picture.HasValue())
-                return;
-
-            if (user.Picture.Equals(originalPictureUrl, StringComparison.CurrentCultureIgnoreCase))
+            if (user.Picture.HasValue() && user.Picture.Equals(originalPictureUrl, StringComparison.CurrentCultureIgnoreCase))
                 return;
 
             // picture URL is different, download and store it

@@ -250,7 +250,7 @@ namespace LB.PhotoGalleries
                     if (!user.Picture.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
                     {
                         // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
-                        await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, ctx.Principal.FindFirstValue("picture"));
+                        await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
                         updateNeeded = true;
                     }
                 }
