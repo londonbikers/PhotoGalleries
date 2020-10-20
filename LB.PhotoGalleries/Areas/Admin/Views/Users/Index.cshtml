@@ -1,4 +1,5 @@
-﻿@model IEnumerable<User>
+﻿@using LB.PhotoGalleries.Shared
+@model IEnumerable<User>
 @{
     ViewData["Title"] = "Users Admin";
 }
@@ -20,8 +21,8 @@
 <table class="table">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Picture)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Email)</th>
             <th scope="col"></th>
             <th scope="col"></th>
@@ -31,11 +32,16 @@
         @foreach (var item in Model)
         {
             <tr>
-                <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
-                <td>@Html.DisplayFor(modelItem => item.Picture)</td>
+                <td>
+                    @if (item.PictureHostedUrl.HasValue())
+                    {
+                        <img src="@item.PictureHostedUrl" width="50" title="@item.Name" class="comment-user-pic rounded" />
+                    }
+                </td>
+                <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.ActionLink("Details", "Details", new { item.Id })</td>
-                <td>@Html.ActionLink("Delete", "Delete", new { item.Id })</td>
+                <td>@Html.ActionLink("Details", "Details", new {item.Id})</td>
+                <td>@Html.ActionLink("Delete", "Delete", new {item.Id})</td>
             </tr>
         }
     </tbody>
