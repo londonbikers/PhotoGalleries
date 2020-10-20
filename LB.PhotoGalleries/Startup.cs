@@ -243,10 +243,16 @@ namespace LB.PhotoGalleries
                     updateNeeded = true;
                 }
 
-                if (!user.Picture.Equals(ctx.Principal.FindFirstValue("picture"), StringComparison.CurrentCultureIgnoreCase))
+                var pictureClaimValue = ctx.Principal.FindFirstValue("picture");
+                if (pictureClaimValue.HasValue())
                 {
-                    await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, ctx.Principal.FindFirstValue("picture"));
-                    updateNeeded = true;
+                    // only update the picture if we have an inbound claim
+                    if (!user.Picture.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
+                        await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, ctx.Principal.FindFirstValue("picture"));
+                        updateNeeded = true;
+                    }
                 }
             }
 
