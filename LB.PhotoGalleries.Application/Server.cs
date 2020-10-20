@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using LB.PhotoGalleries.Application.Servers;
 using LB.PhotoGalleries.Models;
@@ -210,16 +211,31 @@ namespace LB.PhotoGalleries.Application
                     throw;
             }
 
-            var specLowres = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
+            var specLowRes = ImageFileSpecs.Specs.Single(ifs => ifs.FileSpec == FileSpec.SpecLowRes);
             try
             {
-                await BlobServiceClient.CreateBlobContainerAsync(specLowres.ContainerName);
-                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowres.ContainerName}");
+                await BlobServiceClient.CreateBlobContainerAsync(specLowRes.ContainerName);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowRes.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {specLowres.ContainerName}");
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {specLowRes.ContainerName}");
+                else
+                    // something bad happened
+                    throw;
+            }
+
+            try
+            {
+                // these pictures can be served straight from their container
+                await BlobServiceClient.CreateBlobContainerAsync(Constants.StorageUserPicturesContainerName, PublicAccessType.Blob);
+                Debug.WriteLine($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageUserPicturesContainerName}");
+            }
+            catch (RequestFailedException e)
+            {
+                if (e.ErrorCode == "ContainerAlreadyExists")
+                    Debug.WriteLine($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageUserPicturesContainerName}");
                 else
                     // something bad happened
                     throw;

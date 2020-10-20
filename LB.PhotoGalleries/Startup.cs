@@ -21,6 +21,7 @@ using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries
 {
@@ -72,21 +73,8 @@ namespace LB.PhotoGalleries
                 options.TokenValidationParameters.RoleClaimType = "role";
 
                 // create a user object in our database the first time they login
-                options.Events.OnTicketReceived = async ctx =>
-                {
-                    var user = new User
-                    {
-                        Id = ctx.Principal.FindFirstValue("sub"),
-                        Name = ctx.Principal.FindFirstValue("name"),
-                        Email = ctx.Principal.FindFirstValue("email"),
-                        Picture = ctx.Principal.FindFirstValue("picture"),
-                        LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
-                    };
-
-                    // we'll either create them or update them, which is useful if their
-                    // profile picture has changed from their source identity provider, i.e. Facebook
-                    await Server.Instance.Users.CreateOrUpdateUserAsync(user);
-                };
+                // or update them if claims/attributes change
+                options.Events.OnTicketReceived = async ctx => { await UpdateUserFromClaimsAsync(ctx); };
             });
 
             // configure the application tier
@@ -218,6 +206,56 @@ namespace LB.PhotoGalleries
                 new WatermarkOptions()
                     .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
                     .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
+        }
+
+        private static async Task UpdateUserFromClaimsAsync(TicketReceivedContext ctx)
+        {
+            var userId = ctx.Principal.FindFirstValue("sub");
+            var user = await Server.Instance.Users.GetUserAsync(userId);
+            var updateNeeded = false;
+
+            if (user == null)
+            {
+                // the user is new, create them
+                user = new User
+                {
+                    Id = ctx.Principal.FindFirstValue("sub"),
+                    Name = ctx.Principal.FindFirstValue("name"),
+                    Email = ctx.Principal.FindFirstValue("email"),
+                    Picture = ctx.Principal.FindFirstValue("picture"),
+                    LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
+                };
+
+                updateNeeded = true;
+            }
+            else
+            {
+                // we already have an existing user for them, update their attributes if necessary
+                if (!user.Name.Equals(ctx.Principal.FindFirstValue("name"), StringComparison.CurrentCultureIgnoreCase))
+                {
+                    user.Name = ctx.Principal.FindFirstValue("name");
+                    updateNeeded = true;
+                }
+
+                if (!user.Email.Equals(ctx.Principal.FindFirstValue("email"), StringComparison.CurrentCultureIgnoreCase))
+                {
+                    user.Email = ctx.Principal.FindFirstValue("email");
+                    updateNeeded = true;
+                }
+
+                if (!user.Picture.Equals(ctx.Principal.FindFirstValue("picture"), StringComparison.CurrentCultureIgnoreCase))
+                {
+                    await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, ctx.Principal.FindFirstValue("picture"));
+                    updateNeeded = true;
+                }
+            }
+
+            if (updateNeeded)
+            {
+                // we'll either create them or update them, which is useful if their
+                // profile picture has changed from their source identity provider, i.e. Facebook
+                await Server.Instance.Users.CreateOrUpdateUserAsync(user);
+            }
         }
         #endregion
     }

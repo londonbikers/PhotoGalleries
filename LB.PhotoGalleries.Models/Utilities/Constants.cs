@@ -18,9 +18,14 @@
         public static string AnonUserId => "AnonUser";
 
         /// <summary>
-        /// The name of the blob container in Azure Storage for where user-provided images are uploaded to.
+        /// The name of the blob container in Azure Storage where user-provided images are uploaded to.
         /// </summary>
         public static string StorageOriginalContainerName => "originals";
+
+        /// <summary>
+        /// The name of the blob container in Azure Storage where user profile pictures are downloaded to from their original location and served from.
+        /// </summary>
+        public static string StorageUserPicturesContainerName => "user-pictures";
 
         /// <summary>
         /// The name of the Azure Storage message queue we use to post-process images on upload.

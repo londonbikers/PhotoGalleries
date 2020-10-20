@@ -1,12 +1,13 @@
 ﻿using LB.PhotoGalleries.Models.Utilities;
+using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Shared;
 using User = LB.PhotoGalleries.Models.User;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -164,6 +165,47 @@ namespace LB.PhotoGalleries.Application.Servers
                     return number.ToString();
 
             throw new ArgumentException("Argument value does not seem to be a valid Guid.", nameof(userId));
+        }
+
+        /// <summary>
+        /// If the user's profile picture is not being internally hosted then this method will download it and store it internally
+        /// </summary>
+        /// <param name="user">The user who to download the picture for.</param>
+        /// <param name="originalPictureUrl">The URL for the original version of the picture.</param>
+        public async Task DownloadAndStoreUserPictureAsync(User user, string originalPictureUrl)
+        {
+            if (!user.Picture.HasValue())
+                return;
+
+            if (user.Picture.Equals(originalPictureUrl, StringComparison.CurrentCultureIgnoreCase))
+                return;
+
+            // picture URL is different, download and store it
+            var containerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageUserPicturesContainerName);
+
+            // delete any old version we have currently
+            string fileId;
+            if (user.PictureHostedUrl.HasValue())
+            {
+                fileId = user.PictureHostedUrl.Substring(user.PictureHostedUrl.LastIndexOf('/') + 1);
+                await containerClient.DeleteBlobIfExistsAsync(fileId);
+            }
+
+            // download it and store the original picture
+            fileId = $"{user.Id}-{DateTime.Now.Ticks}.jpg";
+            using var client = new HttpClient();
+
+            try
+            {
+                await using var imageStream = await client.GetStreamAsync(originalPictureUrl);
+                await containerClient.UploadBlobAsync(fileId, imageStream);
+                user.PictureHostedUrl = containerClient.Uri + "/" + fileId;
+                user.Picture = originalPictureUrl;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading: {e.Message}");
+            }
         }
         #endregion
 

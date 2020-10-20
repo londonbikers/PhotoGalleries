@@ -94,24 +94,31 @@
             @foreach (var comment in Model.Comments)
             {
                 var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
-            <div class="row mb-4 text-left">
-                <div class="col">
-                    <svg width="34" height="34" viewBox="0 0 16 16" class="bi bi-person-square comment-user-pic" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
-                        <path fill-rule="evenodd" d="M2 15v-1c0-1 1-4 6-4s6 3 6 4v1H2zm6-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
-                    </svg>
-                    <div class="text-small">
-                        <b>@commentUser.Name</b><br />
-                        <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
-                        @if (Helpers.CanUserEditComment(comment, Model, User))
+                <div class="row mb-4 text-left">
+                    <div class="col">
+                        @if (user.PictureHostedUrl.HasValue())
+                        {
+                            <img src="@user.PictureHostedUrl" width="34" title="@user.Name" class="comment-user-pic rounded" />
+                        }
+                        else
+                        {
+                            <svg width="34" height="34" viewBox="0 0 16 16" class="bi bi-person-square comment-user-pic" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                                <path fill-rule="evenodd" d="M2 15v-1c0-1 1-4 6-4s6 3 6 4v1H2zm6-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                            </svg>
+                        }
+                        <div class="text-small">
+                            <b>@commentUser.Name</b><br />
+                            <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
+                            @if (Helpers.CanUserEditComment(comment, Model, User))
                             {
-                        <text>-</text>
-                        <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
+                                <text>-</text>
+                                <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
                             }
+                        </div>
+                        <div class="pt-2 text-format no-float text-link">@comment.Text</div>
                     </div>
-                    <div class="pt-2 text-format no-float text-link">@comment.Text</div>
                 </div>
-            </div>
             }
 
         </div>
