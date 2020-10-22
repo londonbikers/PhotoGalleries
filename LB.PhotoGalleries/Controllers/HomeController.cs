@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -40,10 +41,14 @@ namespace LB.PhotoGalleries.Controllers
         /// Signs the user in by redirecting them to our IDP.
         /// </summary>
         [Authorize]
-        public IActionResult SignIn()
+        public IActionResult SignIn(string returnUrl = null)
         {
             // by this point the user will be logged in and we can redirect them back to the homepage for now.
             // in the future we might want to redirect the back to a particular page, so we'll need to add a local redirect URL parameter we can pick up on
+
+            if (returnUrl.HasValue())
+                return LocalRedirect(returnUrl);
+
             return RedirectToAction(nameof(Index));
         }
 

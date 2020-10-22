@@ -1,7 +1,10 @@
 ﻿@using LB.PhotoGalleries.Application
 @using Newtonsoft.Json
 @using System.Linq
+@using System.Net
 @using LB.PhotoGalleries.Shared
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Mvc.RazorPages
 @model Gallery
 @{
     ViewData["Title"] = ViewData.Model.Name;
@@ -62,25 +65,34 @@
     <div class="mt-3 pb-2">
         <a id="comments"></a>
         <h6><img src="/img/comments.svg" width="25" alt="comments icon" /> Comments</h6>
-
-        <div class="info-box mt-3">
-            <form data-bind="submit: CreateComment">
-                <div class="form-group">
-                    <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..." required></textarea>
-                </div>
-                <div class="row">
-                    <div class="col-6 text-left post-box-bottom-row">
-                        @*<input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
+        
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="info-box mt-3">
+                <form data-bind="submit: CreateComment">
+                    <div class="form-group">
+                        <textarea class="form-control" id="comment-postbox" rows="3" placeholder="Write your comment..." required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 text-left post-box-bottom-row">
+                            @*
+                            <input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
                             <label class="form-check-label" for="get-notifications">
                                 Get notification of replies
-                            </label>*@
+                            </label>
+                            *@
+                        </div>
+                        <div class="col-6 text-right">
+                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                        </div>
                     </div>
-                    <div class="col-6 text-right">
-                        <button type="submit" class="btn btn-primary">Post Comment</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+                </form>
+            </div>
+        }
+        else
+        {
+            <text><a asp-controller="Home" asp-action="SignIn" asp-route-returnUrl="@Context.Request.Path">Sign-in</a> to leave a comment</text>
+        }
 
         <div class="mt-3">
 
