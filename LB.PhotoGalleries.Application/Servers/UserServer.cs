@@ -92,9 +92,23 @@ namespace LB.PhotoGalleries.Application.Servers
                 return null;
 
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
-            var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
-            Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
-            return response.Resource;
+
+            try
+            {
+                var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
+                Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
+                return response.Resource;
+            }
+            catch (CosmosException cex)
+            {
+                if (cex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // user does not exist
+                    return null;
+                }
+
+                throw;
+            }
         }
 
         public async Task<User> GetUserByLegacyIdAsync(Guid legacyApolloId)
