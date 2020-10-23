@@ -512,8 +512,11 @@
 
             // handle keyboard navigation of images
             $(document).keydown(function(e) {
-                // make sure we're not in focus of something that receives keyboard entry, i.e. comments post box
-                // to come...
+
+                // make sure the comment post-box does not have focus right now
+                if ($("#comment-postbox").is(":focus")) {
+                    return;
+                }
 
                 if (e.keyCode === 37) {
                     // navigate to previous photo
