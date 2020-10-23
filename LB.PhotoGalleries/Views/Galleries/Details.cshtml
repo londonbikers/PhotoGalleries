@@ -183,7 +183,7 @@
                 $.ajax({
                     url: `/api/galleries/comments?categoryId=@Model.CategoryId&galleryId=@Model.Id&commentCreatedTicks=${commentCreated}&commentCreatedByUserId=${commentCreatedByUserId}`,
                     type: 'DELETE'
-                }).done(function (response) {
+                }).done(function () {
                     // comment created, refresh the page to show new comment
                     location.reload();
                 }).fail(function(response) {
