@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -47,8 +48,18 @@ namespace LB.PhotoGalleries.Controllers
             // in the future we might want to redirect the back to a particular page, so we'll need to add a local redirect URL parameter we can pick up on
 
             if (returnUrl.HasValue())
-                return LocalRedirect(returnUrl);
+            {
+                // if the user is on the sign-out page, redirect them home instead as otherwise
+                // they sign-in and are told they're signed out, which isn't very helpful.
 
+                if (returnUrl.Equals("/home/signedout", StringComparison.CurrentCultureIgnoreCase))
+                    return RedirectToAction(nameof(Index));
+
+                // otherwise take them back to where they wanted to be, as long as it was on our site
+                return LocalRedirect(returnUrl);
+            }
+
+            // failing not knowing where to send them, send them to the homepage
             return RedirectToAction(nameof(Index));
         }
 
