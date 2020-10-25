@@ -334,14 +334,14 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             var images = await GetGalleryImagesAsync(galleryId);
 
-            // if images have not been ordered before, they will have no position set and the client
-            // will be ordering images by when the images were created, so the first thing we need to do
-            // is order the images like that, then re-order the images to what the user wishes.
-
+            // migrated galleries and galleries that have been ordered before will have position values set on images.
+            // but galleries that have just been uploaded normally will not have position values set on images.
+            // in this scenario we need to set a position on the images first as they are retrieved from the database and then re-order.
+            
             var hadToPerformInitialOrdering = false;
-            if (!images.Any(i => i.Position.HasValue))
+            if (images.Any(i => i.Position.HasValue == false))
             {
-                images = images.OrderBy(i => i.Created).ToList();
+                // perform initial ordering of images
                 for (var i = 0; i < images.Count; i++)
                     images[i].Position = i;
 
@@ -349,7 +349,7 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             // now we can re-order the images
-            // cut out the image being ordered first then bump up a position each image from where our image will go
+            // cut out the image being moved first then bump up a position each image from where our image will go
             var imageBeingOrdered = images.Single(i => i.Id == imageId);
             images.RemoveAll(i => i.Id == imageId);
 
@@ -378,29 +378,6 @@ namespace LB.PhotoGalleries.Application.Servers
                 gallery.ThumbnailFiles = imageBeingOrdered.Files;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             }
-        }
-
-        /// <summary>
-        /// Sets a position value on a gallery of images. To be used after upload.
-        /// </summary>
-        /// <param name="categoryId">The id of the category the gallery resides in.</param>
-        /// <param name="galleryId">The id of the gallery to set the image positions on.</param>
-        [Obsolete("Cannot order without setting gallery thumbnail which we can't do after upload as images stand a good chance of not being processed fully")]
-        public async Task DateOrderGalleryImages(string categoryId, string galleryId)
-        {
-            // set the image positions
-            var images = await GetGalleryImagesAsync(galleryId);
-            var dateOrderedImages = images.OrderBy(i => i.Created).ToList();
-            for (var i = 0; i < dateOrderedImages.Count; i++)
-            {
-                dateOrderedImages[i].Position = i;
-                await UpdateImageAsync(dateOrderedImages[i]);
-            }
-
-            // set the gallery thumbnail now we've changed the order of photos
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
-            gallery.ThumbnailFiles = dateOrderedImages[0].Files;
-            await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
         }
 
         /// <summary>
