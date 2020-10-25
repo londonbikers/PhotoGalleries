@@ -37,6 +37,14 @@ namespace LB.PhotoGalleries
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // add session so we can track some user events
+            services.AddDistributedMemoryCache();
+            services.AddSession(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
             // make sure all our urls are generated in lower-case for purely aesthetic reasons
             services.Configure<RouteOptions>(o => o.LowercaseUrls = true);
 
@@ -96,6 +104,7 @@ namespace LB.PhotoGalleries
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        // ReSharper disable once UnusedMember.Global
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -130,6 +139,7 @@ namespace LB.PhotoGalleries
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseSession();
 
             app.UseEndpoints(endpoints => 
             {

@@ -1,6 +1,8 @@
 ﻿using LB.PhotoGalleries.Application;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -40,6 +42,15 @@ namespace LB.PhotoGalleries.Controllers
             // work out the previous image in the gallery for navigation purposes
             ViewData["previousImage"] = await Server.Instance.Images.GetPreviousImageInGalleryAsync(image);
             ViewData["nextImage"] = await Server.Instance.Images.GetNextImageInGalleryAsync(image);
+
+            // record the image view if the user hasn't viewed the image before in their current session
+            var viewedImages = HttpContext.Session.Get<List<string>>("viewedImages") ?? new List<string>();
+            if (!viewedImages.Contains(image.Id))
+            {
+                await Server.Instance.Images.IncreaseImageViewsAsync(galleryId, imageId);
+                viewedImages.Add(image.Id);
+                HttpContext.Session.Set("viewedImages", viewedImages);
+            }
 
             return View();
         }

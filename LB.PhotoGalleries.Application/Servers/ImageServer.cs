@@ -380,6 +380,16 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
+        /// When a user views an image, we increase the count as part of determining how popular an image is.
+        /// </summary>
+        public async Task IncreaseImageViewsAsync(string galleryId, string imageId)
+        {
+            var i = await GetImageAsync(galleryId, imageId);
+            i.Views += 1;
+            await UpdateImageAsync(i);
+        }
+
+        /// <summary>
         /// Attempts to return the image previous to a given image in terms of the order they are shown in their gallery. May return null.
         /// </summary>
         public async Task<Image> GetPreviousImageInGalleryAsync(Image currentImage)
