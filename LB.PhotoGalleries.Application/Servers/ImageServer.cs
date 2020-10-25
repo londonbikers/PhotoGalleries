@@ -32,7 +32,6 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region public methods
-
         /// <summary>
         /// Stores an uploaded file in the storage system and adds a supporting Image object to the database.
         /// </summary>
