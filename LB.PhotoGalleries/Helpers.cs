@@ -99,7 +99,7 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static string GetCameraName(Image image)
         {
-            if (string.IsNullOrEmpty(image.Metadata.CameraMake) && string.IsNullOrEmpty(image.Metadata.CameraModel))
+            if (string.IsNullOrEmpty(image.Metadata.CameraMake) || string.IsNullOrEmpty(image.Metadata.CameraModel))
                 return null;
 
             if (string.IsNullOrEmpty(image.Metadata.CameraModel) && !string.IsNullOrEmpty(image.Metadata.CameraMake))
@@ -112,6 +112,7 @@ namespace LB.PhotoGalleries
             // if the make is in the model, don't return the make
             if (image.Metadata.CameraModel.Contains(image.Metadata.CameraMake, StringComparison.CurrentCultureIgnoreCase))
                 return image.Metadata.CameraModel;
+
 
             // sometimes the manufacturer is a long-form version of the one in the model so try and fish those out...
             var manufacturerWords = image.Metadata.CameraMake.Split(' ');
