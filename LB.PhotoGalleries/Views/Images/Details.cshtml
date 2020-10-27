@@ -92,7 +92,7 @@
             <div class="mt-1">
                 @foreach (var tag in Model.Tags)
                 {
-                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@Helpers.EncodeParamForUrl(tag)" class="badge badge-secondary">@tag</a>
+                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@tag.ToLower()" class="badge badge-secondary">@tag</a>
                 }
             </div>
         }
