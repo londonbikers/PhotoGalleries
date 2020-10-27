@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -50,9 +51,17 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         public async Task<ActionResult> Edit(string pk, string id)
         {
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(pk, id);
+            var images = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
             var createdByUser = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
+
+            // create a csv of all unique image tags
+            var tags = new List<string>();
+            foreach (var t in images.SelectMany(i => i.Tags.Where(t => !tags.Contains(t))))
+                tags.Add(t);
+            ViewData["tags"] = string.Join(',', tags.OrderBy(t => t));
+
             ViewData.Model = gallery;
-            ViewData["images"] = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
+            ViewData["images"] = images;
             ViewData["createdByUser"] = createdByUser;
             ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, createdByUser);
             return View();
@@ -76,7 +85,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 {
                     ViewData["error"] = "Sorry, you are not authorised to edit this gallery. You did not create it.";
                     inErrorState = true;
-                } 
+                }
                 else if (!appGallery.Active && gallery.Active && images.Count == 0)
                 {
                     // don't allow publication if there's no images

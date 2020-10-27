@@ -1,7 +1,9 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -59,6 +61,29 @@ namespace LB.PhotoGalleries.Controllers.Api
                 Debug.WriteLine($"Api:GalleriesController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
 
             return NoContent();
+        }
+
+        [HttpDelete("/api/galleries/remove-tag")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> RemoveTag(string categoryId, string galleryId, string tag)
+        {
+            if (!tag.HasValue())
+                return BadRequest("tag is empty!");
+
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+                return BadRequest("Apologies, you're not authorised to do that.");
+
+            var images = await Server.Instance.Images.GetGalleryImagesAsync(galleryId);
+            var tagImages = images.Where(i => i.Tags.Contains(tag));
+
+            foreach (var i in tagImages)
+            {
+                i.Tags.RemoveAll(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase));
+                await Server.Instance.Images.UpdateImageAsync(i);
+            }
+
+            return Ok($"{tag} tag removed from all gallery images");
         }
     }
 }

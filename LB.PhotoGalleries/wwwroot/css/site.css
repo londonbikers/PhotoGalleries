@@ -318,3 +318,8 @@ img.image-fade, .image-fade img {
     padding-left: 1.25rem;
     padding-right: 1.25rem;
 }
+
+.boxed {
+    border: 3px solid #eee;
+    padding: 20px 20px 10px 20px;
+}

@@ -7,6 +7,7 @@
     var error = (string)ViewData["error"];
     var success = (string)ViewData["success"];
     var images = (List<Image>)ViewData["images"];
+    var tags = (string)ViewData["tags"];
     var createdByUser = (User) ViewData["createdByUser"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
     var categoryNameForUrl = Helpers.EncodeParamForUrl(Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId).Name);
@@ -169,19 +170,35 @@
     <div class="row">
         <div class="col">
             <h2>Images</h2>
+            
+            <div class="boxed">
 
-            <form class="form-inline" data-bind="submit: UpdateAllImages">
-                <div class="form-group mb-2">
-                    <input type="text" class="form-control form-control-sm" id="creditControl" placeholder="Add credit...">
-                </div>
-                <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
-                    <input type="text" class="form-control form-control-sm" id="tagsControl" placeholder="Add tags...">
-                </div>
-                <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
-            </form>
+                <form class="form-inline" data-bind="submit: UpdateAllImages">
+                    <div class="form-group mb-2">
+                        <input type="text" class="form-control form-control-sm" id="creditControl" placeholder="Add credit...">
+                    </div>
+                    <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
+                        <input type="text" class="form-control form-control-sm" id="tagsControl" placeholder="Add tags...">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
+                </form>
 
-            <div id="bulk-update-banner" class="alert alert-success" role="alert" style="display: none">
-                All images have been updated!
+                <div id="bulk-update-banner" class="alert alert-success" role="alert" style="display: none">
+                    All images have been updated!
+                </div>
+
+                <div>
+                    Remove tags from all images:
+                    <div id="remove-tags-div" class="mt-1">
+                        <input type="text" name="remove-tags" id="remove-tags" value="@tags" />
+                        <small class="form-text text-muted">These are all the tags used on images. Removing tags here removes them from all images in the gallery.</small>
+                    </div>
+                </div>
+                
+                <div id="remove-tags-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
+                    Tag <span id="removed-tag"></span> removed.
+                </div>
+
             </div>
 
         </div>
@@ -213,7 +230,7 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        
+
         var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
         var galleryId = '@Model.Id';
 
@@ -358,6 +375,41 @@
             $("#tagsControl").tagsinput({
                 trimValue: true,
                 forceLowerCase: true
+            });
+
+            $("#remove-tags").tagsinput({
+                trimValue: true
+            });
+
+            $("#remove-tags").on('beforeItemAdd', function (event) {
+                // don't allow tags to be added to this control
+                event.cancel = true;
+            });
+
+            $("#remove-tags").on('itemRemoved', function (event) {
+                //console.log(event.item);
+
+                $.ajax({
+                    url: `/api/galleries/remove-tag?categoryId=@Model.CategoryId&galleryId=@Model.Id&tag=${event.item}`,
+                    type: 'DELETE'
+                }).done(function (response) {
+                    // tag deleted, show success banner
+                    console.log(response);
+
+                    // show a fading banner
+                    $("#removed-tag").text(event.item);
+                    var banner = $("#remove-tags-banner");
+                    banner.show();
+                    setTimeout(function() {
+                            banner.fadeOut('slow');
+                        },
+                        5000);
+
+                }).fail(function(response) {
+                    console.log("something went wrong when deleting the tag:");
+                    console.log(response);
+                });
+
             });
         });
     </script>
