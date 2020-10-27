@@ -113,7 +113,6 @@ namespace LB.PhotoGalleries
             if (image.Metadata.CameraModel.Contains(image.Metadata.CameraMake, StringComparison.CurrentCultureIgnoreCase))
                 return image.Metadata.CameraModel;
 
-
             // sometimes the manufacturer is a long-form version of the one in the model so try and fish those out...
             var manufacturerWords = image.Metadata.CameraMake.Split(' ');
             if (manufacturerWords.Any(word => image.Metadata.CameraModel.Contains(word, StringComparison.CurrentCultureIgnoreCase)))
