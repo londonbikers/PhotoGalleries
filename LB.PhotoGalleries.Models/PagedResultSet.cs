@@ -12,7 +12,7 @@ namespace LB.PhotoGalleries.Models
         public int CurrentPage { get; set; }
         public int TotalPages
         {
-            get 
+            get
             {
                 var pages = (double)TotalResults / (double)PageSize;
                 var roundedUpDecimal = Math.Ceiling(pages);
@@ -46,7 +46,7 @@ namespace LB.PhotoGalleries.Models
             {
                 // we're near the start, anchor on the start
                 for (var i = 0; i < pagesToShow; i++)
-                    numbers[i] = i+1;
+                    numbers[i] = i + 1;
 
                 return numbers;
             }
@@ -67,9 +67,11 @@ namespace LB.PhotoGalleries.Models
             }
 
             // otherwise anchor the current page on the middle of the range of pages we want to show
-            var positionDouble = (double) pagesToShow / (double) 2;
+            var positionDouble = (double)pagesToShow / (double)2;
             var position = Math.Ceiling(positionDouble); // we have the anchor now
-            var startNumber = Convert.ToInt32(position - positionDouble);
+            var startNumber = Convert.ToInt32(CurrentPage - positionDouble);
+            if (startNumber == 0)
+                startNumber = 1;
 
             for (var i = 0; i < pagesToShow; i++)
             {
