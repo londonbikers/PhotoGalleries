@@ -104,9 +104,6 @@ namespace LB.PhotoGalleries.Controllers.Api
             // update image count
             await Server.Instance.Galleries.UpdateGalleryImageCount(categoryId, galleryId);
 
-            // order images
-            //await Server.Instance.Images.DateOrderGalleryImages(categoryId, galleryId);
-
             return Ok();
         }
 
@@ -184,6 +181,36 @@ namespace LB.PhotoGalleries.Controllers.Api
                 Debug.WriteLine($"ImageController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, imageId={imageId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
 
             return NoContent();
+        }
+
+        [HttpPost("/api/images/add-tag")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
+        {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            if (!image.Tags.Contains(tag))
+            {
+                image.Tags.Add(tag);
+                await Server.Instance.Images.UpdateImageAsync(image);
+                return Ok();
+            }
+
+            return BadRequest("Tag already exists on image");
+        }
+
+        [HttpDelete("/api/images/remove-tag")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> RemoveTag(string galleryId, string imageId, string tag)
+        {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            if (image.Tags.Contains(tag))
+            {
+                image.Tags.Remove(tag);
+                await Server.Instance.Images.UpdateImageAsync(image);
+                return Ok();
+            }
+
+            return BadRequest("Tag already exists on image");
         }
     }
 }

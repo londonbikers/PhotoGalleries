@@ -320,10 +320,14 @@ img.image-fade, .image-fade img {
 }
 
 .boxed {
-    border: 3px solid #eee;
+    border: 1px solid #ddd;
     padding: 20px 20px 10px 20px;
 }
 
 .page-link-light {
     color: #aaa !important;
+}
+
+.float-clear {
+    clear: both;
 }

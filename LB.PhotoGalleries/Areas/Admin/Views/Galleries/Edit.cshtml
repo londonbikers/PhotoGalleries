@@ -7,8 +7,7 @@
     var error = (string)ViewData["error"];
     var success = (string)ViewData["success"];
     var images = (List<Image>)ViewData["images"];
-    var tags = (string)ViewData["tags"];
-    var createdByUser = (User) ViewData["createdByUser"];
+    var createdByUser = (User)ViewData["createdByUser"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
     var categoryNameForUrl = Helpers.EncodeParamForUrl(Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId).Name);
 
@@ -53,7 +52,7 @@
 
             <div class="form-group">
                 <b>Category</b><br />
-                @Server.Instance.Categories.Categories.Single(c=>c.Id == Model.CategoryId).Name 
+                @Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId).Name
                 (<a asp-action="ChangeCategory" asp-route-pk="@Model.CategoryId" asp-route-id="@Model.Id">change</a>)
             </div>
 
@@ -97,7 +96,7 @@
             <dd class="col-sm-10">
                 @Html.DisplayFor(model => model.Created)
             </dd>
-            
+
             @if (createdByUser != null)
             {
                 <dt class="col-sm-10">
@@ -167,52 +166,88 @@
 
 @if (images.Count > 0)
 {
-    <div class="row">
-        <div class="col">
-            <h2>Images</h2>
-            
-            <div class="boxed">
+    <h2>Images</h2>
 
-                <form class="form-inline" data-bind="submit: UpdateAllImages">
-                    <div class="form-group mb-2">
-                        <input type="text" class="form-control form-control-sm" id="creditControl" placeholder="Add credit...">
-                    </div>
-                    <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
-                        <input type="text" class="form-control form-control-sm" id="tagsControl" placeholder="Add tags...">
-                    </div>
-                    <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
-                </form>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" id="show-ordering-tab-link" href="javascript:void(0);" data-bind="click: ShowOrderingTab">Order Images</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="show-manage-tags-tab-link" href="javascript:void(0);" data-bind="click: ShowManageTagsTab">Update Images</a>
+        </li>
+    </ul>
 
-                <div id="bulk-update-banner" class="alert alert-success" role="alert" style="display: none">
-                    All images have been updated!
-                </div>
+    <div id="ordering-tab">
 
-                <div>
-                    Remove tags from all images:
-                    <div id="remove-tags-div" class="mt-1">
-                        <input type="text" name="remove-tags" id="remove-tags" value="@tags" />
-                        <small class="form-text text-muted">These are all the tags used across the gallery. Removing tags here removes them from all images in the gallery.</small>
-                    </div>
-                </div>
-                
-                <div id="remove-tags-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
-                    Tag <span id="removed-tag"></span> removed.
-                </div>
-
-            </div>
-
+        <div class="mt-3 mb-3 float-right">
+            <a href="#" data-bind="click: function(){SetThumbnailSize('small')}"><img src="/img/photo.svg" width="15" /></a>
+            <a href="#" data-bind="click: function(){SetThumbnailSize('medium')}"><img src="/img/photo.svg" width="20" /></a>
+            <a href="#" data-bind="click: function(){SetThumbnailSize('large')}"><img src="/img/photo.svg" width="25" /></a>
         </div>
+
+        <div id="card-container" class="float-clear row mt-3" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }">
+            <div class="col-md-4" data-bind="attr: { id: 'gi-'+Id }">
+                <div class="card mb-4 shadow-sm">
+                    <a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                    <div class="card-body card-body-thin text-center">
+                        <p class="card-text" data-bind="text: Name"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <div id="manage-tags-tab" style="display: none;">
 
-    <div class="row mt-3" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }">
-        <div class="col-md-4" data-bind="attr: { id: 'gi-'+Id }">
-            <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
-                <div class="card-body card-body-thin text-center">
-                    <p class="card-text" data-bind="text: Name"></p>
+        <div class="mt-3">
+
+            <div class="mb-2 text-muted">
+                Update every image in the gallery:
+            </div>
+
+            <form class="form-inline" data-bind="submit: UpdateAllImages">
+                <div class="form-group mb-2">
+                    <input type="text" class="form-control form-control" id="creditControl" placeholder="Add credit...">
+                </div>
+                <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
+                    <input type="text" class="form-control form-control-sm" id="tags-control" placeholder="Add tags...">
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
+            </form>
+            <div id="bulk-update-banner" class="alert alert-success" role="alert" style="display: none">
+                All images have been updated!
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="mb-2">
+            Filter Images:
+        </div>
+
+        <form class="form-inline">
+            <div class="form-group mb-2">
+                <input type="text" class="form-control form-control" id="filter-term" placeholder="Term..." data-bind="event: { keyup: FilterByTerm }">
+            </div>
+            <div class="form-group mx-sm-3 mb-2">
+                or&nbsp;&nbsp;&nbsp;<select id="filter-tag" data-bind="options: AllTags, optionsCaption: 'Select a tag...', event:{ change: FilterByTag }" class="form-control"></select>
+            </div>
+        </form>
+
+        <div id="update-images-images" class="mt-3 row" data-bind="foreach: FilteredImages">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-3 p-2">
+                        <a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                    </div>
+                    <div class="col-9">
+                        <div data-bind="text: Name" class="mb-1"></div>
+                        <input type="text" data-bind="value: Tags().join(','), tags: Tags, attr: { id: 'uit-'+Id }"/>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 }
 
@@ -225,38 +260,15 @@
     <script src="~/lib/sortable/dist/Sortable.min.js"></script>
     <script src="~/lib/knockout-sortable/dist/knockout-sortable.js"></script>
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
+    <script src="~/js/image.js"></script>
 
     <script type="text/javascript">
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
 
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Tags})));
         var galleryId = '@Model.Id';
-
-        // for high-dpi displays we need to request a larger image than the space we intend to view it in
-        // this ensures images are as crisp as they can be for each client device.
-        function GetThumbnailUrl(files) {
-            var scaledSize = 280 * window.devicePixelRatio;
-
-            // if there's no Spec800 file then processing is not complete so show a working graphic for now
-            if (files.Spec800Id === null) {
-                return '/img/generating-images.png';
-            }
-
-            // choose ImageFileSpec for scaled dimensions
-            if (scaledSize <= 800 && files.Spec800Id != null) {
-                return `/di800/${files.Spec800Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 1920 && files.Spec1920Id != null) {
-                return `/di1920/${files.Spec1920Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 2560 && files.Spec2560Id != null) {
-                return `/di2560/${files.Spec2560Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else if (scaledSize <= 3840 && files.Spec3840Id != null) {
-                return `/di3840/${files.Spec3840Id}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            } else {
-                return `/dio/${files.OriginalId}?w=${scaledSize}&h=${scaledSize}&mode=crop`;
-            }
-        }
 
         function OnImageMoved(evt) {
             console.log("an image was re-ordered!");
@@ -265,9 +277,7 @@
             var imageBeingMovedNewPosition = evt.newIndex;
 
             // send new position to api...
-            $.post(
-                    `/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${
-                    imageBeingMovedNewPosition}`)
+            $.post(`/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)
                 .done(function() {
                     console.log("image ordering post-back done!");
                 })
@@ -284,10 +294,26 @@
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
-            // parse the images from a json blob
-            this.Images = ko.observableArray(payload);
+            var vm = this;
 
-            this.UpdateAllImages = function() {
+            // convert the json payload into an observable array so we can track changes
+            vm.Images = ko.observableArray();
+            payload.forEach(i => this.Images.push(new ImageModel(i)));
+
+            // dynamically calculate the distinct tags in use across the gallery images
+            vm.AllTags = ko.computed(function() {
+                var allTags = [];
+                vm.Images().forEach(function(image) {
+                    image.Tags().forEach(function(tag) {
+                        if (!allTags.includes(tag)) {
+                            allTags.push(tag);
+                        }
+                    });
+                });
+                return allTags;
+            });
+
+            vm.UpdateAllImages = function() {
                 var credit = $("#creditControl").val();
                 var tags = $("#tagsControl").val();
 
@@ -296,9 +322,7 @@
                     return;
                 }
 
-                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id',
-                        { credit: credit, tags: tags })
-                    .done(function() {
+                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { credit: credit, tags: tags }).done(function() {
                         // images updated
                         // clear the form
                         $("#creditControl").val('');
@@ -307,20 +331,17 @@
                         // show a fading banner
                         var banner = $("#bulk-update-banner");
                         banner.show();
-                        setTimeout(function() {
-                                banner.fadeOut('slow');
-                            },
-                            5000);
+                        setTimeout(function() { banner.fadeOut('slow'); }, 5000);
                     })
                     .fail(function() {
                         console.log("UpdateAllImages: something went wrong when updating all images...");
                     });
             }
 
-            this.GenerateImageFiles = function() {
+            vm.GenerateImageFiles = function() {
                 console.log('GenerateImageFiles()');
                 $.post('/api/images/generate-image-files?galleryId=@Model.Id')
-                    .done(function (responses) {
+                    .done(function(responses) {
                         console.log("GenerateImageFiles(): done");
                         console.log(responses);
                     })
@@ -329,10 +350,10 @@
                     });
             }
 
-            this.DeletePreGenImages = function() {
+            vm.DeletePreGenImages = function() {
                 console.log('DeletePreGenImages()');
                 $.post('/api/images/delete-pregen-image-files?galleryId=@Model.Id')
-                    .done(function (responses) {
+                    .done(function(responses) {
                         console.log("DeletePreGenImages(): done");
                         console.log(responses);
                     })
@@ -340,6 +361,134 @@
                         console.log("DeletePreGenImages(): something went wrong");
                     });
             }
+
+            vm.ShowOrderingTab = function() {
+                $("#show-ordering-tab-link").toggleClass("active");
+                $("#show-manage-tags-tab-link").toggleClass("active");
+                $("#ordering-tab").show();
+                $("#manage-tags-tab").hide();
+            }
+
+            vm.ShowManageTagsTab = function() {
+                $("#show-ordering-tab-link").toggleClass("active");
+                $("#show-manage-tags-tab-link").toggleClass("active");
+                $("#ordering-tab").hide();
+                $("#manage-tags-tab").show();
+            }
+
+            vm.SetThumbnailSize = function(size) {
+                if (size === 'small') {
+                    $(".card").css('width', 175);
+                    $(".card-body").hide();
+                    $("#card-container").children().removeClass('col-md-4 col-md-3').addClass('col-md-2');
+                } else if (size === 'medium') {
+                    $(".card").css('width', 268);
+                    $(".card-body").show().css('font-size', '0.75rem');
+                    $("#card-container").children().removeClass('col-md-2 col-md-4').addClass('col-md-3');
+                } else {
+                    $(".card").css('width', 368);
+                    $(".card-body").show().css('font-size', '1rem');
+                    $("#card-container").children().removeClass('col-md-2 col-md-3').addClass('col-md-4');
+                }
+            }
+
+            // allow the user to search by text or tag
+            vm.Filter = ko.observable();
+            vm.FilterByTag = function(viewModel, event) {
+                $("#filter-term").val(null);
+                var selectedTag = $(event.target).val();
+                if (selectedTag) {
+                    vm.Filter("tag:" + selectedTag);
+                } else {
+                    vm.Filter(null);
+                }
+            }
+
+            vm.FilterByTerm = function(viewModel, event) {
+                $("#filter-tag").prop('selectedIndex', 0);
+                console.log("term: " + $(event.target).val());
+                vm.Filter($(event.target).val());
+            }
+
+            vm.FilteredImages = ko.computed(function() {
+                if (!vm.Filter()) {
+                    return vm.Images();
+                } else {
+                    if (vm.Filter().startsWith('tag:')) {
+                        var tag = vm.Filter().substring(4);
+                        console.log("tag: " + tag);
+                        return ko.utils.arrayFilter(vm.Images(),
+                            function(i) {
+                                return i.Tags().includes(tag);
+                            });
+                    } else {
+                        return ko.utils.arrayFilter(vm.Images(),
+                            function(i) {
+                                return i.Name().toLowerCase().includes(vm.Filter().toLowerCase());
+                            });
+                    }
+                }
+            });
+
+            // wire up individual image tags input elements
+            ko.bindingHandlers.tags = {
+                init: function(element) {
+                    $(element).tagsinput({
+                        trimValue: true,
+                        forceLowerCase: true
+                    });
+
+                    $(element).on('itemAdded',
+                        function(event) {
+                            var tag = event.item;
+                            for (var x = 0; x < vm.Images().length; x++) {
+                                var i = vm.Images()[x];
+                                if (i.Id === event.target.id.substring(4)) {
+                                    i.Tags.push(tag);
+                                    console.log("added a tag: " + tag);
+                                    console.log("added a tag to: " + i.Id);
+
+                                    // push change to server
+                                    $.post(`/api/images/add-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`)
+                                        .done(function() {
+                                            console.log(`pushed new tag '${tag}' to server`);
+                                        })
+                                        .fail(function() {
+                                            console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
+                                        });
+
+                                    return;
+                                }
+                            }
+                        });
+
+                    $(element).on('itemRemoved',
+                        function(event) {
+                            var tag = event.item;
+                            for (var x = 0; x < vm.Images().length; x++) {
+                                var i = vm.Images()[x];
+                                if (i.Id === event.target.id.substring(4)) {
+                                    i.Tags.remove(tag);
+                                    console.log("removed a tag: " + tag);
+                                    console.log("removed a tag from: " + i.Id);
+
+                                    // push change to server
+                                    $.ajax({
+                                        url: `/api/images/remove-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`,
+                                        type: 'DELETE'
+                                    }).done(function() {
+                                        console.log(`pushed tag '${tag}' removal to server`);
+                                    }).fail(function() {
+                                        console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
+                                    });
+
+
+                                    return;
+                                }
+                            }
+                        });
+                }
+            };
         }
 
         // configure the uploader
@@ -372,44 +521,9 @@
         $(document).ready(function() {
             ko.applyBindings(new ViewModel());
 
-            $("#tagsControl").tagsinput({
+            $("#tags-control").tagsinput({
                 trimValue: true,
                 forceLowerCase: true
-            });
-
-            $("#remove-tags").tagsinput({
-                trimValue: true
-            });
-
-            $("#remove-tags").on('beforeItemAdd', function (event) {
-                // don't allow tags to be added to this control
-                event.cancel = true;
-            });
-
-            $("#remove-tags").on('itemRemoved', function (event) {
-                //console.log(event.item);
-
-                $.ajax({
-                    url: `/api/galleries/remove-tag?categoryId=@Model.CategoryId&galleryId=@Model.Id&tag=${event.item}`,
-                    type: 'DELETE'
-                }).done(function (response) {
-                    // tag deleted, show success banner
-                    console.log(response);
-
-                    // show a fading banner
-                    $("#removed-tag").text(event.item);
-                    var banner = $("#remove-tags-banner");
-                    banner.show();
-                    setTimeout(function() {
-                            banner.fadeOut('slow');
-                        },
-                        5000);
-
-                }).fail(function(response) {
-                    console.log("something went wrong when deleting the tag:");
-                    console.log(response);
-                });
-
             });
         });
     </script>
