@@ -207,10 +207,10 @@
 
             <form class="form-inline" data-bind="submit: UpdateAllImages">
                 <div class="form-group mb-2">
-                    <input type="text" class="form-control form-control" id="creditControl" placeholder="Add credit...">
+                    <input type="text" class="form-control form-control" id="bulk-credit" placeholder="Add credit...">
                 </div>
-                <div class="form-group mx-sm-3 mb-2" style="width: 400px !important;">
-                    <input type="text" class="form-control form-control-sm" id="tags-control" placeholder="Add tags...">
+                <div class="form-group mx-sm-3 mb-2">
+                    <input type="text" class="form-control form-control-sm" id="bulk-tags" placeholder="Add tags...">
                 </div>
                 <button type="submit" class="btn btn-secondary btn-sm mb-2" id="updateAllImagesBtn">Update all images</button>
             </form>
@@ -242,7 +242,7 @@
                     </div>
                     <div class="col-9">
                         <div data-bind="text: Name" class="mb-1"></div>
-                        <input type="text" data-bind="value: Tags().join(','), tags: Tags, attr: { id: 'uit-'+Id }"/>
+                        <input type="text" data-bind="value: Tags().join(','), tags: Tags, attr: { id: 'uit-'+Id }" />
                     </div>
                 </div>
             </div>
@@ -301,7 +301,7 @@
             payload.forEach(i => this.Images.push(new ImageModel(i)));
 
             // dynamically calculate the distinct tags in use across the gallery images
-            vm.AllTags = ko.computed(function() {
+            vm.AllTags = ko.pureComputed(function() {
                 var allTags = [];
                 vm.Images().forEach(function(image) {
                     image.Tags().forEach(function(tag) {
@@ -314,19 +314,31 @@
             });
 
             vm.UpdateAllImages = function() {
-                var credit = $("#creditControl").val();
-                var tags = $("#tagsControl").val();
+                var credit = $("#bulk-credit").val();
+                var tags = $("#bulk-tags").val();
 
                 if (credit === '' && tags === '') {
                     console.log("UpdateAllImages: no credit or tag supplied.");
                     return;
                 }
 
-                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { credit: credit, tags: tags }).done(function() {
+                // update all Image models so the ui updates
+                var individualTags = tags.split(',');
+                vm.Images().forEach(function(i) {
+                    individualTags.forEach(t => i.Tags.push(t));
+                });
+
+                // refresh all taginputs to show new values
+                $("[id^=uit-").each(function () {
+                    individualTags.forEach(t => $(this).tagsinput('add', t));
+                });
+
+                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { bulkCredit: credit, bulkTags: tags })
+                    .done(function() {
                         // images updated
                         // clear the form
-                        $("#creditControl").val('');
-                        $("#tagsControl").tagsinput('removeAll');
+                        $("#bulk-credit").val(null);
+                        $("#bulk-tags").tagsinput('removeAll');
 
                         // show a fading banner
                         var banner = $("#bulk-update-banner");
@@ -410,7 +422,7 @@
                 vm.Filter($(event.target).val());
             }
 
-            vm.FilteredImages = ko.computed(function() {
+            vm.FilteredImages = ko.pureComputed(function() {
                 if (!vm.Filter()) {
                     return vm.Images();
                 } else {
@@ -481,7 +493,6 @@
                                     }).fail(function() {
                                         console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
                                     });
-
 
                                     return;
                                 }

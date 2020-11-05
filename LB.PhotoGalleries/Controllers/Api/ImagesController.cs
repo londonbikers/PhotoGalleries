@@ -47,8 +47,8 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 return Unauthorized("You are not authorised to update these images.");
 
-            var credit = Request.Form["credit"].FirstOrDefault();
-            var tagsCsv = Request.Form["tags"].FirstOrDefault();
+            var credit = Request.Form["bulkCredit"].FirstOrDefault();
+            var tagsCsv = Request.Form["bulkTags"].FirstOrDefault();
             if (string.IsNullOrEmpty(credit) && string.IsNullOrEmpty(tagsCsv))
                 return BadRequest("neither credit or tags supplied.");
 
