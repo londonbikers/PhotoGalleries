@@ -28,7 +28,7 @@
                     title: Image.Name,
                     width: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).width,
                     height: GetImageDimensions(Image, ImageContainerWidth, ImageContainerHeight).height }" />
-            <div id="photo-overlay" class="photo-overlay-full-frame">
+            <div id="photo-overlay" class="photo-overlay-full-frame" style="display: none;">
                 <div class="row photo-overlay-full-frame">
                     <div @Html.Raw(photoLeftColClass) id="photo-overlay-left">
                         @if (previousImage != null)
@@ -314,11 +314,11 @@
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
     <script src="~/lib/linkify/linkify.min.js"></script>
     <script src="~/lib/linkify/linkify-jquery.min.js"></script>
+    <script src="~/lib/jquery-touchswipe/jquery.touchSwipe.min.js"></script>
 
     <script language="javascript">
 
-        function GetImageUrl(image, imageContainerWidth, imageContainerHeight)
-        {
+        function GetImageUrl(image, imageContainerWidth, imageContainerHeight) {
             var dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
 
             // choose an appropriate ImageFileSpec for scaled dimensions:
@@ -414,7 +414,7 @@
         // this allows us to show the preview image and loader right up until the main image is ready to be shown.
         function LoadImage(image, imageContainerWidth, imageContainerHeight) {
             var imgPlaceholder = new Image();
-            var imgTag =  document.getElementById("image");
+            var imgTag = document.getElementById("image");
 
             imgPlaceholder.onload = function() {
                 imgTag.src = img.src;
@@ -426,8 +426,10 @@
         // the view model that KnockoutJS uses to bind data and events to the html
         function ViewModel() {
 
+            const self = this;
+
             // parse the image from a json blob
-            this.Image = @Html.Raw(JsonConvert.SerializeObject(new
+            self.Image = @Html.Raw(JsonConvert.SerializeObject(new
                          {
                              Model.Files,
                              Model.Metadata.Width,
@@ -435,27 +437,48 @@
                              Model.Name
                          }));
 
-            this.ImageContainerWidth = $(".container-max").innerWidth();
-            //console.log("this.ImageContainerWidth: " + this.ImageContainerWidth);
-
-            var pageHeight = $(window).height();
-            //console.log("pageHeight: " + pageHeight);
-
-            var imageTop = $(".container-max").position().top;
-            //console.log("imageTop: " + imageTop);
-
-            var usableHeight = Math.floor(pageHeight - imageTop - 10);
-            //console.log("usableHeight: " + usableHeight);
-
-            this.ImageContainerHeight = usableHeight;
-            //console.log("this.ImageContainerHeight: " + this.ImageContainerHeight);
+            self.ImageContainerWidth = $(".container-max").innerWidth();
+            const pageHeight = $(window).height();
+            const imageTop = $(".container-max").position().top;
+            const usableHeight = Math.floor(pageHeight - imageTop - 10);
+            self.ImageContainerHeight = usableHeight;
 
             // mixing a data-bind on the img with this isn't conventional but not sure how to combine this all into data-binding.
             // should probably flip it and set the img up entirely from here and eschew conventional data-binding approach.
-            LoadImage(this.Image, this.ImageContainerWidth, this.ImageContainerHeight);
+            LoadImage(self.Image, self.ImageContainerWidth, self.ImageContainerHeight);
 
-            this.CreateComment = function ()
-            {
+            // work out if this is a mobile device or not and customise the ui accordingly
+            if (window.IsMobileDevice()) {
+                console.log("detected mobile device");
+                $("#image").swipe({
+                    swipe: function (event, direction, distance, duration, fingerCount, fingerData) {
+                        @if (previousImage != null)
+                        {
+                             <text>
+                                if (direction === 'right') {
+                                    NavigateToImage('@previousImage.GalleryId', '@previousImage.Id', '@previousImage.Name');
+                                 }
+                             </text>
+                        }
+
+                        @if (nextImage != null)
+                        {
+                            <text>
+                                if (direction === 'left') {
+                                    NavigateToImage('@nextImage.GalleryId', '@nextImage.Id', '@nextImage.Name');
+                                }
+                            </text>
+                        }
+                    }
+                });
+
+            } else {
+                // desktop overlay controls are hidden by default so show them as we're on a desktop device
+                console.log("desktop device detected");
+                $("#photo-overlay").show();
+            }
+
+            self.CreateComment = function() {
                 var comment = $("#comment-postbox").val();
                 var receiveNotifications = $("#get-notifications").prop("checked") === true;
 
@@ -474,11 +497,11 @@
                     });
             }
 
-            this.DeleteComment = function (commentCreated, commentCreatedByUserId) {
+            self.DeleteComment = function(commentCreated, commentCreatedByUserId) {
                 $.ajax({
                     url: `/api/images/comments?categoryId=@category.Id&galleryId=@gallery.Id&imageId=@Model.Id&commentCreatedTicks=${commentCreated}&commentCreatedByUserId=${commentCreatedByUserId}`,
                     type: 'DELETE'
-                }).done(function (response) {
+                }).done(function(response) {
                     // comment created, refresh the page to show new comment
                     location.reload();
                 }).fail(function(response) {

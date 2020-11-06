@@ -55,3 +55,28 @@ function GetGalleryUrl(categoryName, galleryId, name) {
     var encodedCategoryName = EncodeParamForUrl(categoryName);
     return `/g/${encodedCategoryName}/${galleryId}/${encodedName}`;
 }
+
+function IsTouchDevice()
+{
+    if ("ontouchstart" in window || window.TouchEvent)
+        return true;
+
+    if (window.DocumentTouch && document instanceof DocumentTouch)
+        return true;
+
+    const prefixes = ["", "-webkit-", "-moz-", "-o-", "-ms-"];
+    const queries = prefixes.map(prefix => `(${prefix}touch-enabled)`);
+
+    return window.matchMedia(queries.join(",")).matches;
+}
+
+function IsMobileDevice()
+{
+    // needs to be touch-enabled and the resolution below a certain size, i.e. don't include touch-enabled laptops
+    // as it's far more likely users will want to use touch-pad/keyboard/mouse to navigate images on those devices
+    // of course the weakness with this determination is that mobile device screen sizes are likely to get bigger 
+    // over time, so this will need to be updated now and then.
+
+    var isScreenMobileDeviceSize = window.screen.width <= 1366 && window.screen.height <= 1366;
+    return IsTouchDevice() && isScreenMobileDeviceSize;
+}
