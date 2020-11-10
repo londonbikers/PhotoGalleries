@@ -451,6 +451,7 @@
             if (window.IsMobileDevice()) {
                 console.log("detected mobile device");
                 $("#image").swipe({
+                    allowPageScroll: 'horizontal',
                     swipe: function (event, direction, distance, duration, fingerCount, fingerData) {
                         @if (previousImage != null)
                         {
