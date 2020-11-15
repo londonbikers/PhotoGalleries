@@ -31,10 +31,10 @@ function NavigateToImage(galleryId, imageId, name) {
 // for high-dpi displays we need to request a larger image than the space we intend to view it in.
 // this ensures images are as crisp as they can be for each client device.
 function GetImageThumbnailUrl(files, element) {
-    var cardInnerWidth = $(element).parent().parent().innerWidth();
-    var cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
-    var scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
-    var scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
+    const cardInnerWidth = $(element).parent().parent().innerWidth();
+    const cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
+    const scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
+    const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
 
     // choose ImageFileSpec for scaled dimensions
     if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
@@ -51,8 +51,8 @@ function GetImageThumbnailUrl(files, element) {
 }
 
 function GetGalleryUrl(categoryName, galleryId, name) {
-    var encodedName = EncodeParamForUrl(name);
-    var encodedCategoryName = EncodeParamForUrl(categoryName);
+    const encodedName = EncodeParamForUrl(name);
+    const encodedCategoryName = EncodeParamForUrl(categoryName);
     return `/g/${encodedCategoryName}/${galleryId}/${encodedName}`;
 }
 
@@ -70,13 +70,19 @@ function IsTouchDevice()
     return window.matchMedia(queries.join(",")).matches;
 }
 
-function IsMobileDevice()
-{
+function IsMobileDevice() {
     // needs to be touch-enabled and the resolution below a certain size, i.e. don't include touch-enabled laptops
     // as it's far more likely users will want to use touch-pad/keyboard/mouse to navigate images on those devices
     // of course the weakness with this determination is that mobile device screen sizes are likely to get bigger 
     // over time, so this will need to be updated now and then.
 
-    var isScreenMobileDeviceSize = window.screen.width <= 1366 && window.screen.height <= 1366;
+    const isScreenMobileDeviceSize = window.screen.width <= 1366 && window.screen.height <= 1366;
     return IsTouchDevice() && isScreenMobileDeviceSize;
+}
+
+function GetBackgroundImage(image) {
+    if (image.LowResStorageId !== null) {
+        return `url(/dilr/${image.Files.SpecLowResId})`;
+    }
+    return null;
 }

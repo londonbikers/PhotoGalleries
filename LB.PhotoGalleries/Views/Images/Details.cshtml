@@ -403,13 +403,6 @@
             return "rounded";
         }
 
-        function GetBackgroundImage(image) {
-            if (image.LowResStorageId !== null) {
-                return `url(/dilr/${image.Files.SpecLowResId})`;
-            }
-            return null;
-        }
-
         // pre-loads the main image and only assigns it to the img tag when fully loaded.
         // this allows us to show the preview image and loader right up until the main image is ready to be shown.
         function LoadImage(image, imageContainerWidth, imageContainerHeight) {

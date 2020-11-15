@@ -334,3 +334,8 @@ img.image-fade, .image-fade img {
     pointer-events: none;
     cursor: default;
 }
+
+.card img {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
