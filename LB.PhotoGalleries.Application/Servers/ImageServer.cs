@@ -546,7 +546,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Handles deleting a specific version of an image file according to file spec.
         /// </summary>
-        private async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec)
+        private static async Task DeleteImageFileAsync(Image image, ImageFileSpec imageFileSpec)
         {
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
@@ -801,10 +801,10 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (isoTag == null || !isoTag.Description.HasValue())
                     return null;
 
-                var isoTagProcessed = isoTag.Description;
-                if (isoTagProcessed.StartsWith("ISO "))
-                    isoTagProcessed = isoTag.Description.Split(' ')[1];
+                if (isoTag.Description == null || !isoTag.Description.StartsWith("ISO ")) 
+                    return null;
 
+                var isoTagProcessed = isoTag.Description.Split(' ')[1];
                 var validIso = int.TryParse(isoTagProcessed, out iso);
                 if (validIso)
                     return iso;
