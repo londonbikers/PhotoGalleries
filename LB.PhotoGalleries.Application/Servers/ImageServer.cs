@@ -227,21 +227,20 @@ namespace LB.PhotoGalleries.Application.Servers
             if (page > pagedResultSet.TotalPages)
                 page = pagedResultSet.TotalPages;
 
-            if (ids.Count > 0)
-            {
-                // now just retrieve a page's worth of images from the results
-                var offset = (page - 1) * pageSize;
-                var itemsToGet = ids.Count >= pageSize ? pageSize : ids.Count;
+            if (ids.Count <= 0) 
+                return pagedResultSet;
 
-                // if we're on the last page just get the remaining items
-                if (page == pagedResultSet.TotalPages)
-                    itemsToGet = pagedResultSet.TotalResults - offset;
+            // now just retrieve a page's worth of images from the results
+            var offset = (page - 1) * pageSize;
+            var itemsToGet = ids.Count >= pageSize ? pageSize : ids.Count;
 
-                var pageIds = ids.GetRange(offset, itemsToGet);
+            // if we're on the last page just get the remaining items
+            if (page == pagedResultSet.TotalPages)
+                itemsToGet = pagedResultSet.TotalResults - offset;
 
-                foreach (var id in pageIds)
-                    pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
-            }
+            var pageIds = ids.GetRange(offset, itemsToGet);
+            foreach (var id in pageIds)
+                pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
 
             return pagedResultSet;
         }
