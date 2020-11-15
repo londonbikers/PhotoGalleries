@@ -17,6 +17,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Models.Image;
@@ -60,7 +61,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     if (!image.Id.HasValue())
                         image.Id = Utilities.GenerateId();
                     if (!image.Name.HasValue())
-                        Path.GetFileNameWithoutExtension(filename);
+                        image.Name = TidyImageName(Path.GetFileNameWithoutExtension(filename));
                     if (!image.GalleryCategoryId.HasValue())
                         image.GalleryCategoryId = galleryCategoryId;
                     if (!image.GalleryId.HasValue())
@@ -75,7 +76,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     image = new Image
                     {
                         Id = id,
-                        Name = Path.GetFileNameWithoutExtension(filename),
+                        Name = TidyImageName(Path.GetFileNameWithoutExtension(filename)),
                         GalleryCategoryId = galleryCategoryId,
                         GalleryId = galleryId,
                         Files = { OriginalId = id + Path.GetExtension(filename).ToLower() }
@@ -583,6 +584,13 @@ namespace LB.PhotoGalleries.Application.Servers
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
+
+        private string TidyImageName(string name)
+        {
+            name = name.Replace("_", " ");
+            name = Regex.Replace(name, " {2,}", " ");
+            return name;
+        }
         #endregion
 
         #region metadata parsing methods
@@ -594,7 +602,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="image">The Image object to assign the metadata to.</param>
         /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
         /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
-        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
+        private void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
         {
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             using var bm = new Bitmap(imageStream);
@@ -732,7 +740,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                     if (objectName != null && objectName.Description.HasValue())
-                        image.Name = objectName.Description;
+                        image.Name = TidyImageName(objectName.Description);
                 }
 
                 var keywords = iptcDirectory.GetKeywords();
