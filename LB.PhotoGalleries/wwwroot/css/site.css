@@ -187,9 +187,6 @@ body {
     background-repeat: no-repeat;
     background-size: 48px;
 }
-/*#photo-wrapper-loader img {
-    opacity: 0;
-}*/
     #photo-wrapper:hover #photo-overlay {
         opacity: 1;
     }
@@ -330,4 +327,10 @@ img.image-fade, .image-fade img {
 
 .float-clear {
     clear: both;
+}
+
+.link-disabled {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: default;
 }
