@@ -52,7 +52,7 @@
     <div class="row mt-3" data-bind="foreach: Images">
         <div class="col-md-4">
             <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
                 <div class="card-body card-body-thin">
                     <p class="card-text" data-bind="text: Name"></p>
                 </div>
@@ -148,11 +148,6 @@
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files})));
         var galleryId = '@Model.Id';
-
-        function GetImageUrl(galleryId, imageId, name) {
-            var encodedName = EncodeParamForUrl(name);
-            return `/i/${galleryId}/${imageId}/${encodedName}`;
-        }
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {

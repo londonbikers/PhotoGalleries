@@ -246,6 +246,69 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
+        /// Returns a page of images that match a search term.
+        /// </summary>
+        /// <param name="term">The search term to use to search for galleries.</param>
+        /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
+        /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
+        /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
+        /// <param name="includeInactiveGalleries">Indicates whether or not images in inactive (not active) galleries should be returned. False by default.</param>
+        public async Task<PagedResultSet<Image>> SearchForImagesAsync(string term, int page = 1, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
+        {
+            if (string.IsNullOrEmpty(term))
+                throw new ArgumentNullException(nameof(term));
+
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
+
+            if (page < 1)
+                page = 1;
+
+            // limit page size to avoid incurring unnecessary charges and increasing latency
+            if (pageSize > 100)
+                pageSize = 100;
+
+            // limit how big the id query is to avoid unnecessary charges and to keep latency within an acceptable range
+            if (maxResults > 500)
+                maxResults = 500;
+
+            // get the complete list of ids
+            var queryText = includeInactiveGalleries
+                ? "SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE CONTAINS(i.Name, @term, true) OR ARRAY_CONTAINS(i.Tags, @term) ORDER BY i.Created DESC"
+                : "SELECT TOP @maxResults g.id AS Id, g.GalleryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) AND g.Active = true ORDER BY g.Created DESC";
+
+            var queryDefinition = new QueryDefinition(queryText)
+                .WithParameter("@maxResults", maxResults)
+                .WithParameter("@term", term.ToLower());
+
+            var databaseIds = await Server.GetIdsByQueryAsync(Constants.ImagesContainerName, queryDefinition);
+
+            // now with all the ids we know how many total results there are and so can populate paging info
+            var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = databaseIds.Count, CurrentPage = page };
+
+            // don't let users try and request a page that doesn't exist
+            if (page > pagedResultSet.TotalPages)
+                page = pagedResultSet.TotalPages;
+
+            // now just retrieve a page's worth of images from the results
+            var offset = (page - 1) * pageSize;
+            var itemsToGet = databaseIds.Count >= pageSize ? pageSize : databaseIds.Count;
+
+            // if we're on the last page just get the remaining items
+            if (page == pagedResultSet.TotalPages)
+                itemsToGet = pagedResultSet.TotalResults - offset;
+
+            if (databaseIds.Count == 0)
+                return null;
+
+            var pageIds = databaseIds.GetRange(offset, itemsToGet);
+            foreach (var id in pageIds)
+                pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
+
+            return pagedResultSet;
+        }
+
+        /// <summary>
         /// Causes an Image to be permanently deleted from storage and database.
         /// Will result in some images being re-ordered to avoid holes in positions.
         /// </summary>

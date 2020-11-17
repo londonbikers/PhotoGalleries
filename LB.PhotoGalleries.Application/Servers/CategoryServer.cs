@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using LB.PhotoGalleries.Shared;
@@ -112,6 +113,11 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // remove the category from the cache
             _categories?.Remove(category);
+        }
+
+        public Category GetCategory(string categoryId)
+        {
+            return Categories.SingleOrDefault(c => c.Id == categoryId);
         }
         #endregion
 

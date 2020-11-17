@@ -1,0 +1,129 @@
+﻿@using Newtonsoft.Json
+@using LB.PhotoGalleries.Application
+@{
+    ViewData["Title"] = "Search for " + ViewData["query"];
+    var categories = (List<Category>)ViewData["categories"];
+    var haveCategories = (categories != null && categories.Any()).ToString().ToLower();
+    var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];
+    var galleriesJson = galleries != null ? JsonConvert.SerializeObject(galleries.Results.Select(g => new
+    {
+        g.CategoryId,
+        g.Id,
+        g.Name,
+        g.ThumbnailFiles,
+        g.ImageCount,
+        CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
+    })) : null;
+
+    var images = (PagedResultSet<Image>)ViewData["images"];
+    var imagesJson = images != null ? JsonConvert.SerializeObject(images.Results.Select(i => new
+    {
+        i.Id,
+        i.GalleryId,
+        i.Name,
+        i.Files
+    })) : null;
+}
+<div class="text-center">
+    <h4 class="display-4">Search Results</h4>
+    <div class="text-format text-link">Showing search results for <b>@ViewData["query"]</b>.</div>
+</div>
+
+<div class="row">
+    @if (categories != null && categories.Any())
+    {
+        <div class="col-2">
+            <div><strong>Categories</strong></div>
+            @categories.Count<text> result</text>@if (categories.Count > 1)
+                                                 {<text>s</text>}
+        </div>
+        <div class="col-10">
+            @foreach (var category in categories)
+            {
+                <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)" class="badge badge-primary">@category.Name</a>
+            }
+        </div>
+        <div class="w-100 mb-3"></div>
+    }
+
+    <div class="col-2" style="display: none;" data-bind="visible: Galleries().length > 0">
+        <div><strong>Galleries</strong></div>
+        <div><span data-bind="text: Galleries().length"></span> results</div>
+        <div>
+            <a href="#">show only galleries</a>
+        </div>
+    </div>
+    <div class="col-10" style="display: none;" data-bind="visible: Galleries().length > 0">
+        <div class="row mt-3" data-bind="foreach: Galleries">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
+                    <div class="card-body">
+                        <p class="card-text" data-bind="text: Name"></p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small data-bind="text: CategoryName" class="text-muted"></small>
+                            <small class="text-muted"><span data-bind="text: ImageCount"></span> photos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="w-100 mb-3" style="display: none;" data-bind="visible: Galleries().length > 0"></div>
+
+    <div class="col-2" style="display: none;" data-bind="visible: Images().length > 0">
+        <div><strong>Photos</strong></div>
+        <div><span data-bind="text: Images().length"></span> results</div>
+        <div><a href="#">show only photos</a></div>
+    </div>
+    <div class="col-10" style="display: none;" data-bind="visible: Images().length > 0">
+        <div class="row mt-3" data-bind="foreach: Images">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
+                    <div class="card-body card-body-thin">
+                        <p class="card-text" data-bind="text: Name"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="text-center lead mt-4" style="display: none;" data-bind="visible: HaveCategories == false && Images().length === 0 && Galleries().length === 0">
+    No results, sorry. Please try another search
+</div>
+
+@section Scripts
+{
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+
+    <script type="text/javascript">
+
+    // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
+    // and convert to json so the Knockout script can parse it and use it.
+    var galleries = @Html.Raw(string.IsNullOrEmpty(galleriesJson) ? "[]" : galleriesJson);
+
+    // convert the image server objects into a new lightweight object to aid with rendering of the image grid
+    // and convert to json so the Knockout script can parse it and use it.
+    var images = @Html.Raw(string.IsNullOrEmpty(imagesJson) ? "[]" : imagesJson);
+
+    // the view model that knockout uses to bind data to the html
+    function ViewModel() {
+        const self = this;
+
+        self.HaveCategories = @haveCategories;
+
+        // parse the galleries from a json blob
+        self.Galleries = ko.observableArray(galleries);
+
+        // parse the images from a json blob
+        self.Images = ko.observableArray(images);
+    }
+
+    $(document).ready(function() {
+        ko.applyBindings(new ViewModel());
+    });
+    </script>
+}

@@ -140,20 +140,66 @@ namespace LB.PhotoGalleries.Application.Servers
         }
 
         /// <summary>
-        /// Performs a search for galleries with a given search term in their name.
+        /// Returns a page of galleries that match a search term.
         /// </summary>
-        public async Task<List<GalleryAdminStub>> SearchForGalleriesAsync(string searchString, int maxResults)
+        /// <param name="term">The search term to use to search for galleries.</param>
+        /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
+        /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
+        /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
+        /// <param name="includeInactiveGalleries">Indicates whether or not inactive (not active) galleries should be returned. False by default.</param>
+        public async Task<PagedResultSet<Gallery>> SearchForGalleriesAsync(string term, int page = 1, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
         {
-            // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
-            if (maxResults > 100)
-                maxResults = 100;
+            if (string.IsNullOrEmpty(term))
+                throw new ArgumentNullException(nameof(term));
 
-            var queryDefinition =
-                new QueryDefinition("SELECT TOP @pageSize c.id, c.CategoryId, c.Name, c.Active, c.Created FROM c WHERE CONTAINS(c.Name, @searchString, true) ORDER BY c.Created DESC")
-                    .WithParameter("@searchString", searchString)
-                    .WithParameter("@pageSize", maxResults);
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
 
-            return await GetGalleryStubsByQueryAsync(queryDefinition);
+            if (page < 1)
+                page = 1;
+
+            // limit page size to avoid incurring unnecessary charges and increasing latency
+            if (pageSize > 100)
+                pageSize = 100;
+
+            // limit how big the id query is to avoid unnecessary charges and to keep latency within an acceptable range
+            if (maxResults > 500)
+                maxResults = 500;
+
+            // get the complete list of ids
+            var queryText = includeInactiveGalleries
+                ? "SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) ORDER BY g.Created DESC"
+                : "SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) AND g.Active = true ORDER BY g.Created DESC";
+
+            var queryDefinition = new QueryDefinition(queryText)
+                .WithParameter("@maxResults", maxResults)
+                .WithParameter("@term", term);
+
+            var databaseIds = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
+
+            // now with all the ids we know how many total results there are and so can populate paging info
+            var pagedResultSet = new PagedResultSet<Gallery> { PageSize = pageSize, TotalResults = databaseIds.Count, CurrentPage = page };
+
+            // don't let users try and request a page that doesn't exist
+            if (page > pagedResultSet.TotalPages)
+                page = pagedResultSet.TotalPages;
+
+            // now just retrieve a page's worth of galleries from the results
+            var offset = (page - 1) * pageSize;
+            var itemsToGet = databaseIds.Count >= pageSize ? pageSize : databaseIds.Count;
+
+            // if we're on the last page just get the remaining items
+            if (page == pagedResultSet.TotalPages)
+                itemsToGet = pagedResultSet.TotalResults - offset;
+
+            if (databaseIds.Count == 0)
+                return null;
+
+            var pageIds = databaseIds.GetRange(offset, itemsToGet);
+            foreach (var id in pageIds)
+                pagedResultSet.Results.Add(await GetGalleryAsync(id.PartitionKey, id.Id));
+
+            return pagedResultSet;
         }
 
         public async Task UpdateGalleryAsync(Gallery gallery)

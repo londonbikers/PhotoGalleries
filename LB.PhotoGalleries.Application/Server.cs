@@ -78,7 +78,7 @@ namespace LB.PhotoGalleries.Application
         /// </summary>
         internal static async Task<List<DatabaseId>> GetIdsByQueryAsync(string containerName, QueryDefinition queryDefinition)
         {
-            var container = Server.Instance.Database.GetContainer(containerName);
+            var container = Instance.Database.GetContainer(containerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
             var ids = new List<DatabaseId>();
             double charge = 0;

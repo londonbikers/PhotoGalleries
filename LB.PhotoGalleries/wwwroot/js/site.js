@@ -86,3 +86,8 @@ function GetBackgroundImage(image) {
     }
     return null;
 }
+
+function GetImageUrl(galleryId, imageId, name) {
+    const encodedName = EncodeParamForUrl(name);
+    return `/i/${galleryId}/${imageId}/${encodedName}`;
+}
