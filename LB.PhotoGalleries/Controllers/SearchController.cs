@@ -14,6 +14,7 @@ namespace LB.PhotoGalleries.Controllers
             // search categories
             // search gallery names/description
             // search image names/description/tags/credits
+            q = q.Trim();
             ViewData["query"] = q;
 
             // search for categories
