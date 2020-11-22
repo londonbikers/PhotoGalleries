@@ -28,6 +28,22 @@ function NavigateToImage(galleryId, imageId, name) {
     window.location.href = `/i/${galleryId}/${imageId}/${EncodeParamForUrl(name)}`;
 }
 
+function GetCategoryUrl(categoryName) {
+    const encodedCategoryName = EncodeParamForUrl(categoryName);
+    return `/c/${encodedCategoryName}`;
+}
+
+function GetGalleryUrl(categoryName, galleryId, name) {
+    const encodedName = EncodeParamForUrl(name);
+    const encodedCategoryName = EncodeParamForUrl(categoryName);
+    return `/g/${encodedCategoryName}/${galleryId}/${encodedName}`;
+}
+
+function GetImageUrl(galleryId, imageId, name) {
+    const encodedName = EncodeParamForUrl(name);
+    return `/i/${galleryId}/${imageId}/${encodedName}`;
+}
+
 // for high-dpi displays we need to request a larger image than the space we intend to view it in.
 // this ensures images are as crisp as they can be for each client device.
 function GetImageThumbnailUrl(files, element) {
@@ -48,12 +64,6 @@ function GetImageThumbnailUrl(files, element) {
     } else {
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
-}
-
-function GetGalleryUrl(categoryName, galleryId, name) {
-    const encodedName = EncodeParamForUrl(name);
-    const encodedCategoryName = EncodeParamForUrl(categoryName);
-    return `/g/${encodedCategoryName}/${galleryId}/${encodedName}`;
 }
 
 function IsTouchDevice()
@@ -85,9 +95,4 @@ function GetBackgroundImage(image) {
         return `url(/dilr/${image.Files.SpecLowResId})`;
     }
     return null;
-}
-
-function GetImageUrl(galleryId, imageId, name) {
-    const encodedName = EncodeParamForUrl(name);
-    return `/i/${galleryId}/${imageId}/${encodedName}`;
 }

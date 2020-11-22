@@ -299,7 +299,10 @@ namespace LB.PhotoGalleries.Application.Servers
                 itemsToGet = pagedResultSet.TotalResults - offset;
 
             if (databaseIds.Count == 0)
-                return null;
+                return pagedResultSet;
+
+            //if (databaseIds.Count == 0)
+            //    return null;
 
             var pageIds = databaseIds.GetRange(offset, itemsToGet);
             foreach (var id in pageIds)
