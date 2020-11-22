@@ -3,8 +3,8 @@
 @{
     ViewData["Title"] = "Search for " + ViewData["query"];
     var categories = (List<Category>)ViewData["categories"];
-    var categoriesJson = categories != null ? JsonConvert.SerializeObject(categories.Select(c => new {c.Name})) : null;
-    
+    var categoriesJson = categories != null ? JsonConvert.SerializeObject(categories.Select(c => new { c.Name })) : null;
+
     var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];
     var galleriesJson = galleries != null ? JsonConvert.SerializeObject(galleries.Results.Select(g => new
     {
@@ -31,6 +31,8 @@
 </div>
 
 <hr />
+
+@await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
 
 <div class="row" style="display: none;" data-bind="visible: Categories().length > 0">
     <div class="col text-center">
@@ -89,7 +91,7 @@
 
     <script type="text/javascript">
 
-        // convert the category, gallery and image server objects into lightweight objects to aid with their rendering 
+        // convert the category, gallery and image server objects into lightweight objects to aid with their rendering
         // and convert to json so the Knockout script can parse it and use them.
         var categories = @Html.Raw(string.IsNullOrEmpty(categoriesJson) ? "[]" : categoriesJson);
         var galleries = @Html.Raw(string.IsNullOrEmpty(galleriesJson) ? "[]" : galleriesJson);

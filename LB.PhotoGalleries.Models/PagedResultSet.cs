@@ -68,7 +68,6 @@ namespace LB.PhotoGalleries.Models
 
             // otherwise anchor the current page on the middle of the range of pages we want to show
             var positionDouble = (double)pagesToShow / (double)2;
-            var position = Math.Ceiling(positionDouble); // we have the anchor now
             var startNumber = Convert.ToInt32(CurrentPage - positionDouble);
             if (startNumber == 0)
                 startNumber = 1;
