@@ -83,7 +83,7 @@
     @await Component.InvokeAsync("SearchPaginator", new { searchPagedResultSet = Model })
 </div>
 
-<div class="text-center lead mt-4" style="display: none;" data-bind="visible: HaveCategories == false && Images().length === 0 && Galleries().length === 0">
+<div class="text-center lead mt-4" style="display: none;" data-bind="visible: Categories().length === 0 && Galleries().length === 0 && Images().length === 0">
     No results, sorry. Please try another search
 </div>
 
