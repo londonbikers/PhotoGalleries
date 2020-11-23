@@ -52,15 +52,27 @@ namespace LB.PhotoGalleries.Controllers
             var searchPagedResultSet = new SearchPagedResultSet
             {
                 PageSize = pageSize,
-                CategoryResults = categories,
-                TotalCategoryResults = categories.Count,
-                GalleryResults = galleryPagedResultSet.Results,
-                TotalGalleryResults = galleryPagedResultSet.TotalResults,
-                ImageResults = imagePagedResultSet.Results,
-                TotalImageResults = imagePagedResultSet.TotalResults,
                 CurrentPage = p,
                 QueryString = $"q={q}"
             };
+
+            if (p == 1)
+            {
+                searchPagedResultSet.CategoryResults = categories;
+                searchPagedResultSet.TotalCategoryResults = categories.Count;
+            }
+
+            if (galleryPagedResultSet != null)
+            {
+                searchPagedResultSet.GalleryResults = galleryPagedResultSet.Results;
+                searchPagedResultSet.TotalGalleryResults = galleryPagedResultSet.TotalResults;
+            }
+
+            if (imagePagedResultSet != null)
+            {
+                searchPagedResultSet.ImageResults = imagePagedResultSet.Results;
+                searchPagedResultSet.TotalImageResults = imagePagedResultSet.TotalResults;
+            }
 
             ViewData.Model = searchPagedResultSet;
             return View();
