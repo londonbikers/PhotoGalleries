@@ -48,6 +48,7 @@ namespace LB.PhotoGalleries.Controllers.Api
                 return Unauthorized("You are not authorised to update these images.");
 
             var credit = Request.Form["bulkCredit"].FirstOrDefault();
+            bool.TryParse(Request.Form["bulkCreditOnlyAddWhenMissing"].FirstOrDefault(), out var creditOnlyAddWhenMissing);
             var tagsCsv = Request.Form["bulkTags"].FirstOrDefault();
             if (string.IsNullOrEmpty(credit) && string.IsNullOrEmpty(tagsCsv))
                 return BadRequest("neither credit or tags supplied.");
@@ -63,18 +64,39 @@ namespace LB.PhotoGalleries.Controllers.Api
             // update all images
             foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(galleryId))
             {
+                var updateRequired = false;
                 if (!string.IsNullOrEmpty(credit))
-                    image.Credit = credit;
+                {
+                    if (creditOnlyAddWhenMissing)
+                    {
+                        if (string.IsNullOrEmpty(image.Credit))
+                        {
+                            updateRequired = true;
+                            image.Credit = credit;
+                        }
+                    }
+                    else if (image.Credit != credit)
+                    {
+                        updateRequired = true;
+                        image.Credit = credit;
+                    }
+                }
 
                 if (tags != null)
                 {
                     // only add new tags, don't add duplicates
                     foreach (var tag in tags)
-                        if (!image.Tags.Contains(tag))
-                            image.Tags.Add(tag);
+                    {
+                        if (image.Tags.Contains(tag)) 
+                            continue;
+
+                        updateRequired = true;
+                        image.Tags.Add(tag);
+                    }
                 }
 
-                await Server.Instance.Images.UpdateImageAsync(image);
+                if (updateRequired)
+                    await Server.Instance.Images.UpdateImageAsync(image);
             }
 
             return Ok();

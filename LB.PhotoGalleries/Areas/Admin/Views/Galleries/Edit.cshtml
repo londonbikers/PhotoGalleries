@@ -203,7 +203,7 @@
         <div class="mt-3">
 
             <div class="mb-2">
-                <a href="#" id="show-update-all-images-link" class="link-disabled" data-bind="click: function(){ ToggleUpdateImagesTopControl('update-all-images-div'); }">Update all images</a> |
+                <a href="#" id="show-update-all-images-link" class="link-disabled" data-bind="click: function(){ ToggleUpdateImagesTopControl('update-all-images-div'); }">Update all images</a> &#8729;
                 <a href="#" id="show-remove-tags-link" data-bind="click: function(){ ToggleUpdateImagesTopControl('remove-tags-div'); }">Remove tags</a>
             </div>
 
@@ -211,6 +211,12 @@
                 <form class="form-inline" data-bind="submit: UpdateAllImages">
                     <div class="form-group mb-2">
                         <input type="text" class="form-control form-control" id="bulk-credit" placeholder="Add credit...">
+                    </div>
+                    <div class="form-check mb-2 ml-sm-2 mr-sm-2">
+                        <input class="form-check-input" type="checkbox" id="bulk-credit-delta-yn">
+                        <label class="form-check-label" for="bulk-credit-delta-yn">
+                            Just add missing credits
+                        </label>
                     </div>
                     <div class="form-group mx-sm-3 mb-2">
                         <input type="text" class="form-control form-control-sm" id="bulk-tags" placeholder="Add tags...">
@@ -226,7 +232,7 @@
                     <div id="remove-tags-div" class="mt-1">
                         <input type="text" name="remove-tags" id="remove-tags" />
                         <div class="form-text text-small text-muted mt-1">
-                            <img src="/img/info-circle.svg" width="12" class="image-fade" />
+                            <img src="/img/info-circle.svg" width="12" class="image-fade" alt="info" />
                             These are all the tags used across the gallery. Removing tags here removes them from any images they're use in. Don't add tags.
                         </div>
                     </div>
@@ -333,6 +339,8 @@
 
             vm.UpdateAllImages = function() {
                 const credit = $("#bulk-credit").val();
+                //const creditJustFillInBlanks = $("#bulk-credit-delta-yn").checked;
+                const creditJustFillInBlanks = $("#bulk-credit-delta-yn").prop('checked');
                 const tags = $("#bulk-tags").val();
 
                 if (credit === '' && tags === '') {
@@ -351,7 +359,7 @@
                     individualTags.forEach(t => $(this).tagsinput('add', t));
                 });
 
-                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { bulkCredit: credit, bulkTags: tags })
+                $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { bulkCredit: credit, bulkCreditOnlyAddWhenMissing: creditJustFillInBlanks, bulkTags: tags })
                     .done(function() {
                         // images updated
                         // clear the form
