@@ -182,10 +182,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // don't let users try and request a page that doesn't exist
             if (page > pagedResultSet.TotalPages)
-            {
                 return null;
-                page = pagedResultSet.TotalPages;
-            }
 
             // now just retrieve a page's worth of galleries from the results
             var offset = (page - 1) * pageSize;
