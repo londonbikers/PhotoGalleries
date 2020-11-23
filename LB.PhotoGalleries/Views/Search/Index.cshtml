@@ -1,12 +1,11 @@
 ﻿@using Newtonsoft.Json
 @using LB.PhotoGalleries.Application
+@model SearchPagedResultSet
 @{
     ViewData["Title"] = "Search for " + ViewData["query"];
-    var categories = (List<Category>)ViewData["categories"];
-    var categoriesJson = categories != null ? JsonConvert.SerializeObject(categories.Select(c => new { c.Name })) : null;
+    var categoriesJson = Model.CategoryResults != null ? JsonConvert.SerializeObject(Model.CategoryResults.Select(c => new { c.Name })) : null;
 
-    var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];
-    var galleriesJson = galleries != null ? JsonConvert.SerializeObject(galleries.Results.Select(g => new
+    var galleriesJson = Model.GalleryResults != null ? JsonConvert.SerializeObject(Model.GalleryResults.Select(g => new
     {
         g.CategoryId,
         g.Id,
@@ -16,8 +15,7 @@
         CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
     })) : null;
 
-    var images = (PagedResultSet<Image>)ViewData["images"];
-    var imagesJson = images != null ? JsonConvert.SerializeObject(images.Results.Select(i => new
+    var imagesJson = Model.ImageResults != null ? JsonConvert.SerializeObject(Model.ImageResults.Select(i => new
     {
         i.Id,
         i.GalleryId,
@@ -32,7 +30,7 @@
 
 <hr />
 
-@await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
+@await Component.InvokeAsync("SearchPaginator", new { searchPagedResultSet = Model })
 
 <div class="row" style="display: none;" data-bind="visible: Categories().length > 0">
     <div class="col text-center">
@@ -49,7 +47,7 @@
     </div>
 </div>
 
-<div class="row mt-3" style="display: none;" data-bind="visible: Galleries().length > 0, foreach: Galleries">
+<div class="row mb-3" style="display: none;" data-bind="visible: Galleries().length > 0, foreach: Galleries">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
             <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
@@ -70,7 +68,7 @@
     </div>
 </div>
 
-<div class="row mt-3" data-bind="visible: Images().length > 0, foreach: Images">
+<div class="row mb-3" data-bind="visible: Images().length > 0, foreach: Images">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
             <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
@@ -79,6 +77,10 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="pb-3">
+    @await Component.InvokeAsync("SearchPaginator", new { searchPagedResultSet = Model })
 </div>
 
 <div class="text-center lead mt-4" style="display: none;" data-bind="visible: HaveCategories == false && Images().length === 0 && Galleries().length === 0">
@@ -91,30 +93,30 @@
 
     <script type="text/javascript">
 
-        // convert the category, gallery and image server objects into lightweight objects to aid with their rendering
-        // and convert to json so the Knockout script can parse it and use them.
-        var categories = @Html.Raw(string.IsNullOrEmpty(categoriesJson) ? "[]" : categoriesJson);
-        var galleries = @Html.Raw(string.IsNullOrEmpty(galleriesJson) ? "[]" : galleriesJson);
-        var images = @Html.Raw(string.IsNullOrEmpty(imagesJson) ? "[]" : imagesJson);
+    // convert the category, gallery and image server objects into lightweight objects to aid with their rendering
+    // and convert to json so the Knockout script can parse it and use them.
+    var rawCategories = @Html.Raw(string.IsNullOrEmpty(categoriesJson) ? "[]" : categoriesJson);
+    var rawGalleries = @Html.Raw(string.IsNullOrEmpty(galleriesJson) ? "[]" : galleriesJson);
+    var rawImages = @Html.Raw(string.IsNullOrEmpty(imagesJson) ? "[]" : imagesJson);
 
-        // the view model that knockout uses to bind data to the html
-        function ViewModel() {
-            const self = this;
+    // the view model that knockout uses to bind data to the html
+    function ViewModel() {
+        const self = this;
 
-            self.Categories = ko.observableArray(categories);
+        self.Categories = ko.observableArray(rawCategories);
 
-            // parse the galleries from a json blob
-            self.Galleries = ko.observableArray(galleries);
-            self.GalleriesTotalResults = @galleries.TotalResults;
+        // parse the galleries from a json blob
+        self.Galleries = ko.observableArray(rawGalleries);
+        self.GalleriesTotalResults = @Model.TotalGalleryResults;
 
-            // parse the images from a json blob
-            self.Images = ko.observableArray(images);
-            self.ImagesTotalResults = @images.TotalResults;
-        }
+        // parse the images from a json blob
+        self.Images = ko.observableArray(rawImages);
+        self.ImagesTotalResults = @Model.TotalImageResults;
+    }
 
-        $(document).ready(function() {
-            ko.applyBindings(new ViewModel());
-        });
+    $(document).ready(function() {
+        ko.applyBindings(new ViewModel());
+    });
 
     </script>
 }

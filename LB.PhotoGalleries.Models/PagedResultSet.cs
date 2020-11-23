@@ -7,10 +7,10 @@ namespace LB.PhotoGalleries.Models
     {
         #region accessors
         public List<T> Results { get; set; }
-        public int TotalResults { get; set; }
+        public virtual int TotalResults { get; set; }
         public int PageSize { get; set; }
         public int CurrentPage { get; set; }
-        public int TotalPages
+        public virtual int TotalPages
         {
             get
             {
