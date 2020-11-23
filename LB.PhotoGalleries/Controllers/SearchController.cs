@@ -21,6 +21,7 @@ namespace LB.PhotoGalleries.Controllers
             q = q.Trim();
             ViewData["query"] = q;
             const int pageSize = 21;
+            const int maxResults = 500;
 
             // don't allow invalid page numbers
             if (p < 1)
@@ -38,12 +39,12 @@ namespace LB.PhotoGalleries.Controllers
                 Task.Run(async () =>
                 {
                     // search for galleries
-                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, p, pageSize);
+                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, p, pageSize, maxResults);
                 }),
                 Task.Run(async () =>
                 {
                     // search for images
-                    imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, includeInactiveGalleries:true);
+                    imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries:true);
                 })
             };
             await Task.WhenAll(tasks);
@@ -53,7 +54,8 @@ namespace LB.PhotoGalleries.Controllers
             {
                 PageSize = pageSize,
                 CurrentPage = p,
-                QueryString = $"q={q}"
+                QueryString = $"q={q}",
+                MaximumResults = maxResults
             };
 
             if (p == 1)

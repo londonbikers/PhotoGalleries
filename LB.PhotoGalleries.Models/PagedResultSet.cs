@@ -25,6 +25,7 @@ namespace LB.PhotoGalleries.Models
                 return roundedUpInt;
             }
         }
+        public int MaximumResults { get; set; }
         #endregion
 
         #region constructors
