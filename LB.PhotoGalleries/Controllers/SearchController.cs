@@ -51,7 +51,7 @@ namespace LB.PhotoGalleries.Controllers
             // merge the individual paged result sets into a multi-object-type one here
             var searchPagedResultSet = new SearchPagedResultSet
             {
-                PageSize = 20,
+                PageSize = pageSize,
                 CategoryResults = categories,
                 TotalCategoryResults = categories.Count,
                 GalleryResults = galleryPagedResultSet.Results,
