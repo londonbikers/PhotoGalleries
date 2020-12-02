@@ -76,7 +76,7 @@ namespace LB.PhotoGalleries.Application
         /// Gets a pairing of partition key and id via a supplied query.
         /// The query must return the partition key as 'PartitionKey' and the id as 'Id'.
         /// </summary>
-        internal static async Task<List<DatabaseId>> GetIdsByQueryAsync(string containerName, QueryDefinition queryDefinition)
+        public static async Task<List<DatabaseId>> GetIdsByQueryAsync(string containerName, QueryDefinition queryDefinition)
         {
             var container = Instance.Database.GetContainer(containerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);

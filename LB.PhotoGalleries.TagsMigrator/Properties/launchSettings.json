@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LB.PhotoGalleries.TagsMigrator": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\JayVanderZant\\OneDrive - Tetron Limited\\LB\\LB Photos\\Migrator\\appsettings.Development.json\""
+    }
+  }
+}

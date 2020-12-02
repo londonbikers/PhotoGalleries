@@ -63,7 +63,13 @@ namespace LB.PhotoGalleries.Models
         /// <summary>
         /// Tags that define the context of the photo, i.e. what's in it, where it is, etc.
         /// </summary>
+        [Obsolete("Use TagsCsv instead.")]
         public List<string> Tags { get; set; }
+
+        /// <summary>
+        /// A CSV of tags that define the context of the photo, i.e. what's in it, where it is, etc. 
+        /// </summary>
+        public string TagsCsv { get; set; }
 
         /// <summary>
         /// The Exif and IPTC metadata that we have parsed out of an image.
@@ -87,7 +93,6 @@ namespace LB.PhotoGalleries.Models
         {
             Created = DateTime.Now;
             Comments = new List<Comment>();
-            Tags = new List<string>();
             Metadata = new Metadata();
             Files = new ImageFiles();
         }
