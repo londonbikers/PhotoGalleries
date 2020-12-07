@@ -5,7 +5,6 @@
     var error = (string)ViewData["error"];
     var success = (string)ViewData["success"];
     var gallery = (Gallery)ViewData["gallery"];
-    var tags = (string)ViewData["tags"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
     var mapsKey = (string) ViewData["mapsKey"];
 }
@@ -63,7 +62,7 @@
             </div>
             <div class="form-group">
                 <label for="tagsCsv" class="control-label">Tags</label>
-                <input type="text" name="tagsCsv" id="tagsCsv" value="@tags" />
+                <input type="text" name="tagsCsv" id="tagsCsv" value="@Model.TagsCsv" />
                 <small class="form-text text-muted">Please enter comma separated values.</small>
             </div>
 
@@ -183,7 +182,8 @@
             <iframe
                 width="550"
                 height="450"
-                frameborder="0" style="border: solid 1px #ccc"
+                frameborder="0" 
+                style="border: solid 1px #ccc"
                 src="https://www.google.com/maps/embed/v1/view?key=@mapsKey&center=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&zoom=18" allowfullscreen>
             </iframe>
         }

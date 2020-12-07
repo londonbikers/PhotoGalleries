@@ -1,4 +1,6 @@
-﻿namespace LB.PhotoGalleries.Shared
+﻿using System.Linq;
+
+namespace LB.PhotoGalleries.Shared
 {
     public static class Extensions
     {
@@ -8,6 +10,18 @@
         public static bool HasValue(this string str)
         {
             return !string.IsNullOrEmpty(str) && !string.IsNullOrWhiteSpace(str);
+        }
+
+        /// <summary>
+        /// Determines if a TagsCsv contains a specific tag.
+        /// </summary>
+        public static bool TagsContain(this string str, string tag)
+        {
+            if (!str.HasValue())
+                return false;
+
+            var list = str.Split(',');
+            return list.Contains(tag);
         }
     }
 }

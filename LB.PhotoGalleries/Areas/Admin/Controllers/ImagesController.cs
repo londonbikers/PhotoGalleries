@@ -62,7 +62,6 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
             ViewData.Model = image;
             ViewData["gallery"] = gallery;
-            ViewData["tags"] = string.Join(',', image.Tags);
             ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
             return View();
@@ -92,9 +91,8 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
                 image.Name = collection["Name"];
                 image.Caption = collection["Caption"];
                 image.Credit = collection["Credit"];
-                image.Tags.Clear();
-                image.Tags.AddRange(collection["tagsCsv"].ToString().Split(','));
-                ViewData["tags"] = string.Join(',', image.Tags);
+                image.TagsCsv = collection["tagsCsv"].ToString();
+
                 await Server.Instance.Images.UpdateImageAsync(image);
                 ViewData["success"] = "Image updated!";
             }

@@ -3,7 +3,6 @@ using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -74,12 +73,13 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 return BadRequest("Apologies, you're not authorised to do that.");
 
+            tag = tag.ToLower();
             var images = await Server.Instance.Images.GetGalleryImagesAsync(galleryId);
-            var tagImages = images.Where(i => i.Tags.Contains(tag));
+            var tagImages = images.Where(i => i.TagsCsv.TagsContain(tag));
 
             foreach (var i in tagImages)
             {
-                i.Tags.RemoveAll(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase));
+                i.TagsCsv = Utilities.RemoveTagFromCsv(i.TagsCsv, tag);
                 await Server.Instance.Images.UpdateImageAsync(i);
             }
 

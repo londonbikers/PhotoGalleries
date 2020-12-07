@@ -96,3 +96,31 @@ function GetBackgroundImage(image) {
     }
     return null;
 }
+
+function AddTagToCsv(tags, tag) {
+
+    if (tags === undefined || tags === null || tags.length === 0)
+        return tag;
+
+    const array = tags.split(",");
+    array.push(tag);
+    return array.join(",");
+}
+
+function RemoveTagFromCsv(tags, tag) {
+    if (tags === undefined || tags === null || tags.length === 0)
+        return null;
+
+    const array = tags.split(",");
+    const newTags = array.filter(function(value, index, arr) {
+        return value === tag;
+    });
+    return newTags.join(",");
+}
+
+// determines if a tag csv contains a specific tag.
+// better than a string contains() check as it looks for exact matches, not partial.
+function TagsCsvContains(tags, tag) {
+    const array = tags.split(",");
+    return array.includes(tag);
+}

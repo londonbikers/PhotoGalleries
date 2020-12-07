@@ -1,5 +1,6 @@
 ﻿@model Image
 @using Newtonsoft.Json
+@using LB.PhotoGalleries.Shared
 @{
     ViewData["Title"] = "Delete Image";
     var error = (string)ViewData["error"];
@@ -41,13 +42,16 @@
             <li><b>@Html.DisplayNameFor(model => model.Files.Spec1920Id)</b>: @Html.DisplayFor(model => model.Files.Spec1920Id)</li>
             <li><b>@Html.DisplayNameFor(model => model.Files.Spec800Id)</b>: @Html.DisplayFor(model => model.Files.Spec800Id)</li>
             <li><b>@Html.DisplayNameFor(model => model.Files.SpecLowResId)</b>: @Html.DisplayFor(model => model.Files.SpecLowResId)</li>
-            <li>
-                <b>Tags</b>:
-                @foreach (var tag in Model.Tags)
-                {
-                    <span class="badge badge-info">@tag</span>
-                }
-            </li>
+            @if (Model.TagsCsv.HasValue())
+            {
+                <li>
+                    <b>Tags</b>:
+                    @foreach (var tag in Model.TagsCsv.Split(","))
+                    {
+                        <span class="badge badge-info">@tag</span>
+                    }
+                </li>
+            }
         </ul>
         
         <p>

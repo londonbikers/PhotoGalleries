@@ -10,6 +10,7 @@ using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -82,16 +83,18 @@ namespace LB.PhotoGalleries.Application
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
             var ids = new List<DatabaseId>();
             double charge = 0;
+            TimeSpan elapsedTime = default;
 
             while (queryResult.HasMoreResults)
             {
                 var results = await queryResult.ReadNextAsync();
                 ids.AddRange(results.Select(result => new DatabaseId(result["Id"].Value<string>(), result["PartitionKey"].Value<string>())));
+                elapsedTime += results.Diagnostics.GetClientElapsedTime();
                 charge += results.RequestCharge;
             }
 
             Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Found {ids.Count} DatabaseIds using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Total request charge: {charge}");
+            Debug.WriteLine($"Utilities.GetIdsByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return ids;
         }

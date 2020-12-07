@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Controllers.Api
 {
@@ -53,11 +54,11 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (string.IsNullOrEmpty(credit) && string.IsNullOrEmpty(tagsCsv))
                 return BadRequest("neither credit or tags supplied.");
 
-            string[] tags = null;
+            string[] newTags = null;
             if (!string.IsNullOrEmpty(tagsCsv))
             {
-                tags = tagsCsv.Split(',');
-                if (tags.Length == 0)
+                newTags = tagsCsv.Split(',');
+                if (newTags.Length == 0)
                     return BadRequest("tags doesn't contain comma-separated values.");
             }
 
@@ -82,16 +83,16 @@ namespace LB.PhotoGalleries.Controllers.Api
                     }
                 }
 
-                if (tags != null)
+                if (newTags != null)
                 {
-                    // only add new tags, don't add duplicates
-                    foreach (var tag in tags)
+                    foreach (var newTag in newTags)
                     {
-                        if (image.Tags.Contains(tag)) 
+                        // only add new tags, don't add duplicates
+                        if (image.TagsCsv.TagsContain(newTag)) 
                             continue;
 
+                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, newTag);
                         updateRequired = true;
-                        image.Tags.Add(tag);
                     }
                 }
 
@@ -210,14 +211,13 @@ namespace LB.PhotoGalleries.Controllers.Api
         public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            if (!image.Tags.Contains(tag))
-            {
-                image.Tags.Add(tag);
-                await Server.Instance.Images.UpdateImageAsync(image);
-                return Ok();
-            }
+            if (image.TagsCsv.Contains(tag)) 
+                return BadRequest("Tag already exists on image");
 
-            return BadRequest("Tag already exists on image");
+            image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, tag);
+            await Server.Instance.Images.UpdateImageAsync(image);
+            return Ok();
+
         }
 
         [HttpDelete("/api/images/remove-tag")]
@@ -225,14 +225,13 @@ namespace LB.PhotoGalleries.Controllers.Api
         public async Task<ActionResult> RemoveTag(string galleryId, string imageId, string tag)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            if (image.Tags.Contains(tag))
-            {
-                image.Tags.Remove(tag);
-                await Server.Instance.Images.UpdateImageAsync(image);
-                return Ok();
-            }
+            if (!image.TagsCsv.TagsContain(tag)) 
+                return BadRequest("Tag does not exist on image");
 
-            return BadRequest("Tag already exists on image");
+            image.TagsCsv = Utilities.RemoveTagFromCsv(image.TagsCsv, tag);
+            await Server.Instance.Images.UpdateImageAsync(image);
+            return Ok();
+
         }
     }
 }

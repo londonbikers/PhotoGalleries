@@ -59,5 +59,46 @@ namespace LB.PhotoGalleries.Shared
 
             return images.OrderBy(i => i.Created);
         }
+
+        public static string ListToCsv(List<string> list)
+        {
+            return string.Join(',', list);
+        }
+
+        public static List<string> CsvToList(string csv)
+        {
+            return string.IsNullOrEmpty(csv) ? null : csv.Split(',').ToList();
+        }
+
+        /// <summary>
+        /// Adds a new tag (won't add a duplicate) to the tags CSV.
+        /// </summary>
+        public static string AddTagToCsv(string tags, string tag)
+        {
+            var list = CsvToList(tags);
+
+            // if this is the first tag just return it!
+            if (list == null)
+                return tag;
+
+            // make sure we're not adding duplicates
+            if (!list.Any(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase)))
+                list.Add(tag.ToLower());
+
+            return ListToCsv(list);
+        }
+
+        /// <summary>
+        /// Removes an instance of a tag from the tags CSV.
+        /// </summary>
+        public static string RemoveTagFromCsv(string tags, string tag)
+        {
+            var list = CsvToList(tags);
+            if (list == null || list.Count == 0)
+                return null;
+
+            list.RemoveAll(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase));
+            return ListToCsv(list);
+        }
     }
 }

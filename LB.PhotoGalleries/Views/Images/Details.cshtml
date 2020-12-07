@@ -87,12 +87,12 @@
             <div class="text-format text-link">@Model.Caption</div>
         }
 
-        @if (Model.Tags.Count > 0)
+        @if (Model.TagsCsv.HasValue())
         {
             <div class="mt-1">
-                @foreach (var tag in Model.Tags)
+                @foreach (var tag in Model.TagsCsv.Split(","))
                 {
-                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@tag.ToLower()" class="badge badge-secondary">@tag</a>
+                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@tag" class="badge badge-secondary">@tag</a>
                 }
             </div>
         }

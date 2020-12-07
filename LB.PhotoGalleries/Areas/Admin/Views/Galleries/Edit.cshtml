@@ -266,7 +266,7 @@
                     </div>
                     <div class="col-9">
                         <div data-bind="text: Name" class="mb-1"></div>
-                        <input type="text" data-bind="value: Tags().join(','), tags: Tags, attr: { id: 'uit-'+Id }" />
+                        <input type="text" data-bind="value: TagsCsv(), tags: TagsCsv, attr: { id: 'uit-'+Id }" />
                     </div>
                 </div>
             </div>
@@ -291,7 +291,7 @@
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
 
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Tags})));
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.TagsCsv})));
         var galleryId = '@Model.Id';
 
         function OnImageMoved(evt) {
@@ -328,18 +328,22 @@
             vm.AllTags = ko.pureComputed(function() {
                 var allTags = [];
                 vm.Images().forEach(function(image) {
-                    image.Tags().forEach(function(tag) {
-                        if (!allTags.includes(tag)) {
-                            allTags.push(tag);
-                        }
-                    });
+
+                    if (image.TagsCsv() !== null) {
+                        const tags = image.TagsCsv().split(',');
+                        tags.forEach(function(tag) {
+                            if (!allTags.includes(tag)) {
+                                allTags.push(tag);
+                            }
+                        });
+                    }
+
                 });
                 return allTags;
             });
 
             vm.UpdateAllImages = function() {
                 const credit = $("#bulk-credit").val();
-                //const creditJustFillInBlanks = $("#bulk-credit-delta-yn").checked;
                 const creditJustFillInBlanks = $("#bulk-credit-delta-yn").prop('checked');
                 const tags = $("#bulk-tags").val();
 
@@ -348,10 +352,12 @@
                     return;
                 }
 
-                // update all Image models so the ui updates
+                // update all Image models so the UI updates
                 var individualTags = tags.split(',');
                 vm.Images().forEach(function(i) {
-                    individualTags.forEach(t => i.Tags.push(t));
+                    individualTags.forEach(function(tag) {
+                        i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
+                    });
                 });
 
                 // add the new tag to all taginputs
@@ -468,11 +474,11 @@
                     return vm.Images();
                 } else {
                     if (vm.Filter().startsWith('tag:')) {
-                        var tag = vm.Filter().substring(4);
+                        var tag = vm.Filter().substring(4).toLowerCase();
                         console.log(`tag: ${tag}`);
                         return ko.utils.arrayFilter(vm.Images(),
-                            function(i) {
-                                return i.Tags().includes(tag);
+                            function (i) {
+                                return window.TagsCsvContains(i.TagsCsv(), tag);
                             });
                     } else {
                         return ko.utils.arrayFilter(vm.Images(),
@@ -497,9 +503,8 @@
                             for (let x = 0; x < vm.Images().length; x++) {
                                 const i = vm.Images()[x];
                                 if (i.Id === event.target.id.substring(4)) {
-                                    i.Tags.push(tag);
-                                    console.log(`added a tag: ${tag}`);
-                                    console.log(`added a tag to: ${i.Id}`);
+                                    i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
+                                    console.log(`added tag '${tag}' to ${i.Id}`);
 
                                     // push change to server
                                     $.post(`/api/images/add-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`)
@@ -521,12 +526,11 @@
                             for (let x = 0; x < vm.Images().length; x++) {
                                 const i = vm.Images()[x];
                                 if (i.Id === event.target.id.substring(4)) {
-                                    i.Tags.remove(tag);
-                                    console.log(`removed a tag: ${tag}`);
-                                    console.log(`removed a tag from: ${i.Id}`);
+                                    i.TagsCsv(RemoveTagFromCsv(i.TagsCsv(), tag));
 
+                                    console.log(`removed tag '${tag}' from ${i.Id}`);
                                     if (event.options.preventPost) {
-                                        console.log("preventing tag removal postback");
+                                        console.log("preventing tag removal post-back");
                                         return;
                                     }
 
@@ -576,7 +580,7 @@
 
                         // remove tag from images
                         vm.Images().forEach(function(i) {
-                            if (i.Tags().includes(tag)) {
+                            if (window.TagsCsvContains(i.TagsCsv(), tag)) {
                                 $(`#uit-${i.Id}`).tagsinput('remove', tag, { preventPost: true });
                             }
                         });

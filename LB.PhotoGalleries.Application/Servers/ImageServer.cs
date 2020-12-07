@@ -132,17 +132,19 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<Image>(queryDefinition);
             double charge = 0;
+            TimeSpan elapsedTime = default;
             var images = new List<Image>();
 
             while (queryResult.HasMoreResults)
             {
                 var results = await queryResult.ReadNextAsync();
                 images.AddRange(results);
+                elapsedTime += results.Diagnostics.GetClientElapsedTime();
                 charge += results.RequestCharge;
             }
 
             Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Found {images.Count} gallery images");
-            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}");
+            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}. Elapsed time: {elapsedTime} ms");
 
             return images;
         }
@@ -159,7 +161,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
-                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}");
+                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
                 return response.Resource;
             }
             catch (CosmosException e)
@@ -182,7 +184,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
-        public async Task<PagedResultSet<Image>> GetImagesAsync(string tag, int page = 1, int pageSize = 20, int maxResults = 500)
+        public async Task<PagedResultSet<Image>> GetImagesForTagAsync(string tag, int page = 1, int pageSize = 20, int maxResults = 500)
         {
             if (string.IsNullOrEmpty(tag))
                 throw new ArgumentNullException(nameof(tag));
@@ -202,7 +204,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 maxResults = 500;
 
             // get the complete list of ids
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE ARRAY_CONTAINS(i.Tags, @tag) ORDER BY i.Created DESC")
+            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY i.Created DESC")
                     .WithParameter("@maxResults", maxResults)
                     .WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
@@ -274,8 +276,8 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // get the complete list of ids
             var queryText = includeInactiveGalleries
-                ? "SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE CONTAINS(i.Name, @term, true) OR ARRAY_CONTAINS(i.Tags, @term) ORDER BY i.Created DESC"
-                : "SELECT TOP @maxResults g.id AS Id, g.GalleryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) AND g.Active = true ORDER BY g.Created DESC";
+                ? "SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true) ORDER BY i.Created DESC"
+                : "NOT CURRENTLY SUPPORTED - NO WAY TO TELL!";
 
             var queryDefinition = new QueryDefinition(queryText)
                 .WithParameter("@maxResults", maxResults)
@@ -300,9 +302,6 @@ namespace LB.PhotoGalleries.Application.Servers
 
             if (databaseIds.Count == 0)
                 return pagedResultSet;
-
-            //if (databaseIds.Count == 0)
-            //    return null;
 
             var pageIds = databaseIds.GetRange(offset, itemsToGet);
             foreach (var id in pageIds)
@@ -810,14 +809,8 @@ namespace LB.PhotoGalleries.Application.Servers
 
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)
-                {
-                    foreach (var keyword in keywords)
-                    {
-                        // make sure we don't add duplicate keywords
-                        if (keyword.HasValue() && !image.Tags.Any(t => t.Equals(keyword, StringComparison.CurrentCultureIgnoreCase)))
-                            image.Tags.Add(keyword.ToLower());
-                    }
-                }
+                    foreach (var keyword in keywords.Where(k => k.HasValue()))
+                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword);
             }
 
             // wind the stream back to allow other code to work with the stream

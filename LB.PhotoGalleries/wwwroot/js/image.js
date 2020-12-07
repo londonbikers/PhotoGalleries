@@ -11,5 +11,5 @@
     self.Files.Spec2560Id = data.Files.Spec2560Id;
     self.Files.Spec3840Id = data.Files.Spec3840Id;
     self.Files.OriginalId = data.Files.OriginalId;
-    self.Tags = ko.observableArray(data.Tags);
+    self.TagsCsv = ko.observable(data.TagsCsv);
 }
