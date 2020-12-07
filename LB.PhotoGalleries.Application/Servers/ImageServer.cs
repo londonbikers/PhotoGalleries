@@ -306,8 +306,29 @@ namespace LB.PhotoGalleries.Application.Servers
                 return pagedResultSet;
 
             var pageIds = databaseIds.GetRange(offset, itemsToGet);
+
+            // this is how we used to do it, and it used to be 3-5x slower
+            //foreach (var id in pageIds)
+            //    pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
+
+            var unorderedImages = new List<Image>();
+            var tasks = new List<Task>();
+            foreach (var pageId in pageIds)
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    var i = await GetImageAsync(pageId.PartitionKey, pageId.Id);
+                    lock (unorderedImages)
+                        unorderedImages.Add(i);
+                }));
+            }
+
+            var t = Task.WhenAll(tasks);
+            t.Wait();
+
+            // put the unordered images into the results list in the same order as the ids were retrieved from the db
             foreach (var id in pageIds)
-                pagedResultSet.Results.Add(await GetImageAsync(id.PartitionKey, id.Id));
+                pagedResultSet.Results.Add(unorderedImages.SingleOrDefault(i => i.Id == id.Id));
 
             return pagedResultSet;
         }

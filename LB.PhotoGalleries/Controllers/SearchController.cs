@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -82,6 +83,25 @@ namespace LB.PhotoGalleries.Controllers
             }
 
             ViewData.Model = searchPagedResultSet;
+
+            ViewData["galleriesJson"] = searchPagedResultSet.GalleryResults != null ? JsonConvert.SerializeObject(searchPagedResultSet.GalleryResults.Select(g => new
+            {
+                g.CategoryId,
+                g.Id,
+                g.Name,
+                g.ThumbnailFiles,
+                g.ImageCount,
+                CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
+            })) : null;
+
+            ViewData["imagesJson"] = searchPagedResultSet.ImageResults != null ? JsonConvert.SerializeObject(searchPagedResultSet.ImageResults.Select(i => new
+            {
+                i.Id,
+                i.GalleryId,
+                i.Name,
+                i.Files
+            })) : null;
+
             return View();
         }
     }

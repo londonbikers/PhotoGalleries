@@ -4,24 +4,8 @@
 @{
     ViewData["Title"] = "Search for " + ViewData["query"];
     var categoriesJson = Model.CategoryResults != null ? JsonConvert.SerializeObject(Model.CategoryResults.Select(c => new { c.Name })) : null;
-
-    var galleriesJson = Model.GalleryResults != null ? JsonConvert.SerializeObject(Model.GalleryResults.Select(g => new
-    {
-        g.CategoryId,
-        g.Id,
-        g.Name,
-        g.ThumbnailFiles,
-        g.ImageCount,
-        CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
-    })) : null;
-
-    var imagesJson = Model.ImageResults != null ? JsonConvert.SerializeObject(Model.ImageResults.Select(i => new
-    {
-        i.Id,
-        i.GalleryId,
-        i.Name,
-        i.Files
-    })) : null;
+    var galleriesJson = (string)ViewData["galleriesJson"];
+    var imagesJson = (string)ViewData["imagesJson"];
 }
 <div class="text-center">
     <h4 class="display-4">Search Results</h4>
