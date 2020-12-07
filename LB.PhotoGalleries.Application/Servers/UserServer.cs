@@ -37,7 +37,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.UpsertItemAsync(user, partitionKey);
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Created user? " + createdItem);
-            Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Request charge: " + response.RequestCharge);
+            Debug.WriteLine($"UserServer.CreateOrUpdateUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace LB.PhotoGalleries.Application.Servers
             try
             {
                 var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
-                Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}");
+                Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 return response.Resource;
             }
             catch (CosmosException cex)
@@ -117,6 +117,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
             var response = await queryResult.ReadNextAsync();
+            Debug.WriteLine($"UserServer:GetUserByLegacyIdAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
             return response.FirstOrDefault();
         }
 
@@ -227,16 +228,18 @@ namespace LB.PhotoGalleries.Application.Servers
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
             var users = new List<User>();
             double charge = 0;
+            TimeSpan elapsedTime = default;
 
             while (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
-                charge += resultSet.RequestCharge;
                 users.AddRange(resultSet);
+                charge += resultSet.RequestCharge;
+                elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
             }
 
             Debug.WriteLine("UserServer.GetUsersByQueryAsync: Query: " + queryDefinition.QueryText);
-            Debug.WriteLine("UserServer.GetUsersByQueryAsync: Total request charge: " + charge);
+            Debug.WriteLine($"UserServer.GetUsersByQueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
 
             return users;
         }

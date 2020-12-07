@@ -95,7 +95,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 // create the database record
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
-                Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}");
+                Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
                 // have the pre-gen images created by a background process
                 await PostProcessImagesAsync(image);
@@ -120,7 +120,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var response = await container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer.UpdateImageAsync: Request charge: {response.RequestCharge}");
+            Debug.WriteLine($"ImageServer.UpdateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
         }
 
         public async Task<List<Image>> GetGalleryImagesAsync(string galleryId)
@@ -144,7 +144,7 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Found {images.Count} gallery images");
-            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}. Elapsed time: {elapsedTime} ms");
+            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return images;
         }
@@ -161,7 +161,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
-                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
+                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 return response.Resource;
             }
             catch (CosmosException e)
@@ -211,16 +211,18 @@ namespace LB.PhotoGalleries.Application.Servers
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
             var ids = new List<DatabaseId>();
             double charge = 0;
+            TimeSpan elapsedTime = default;
 
             while (queryResult.HasMoreResults)
             {
                 var results = await queryResult.ReadNextAsync();
                 ids.AddRange(results.Select(result => new DatabaseId(result["id"].Value<string>(), result["GalleryId"].Value<string>())));
                 charge += results.RequestCharge;
+                elapsedTime += results.Diagnostics.GetClientElapsedTime();
             }
 
             Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}");
+            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             // now with all the ids we know how many total results there are and so can populate paging info
             var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
@@ -337,7 +339,7 @@ namespace LB.PhotoGalleries.Application.Servers
             // finally, delete the database record
             var imagesContainer = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var deleteResponse = await imagesContainer.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {deleteResponse.RequestCharge}");
+            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {deleteResponse.RequestCharge}. Elapsed time: {deleteResponse.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             // if necessary, re-order photos down-position from where the deleted photo used to be
             if (!isGalleryBeingDeleted)
@@ -539,7 +541,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}");
+            Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             if (resultSet.Resource == null || !resultSet.Resource.Any())
                 return -1;
@@ -572,16 +574,18 @@ namespace LB.PhotoGalleries.Application.Servers
             var queryResult = container.GetItemQueryIterator<Image>(queryDefinition);
             var users = new List<Image>();
             double charge = 0;
+            TimeSpan elapsedTime = default;
 
             while (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
                 charge += resultSet.RequestCharge;
+                elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
                 users.AddRange(resultSet);
             }
 
             Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}");
+            Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return users;
         }
@@ -603,7 +607,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var resultSet = await result.ReadNextAsync();
             Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}");
+            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             return (string)resultSet.Resource.FirstOrDefault();
         }

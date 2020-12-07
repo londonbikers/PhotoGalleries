@@ -62,7 +62,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var response = await container.UpsertItemAsync(category, new PartitionKey(category.PartitionKey));
             var createdItem = response.StatusCode == HttpStatusCode.Created;
             Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Created category? " + createdItem);
-            Debug.WriteLine("CategoryServer.CreateOrUpdateCategoryAsync: Request charge: " + response.RequestCharge);
+            Debug.WriteLine($"CategoryServer.CreateOrUpdateCategoryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             // update the categories cache (remove first if this is an edit scenario)
             if (Categories != null)
@@ -89,7 +89,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 return count;
 
             var resultSet = await result.ReadNextAsync();
-            Debug.WriteLine("CategoryServer.GetCategoryGalleryCountAsync: Request charge: " + resultSet.RequestCharge);
+            Debug.WriteLine($"CategoryServer.GetCategoryGalleryCountAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
             foreach (JObject item in resultSet)
                 count = (int) item["NumOfGalleries"];
 
@@ -108,7 +108,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.CategoriesContainerName);
             var response = await container.DeleteItemAsync<Category>(category.Id, new PartitionKey(category.PartitionKey));
             
-            Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Request charge: " + response.RequestCharge);
+            Debug.WriteLine($"CategoryServer.DeleteCategoryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
             Debug.WriteLine("CategoryServer.DeleteCategoryAsync: Status code: " + response.StatusCode);
 
             // remove the category from the cache
@@ -136,7 +136,7 @@ namespace LB.PhotoGalleries.Application.Servers
             while (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
-                Debug.WriteLine("CategoryServer.LoadCategoriesAsync: Request charge: " + resultSet.RequestCharge);
+                Debug.WriteLine($"CategoryServer.LoadCategoriesAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 foreach (var category in resultSet)
                     _categories.Add(category);
             }
@@ -161,7 +161,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (queryResult.HasMoreResults)
             {
                 var resultSet = await queryResult.ReadNextAsync();
-                Debug.WriteLine("CategoryServer.IsCategoryNameUniqueAsync: Request charge: " + resultSet.RequestCharge);
+                Debug.WriteLine($"CategoryServer.IsCategoryNameUniqueAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 foreach (var dbCategory in resultSet)
                 {
                     if (dbCategory.Id != category.Id)

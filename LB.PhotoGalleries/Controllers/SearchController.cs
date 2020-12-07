@@ -3,6 +3,7 @@ using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -47,7 +48,11 @@ namespace LB.PhotoGalleries.Controllers
                     imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries:true);
                 })
             };
+
+            var stopwatch = Stopwatch.StartNew();
             await Task.WhenAll(tasks);
+            stopwatch.Stop();
+            Debug.WriteLine($"SearchController.Index: Search took {stopwatch.ElapsedMilliseconds} ms");
 
             // merge the individual paged result sets into a multi-object-type one here
             var searchPagedResultSet = new SearchPagedResultSet
