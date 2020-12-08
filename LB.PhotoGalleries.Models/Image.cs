@@ -61,12 +61,6 @@ namespace LB.PhotoGalleries.Models
         public List<Comment> Comments { get; set; }
 
         /// <summary>
-        /// Tags that define the context of the photo, i.e. what's in it, where it is, etc.
-        /// </summary>
-        [Obsolete("Use TagsCsv instead.")]
-        public List<string> Tags { get; set; }
-
-        /// <summary>
         /// A CSV of tags that define the context of the photo, i.e. what's in it, where it is, etc. 
         /// </summary>
         public string TagsCsv { get; set; }
