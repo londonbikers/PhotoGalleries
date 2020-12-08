@@ -339,3 +339,7 @@ img.image-fade, .image-fade img {
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
 }
+
+.mt-75 {
+    margin-top: 75px;
+}
