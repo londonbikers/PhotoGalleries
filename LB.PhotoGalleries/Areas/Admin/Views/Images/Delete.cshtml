@@ -147,10 +147,10 @@
         $(document).ready(function () {
 
             // payload
-            var files = @Html.Raw(JsonConvert.SerializeObject(Model.Files));
+            const files = @Html.Raw(JsonConvert.SerializeObject(Model.Files));
 
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
-            var scaledWidth = 550 * window.devicePixelRatio;
+            const scaledWidth = 550 * window.devicePixelRatio;
 
             // choose ImageFileSpec for scaled dimensions
             var url;

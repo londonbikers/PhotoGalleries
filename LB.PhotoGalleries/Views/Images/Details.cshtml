@@ -319,7 +319,7 @@
     <script language="javascript">
 
         function GetImageUrl(image, imageContainerWidth, imageContainerHeight) {
-            var dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
+            const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
 
             // choose an appropriate ImageFileSpec for scaled dimensions:
             // find first available image spec that is larger than scaled dims
@@ -348,11 +348,11 @@
                 return { width: image.Width, height: image.Height };
             }
 
-            var widthRatio = image.Width / imageContainerWidth;
-            var heightFits = image.Height / widthRatio <= imageContainerHeight;
+            const widthRatio = image.Width / imageContainerWidth;
+            const heightFits = image.Height / widthRatio <= imageContainerHeight;
 
-            var heightRatio = image.Height / imageContainerHeight;
-            var widthFits = image.Width / heightRatio <= imageContainerWidth;
+            const heightRatio = image.Height / imageContainerHeight;
+            const widthFits = image.Width / heightRatio <= imageContainerWidth;
 
             var width = 0;
             var height = 0;
@@ -382,8 +382,8 @@
         }
 
         function GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight) {
-            var dims = GetImageDimensions(image, imageContainerWidth, imageContainerHeight);
-            var ratio = window.devicePixelRatio;
+            const dims = GetImageDimensions(image, imageContainerWidth, imageContainerHeight);
+            const ratio = window.devicePixelRatio;
             dims.width = Math.ceil(dims.width * ratio);
             dims.height = Math.ceil(dims.height * ratio);
             return dims;
@@ -391,7 +391,7 @@
 
         function GetImageClass(image, imageContainerWidth, imageContainerHeight) {
 
-            var dims = GetImageDimensions(image, imageContainerWidth, imageContainerHeight);
+            const dims = GetImageDimensions(image, imageContainerWidth, imageContainerHeight);
 
             // if the image is full width then don't show a border radius
             if (dims.width === imageContainerWidth) {
