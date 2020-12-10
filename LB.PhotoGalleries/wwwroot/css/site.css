@@ -24,6 +24,13 @@ a {
   border-color: #1861ac;
 }
 
+.page-item.sub-active .page-link {
+    z-index: 1;
+    color: #777;
+    background-color: #eee;
+    border-color: #ddd;
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {

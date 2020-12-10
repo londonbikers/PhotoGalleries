@@ -1,5 +1,4 @@
 ﻿@using Newtonsoft.Json
-@using LB.PhotoGalleries.Application
 @model SearchPagedResultSet
 @{
     ViewData["Title"] = "Search for " + ViewData["query"];
@@ -9,7 +8,20 @@
 }
 <div class="text-center">
     <h4 class="display-4">Search Results</h4>
-    <div class="text-format text-link">Showing search results for <b>@ViewData["query"]</b>.</div>
+    Showing search results for <b>@ViewData["query"]</b>
+    <div class="mt-2 text-muted">
+        <nav aria-label="...">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item disabled">
+                    <span class="page-link">Showing</span>
+                </li>
+                <li class="page-item sub-active"><a class="page-link" href="#">All</a></li>
+                <li class="page-item"><a class="page-link" href="#">Categories</a></li>
+                <li class="page-item"><a class="page-link" href="#">Gallieries</a></li>
+                <li class="page-item"><a class="page-link" href="#">Photos</a></li>
+            </ul>
+        </nav>
+    </div>
 </div>
 
 <hr />
@@ -18,7 +30,7 @@
 
 <div class="row" style="display: none;" data-bind="visible: Categories().length > 0">
     <div class="col text-center">
-        <strong>Categories</strong> (<span data-bind="text: Categories().length"></span> result<span data-bind="visible: Categories().length > 1">s</span>) - <a href="#">show only categories</a>
+        <strong>Categories</strong> (<span data-bind="text: Categories().length"></span> result<span data-bind="visible: Categories().length > 1">s</span>)
         <div data-bind="foreach: Categories" class="mt-3">
             <a data-bind="text: Name, attr: { href: window.GetCategoryUrl(Name) }" class="btn btn-sm btn-outline-primary btn-v-spaced" role="button"></a>
         </div>
@@ -27,7 +39,7 @@
 
 <div class="row mt-3 mb-3" style="display: none;" data-bind="visible: Galleries().length > 0">
     <div class="col text-center">
-        <strong>Galleries</strong> (<span data-bind="text: GalleriesTotalResults"></span> result<span data-bind="visible: Galleries().length > 1">s</span>) - <a href="#">show only galleries</a>
+        <strong>Galleries</strong> (<span data-bind="text: GalleriesTotalResults"></span> result<span data-bind="visible: Galleries().length > 1">s</span>)
         <div data-bind="visible: GalleriesTotalResults === MaxResults" class="alert alert-warning mt-2" role="alert">
             There were more than <span data-bind="text: MaxResults"></span> results. Refine your search if you don't see what you're looking for.
         </div>
@@ -51,7 +63,7 @@
 
 <div class="row mb-3" data-bind="visible: Images().length > 0">
     <div class="col text-center">
-        <strong>Photos</strong> (<span data-bind="text: ImagesTotalResults"></span> result<span data-bind="visible: Images().length > 1">s</span>) - <a href="#">show only photos</a>
+        <strong>Photos</strong> (<span data-bind="text: ImagesTotalResults"></span> result<span data-bind="visible: Images().length > 1">s</span>)
         <div data-bind="visible: ImagesTotalResults === MaxResults" class="alert alert-warning mt-2" role="alert">
             There were more than <span data-bind="text: MaxResults"></span> results. Refine your search if you don't see what you're looking for.
         </div>
