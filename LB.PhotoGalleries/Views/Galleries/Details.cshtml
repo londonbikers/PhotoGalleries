@@ -33,7 +33,7 @@
                 - Created @ViewData.Model.Created.ToShortDateString()
                 @if (user != null)
                 {
-                    <text>-by </text>@user.Name
+                    <text>- by </text>@user.Name
                 }
                 - @images.Count photos
                 @if (User.IsInRole(Roles.Administrator.ToString()) || User.IsInRole(Roles.Photographer.ToString()))
