@@ -4,6 +4,8 @@
     var totalPages = Model.TotalPages;
     var numPagesToDisplayInNav = totalPages <= maxPagesToDisplayInNav ? totalPages : maxPagesToDisplayInNav;
     var pageNumbers = Model.GetNavigationPageNumbers(numPagesToDisplayInNav);
+    var previousPageNumber = Model.CurrentPage - 1;
+    var previousPageParam = previousPageNumber == 1 ? "" : $"&p={previousPageNumber}";
 }
 
 @if (totalPages > 1)
@@ -13,12 +15,18 @@
             <ul class="pagination justify-content-center">
                 @if (Model.CurrentPage > 1)
                 {
-                    <li class="page-item"><a class="page-link" href="?@(Model.QueryString)&p=@(Model.CurrentPage - 1)">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="?@(Model.QueryString)@(previousPageParam)">Previous</a></li>
                 }
 
                 @foreach (var p in pageNumbers)
                 {
-                    <li class="page-item@(p == Model.CurrentPage ? " active":"")"><a class="page-link" href="?@(Model.QueryString)&p=@p">@p</a></li>
+                    var pageParam = "";
+                    if (p != 1)
+                    {
+                        pageParam = "&p=" + p;
+                    }
+
+                    <li class="page-item@(p == Model.CurrentPage ? " active":"")"><a class="page-link" href="?@(Model.QueryString)@pageParam">@p</a></li>
                 }
 
                 @if (Model.CurrentPage < totalPages)
