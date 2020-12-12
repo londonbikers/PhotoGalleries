@@ -42,6 +42,7 @@ namespace LB.PhotoGalleries
             services.AddSession(options =>
             {
                 options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.IsEssential = true;
             });
 
