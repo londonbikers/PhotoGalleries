@@ -1,10 +1,13 @@
-﻿using System;
+﻿using LB.PhotoGalleries.Models.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace LB.PhotoGalleries.Models
 {
     public class SearchPagedResultSet : PagedResultSet<object>
     {
+        public SearchResultsType SearchResultsType { get; set; }
+
         public List<Category> CategoryResults { get; set; }
         public int TotalCategoryResults { get; set; }
 

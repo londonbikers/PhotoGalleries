@@ -1,4 +1,5 @@
 ﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
 using System;
 using System.Linq;
@@ -146,6 +147,17 @@ namespace LB.PhotoGalleries
 
             return subsequentParagraphs;
 
+        }
+
+        /// <summary>
+        /// Returns a URL for the current query that changes what search results are displayed.
+        /// </summary>
+        public static string GetSearchTypeUrl(SearchResultsType searchResultsType, string query)
+        {
+            if (searchResultsType == SearchResultsType.All)
+                return $"/search?q={query}";
+            else
+                return $"/search?q={query}&t={searchResultsType.ToString().ToLower()}";
         }
 
         #region private methods

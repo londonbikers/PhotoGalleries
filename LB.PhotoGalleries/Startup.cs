@@ -124,6 +124,10 @@ namespace LB.PhotoGalleries
             // configure ImageFlow for image resizing and serving
             // ImageFlow says: it's a good idea to limit image sizes for security. Requests causing these to be exceeded will fail
             // ImageFlow says: the last argument to FrameSizeLimit() is the maximum number of megapixels
+            // we don't resize larger images to reduce the number of unique urls so we can increase caching hits, it's a trade off 
+            // as we increase filesize, keep the same total download time but cache more images as we are only returning about five 
+            // possible image sizes rather than millions more permutations.
+            // ImageFlow doesn't seem to be able to watermark images without width/height arguments, so use a RewriteHandler to ensure they're always set internally.
             app.UseImageflow(new ImageflowMiddlewareOptions()
                 .SetJobSecurityOptions(new SecurityOptions()
                     .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
@@ -131,6 +135,10 @@ namespace LB.PhotoGalleries
                     .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
                 .SetAllowDiskCaching(true)
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
+                .AddRewriteHandler("/dio/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/di3840/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/di2560/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/di1920/", EnsureDimensionsAreSpecified)
                 .AddWatermarkingHandler("/dio/", AddWatermark)
                 .AddWatermarkingHandler("/di3840/", AddWatermark)
                 .AddWatermarkingHandler("/di2560/", AddWatermark)
@@ -212,11 +220,22 @@ namespace LB.PhotoGalleries
                 return;
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
-            var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
-            args.AppliedWatermarks.Add(new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
+            //var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
+            var watermarkSizeAsPercent = 12;
+
+            args.AppliedWatermarks.Add(
+                new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
                 new WatermarkOptions()
-                    .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))
-                    .SetHints(new ResampleHints().SetResampleFilters(InterpolationFilter.Robidoux_Sharp, null).SetSharpen(7, SharpenWhen.Downscaling))));
+                    .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))));
+        }
+
+        private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
+        {
+            if (!args.Query.ContainsKey("w") && !args.Query.ContainsKey("width"))
+                args.Query["w"] = 99999.ToString();
+
+            if (!args.Query.ContainsKey("h") && !args.Query.ContainsKey("height"))
+                args.Query["h"] = 99999.ToString();
         }
 
         private static async Task UpdateUserFromClaimsAsync(TicketReceivedContext ctx)

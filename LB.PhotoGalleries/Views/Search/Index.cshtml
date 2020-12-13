@@ -1,7 +1,9 @@
 ﻿@using Newtonsoft.Json
+@using LB.PhotoGalleries.Models.Enums
 @model SearchPagedResultSet
 @{
-    ViewData["Title"] = "Search for " + ViewData["query"];
+    var query = (string)ViewData["query"];
+    ViewData["Title"] = $"Search for {query}";
     var categoriesJson = Model.CategoryResults != null ? JsonConvert.SerializeObject(Model.CategoryResults.Select(c => new { c.Name })) : null;
     var galleriesJson = (string)ViewData["galleriesJson"];
     var imagesJson = (string)ViewData["imagesJson"];
@@ -15,10 +17,10 @@
                 <li class="page-item disabled">
                     <span class="page-link">Showing</span>
                 </li>
-                <li class="page-item sub-active"><a class="page-link" href="#">All</a></li>
-                <li class="page-item"><a class="page-link" href="#">Categories</a></li>
-                <li class="page-item"><a class="page-link" href="#">Galleries</a></li>
-                <li class="page-item"><a class="page-link" href="#">Photos</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.All ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.All, query)">All</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Categories ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Categories, query)">Categories</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Galleries ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Galleries, query)">Galleries</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Images ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Images, query)">Photos</a></li>
             </ul>
         </nav>
     </div>
