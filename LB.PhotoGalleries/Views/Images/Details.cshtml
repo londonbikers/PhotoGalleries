@@ -325,16 +325,12 @@
             // find first available image spec that is larger than scaled dims
 
             if (dims.width <= 800 && dims.height <= 800 && image.Files.Spec800Id != null) {
-                //return `/di800/${image.Files.Spec800Id}?w=${dims.width}&h=${dims.height}`;
                 return `/di800/${image.Files.Spec800Id}`;
             } else if (dims.width <= 1920 && dims.height <= 1920 && image.Files.Spec1920Id != null) {
-                //return `/di1920/${image.Files.Spec1920Id}?w=${dims.width}&h=${dims.height}`;
                 return `/di1920/${image.Files.Spec1920Id}`;
             } else if (dims.width <= 2560 && dims.height <= 2560 && image.Files.Spec2560Id != null) {
-                //return `/di2560/${image.Files.Spec2560Id}?w=${dims.width}&h=${dims.height}`;
                 return `/di2560/${image.Files.Spec2560Id}`;
             } else if (dims.width <= 3840 && dims.height <= 3840 && image.Files.Spec3840Id != null) {
-                //return `/di3840/${image.Files.Spec3840Id}?w=${dims.width}&h=${dims.height}`;
                 return `/di3840/${image.Files.Spec3840Id}`;
             } else {
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;
