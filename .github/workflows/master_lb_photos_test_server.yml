@@ -1,0 +1,42 @@
+name: Build and deploy LB Photos to Test
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.102'
+
+    - name: Swap out ImageFlow runtime for target environment
+      run: |
+        dotnet remove LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.win-x86_64
+        dotnet add LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
+
+    - name: Build with dotnet
+      run: dotnet build --configuration Release
+
+    - name: dotnet Publish
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+    - name: Copying files to server
+          uses: appleboy/scp-action@master
+          with:
+            host: ${{ secrets.REMOTE_HOST }}
+            port: ${{ secrets.PORT }}
+            username: ${{ secrets.REMOTE_USER }}
+            key: ${{ secrets.SSH_KEY }}
+            passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+            rm: true
+            source: "${{env.DOTNET_ROOT}}/myapp"
+            target: "${{ secrets.REMOTE_DIR }}"
