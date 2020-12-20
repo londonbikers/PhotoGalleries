@@ -16,12 +16,13 @@ jobs:
     - name: Set up .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.102'
+        dotnet-version: '3.1.x'
 
     - name: Swap out ImageFlow runtime for target environment
       run: |
-        dotnet remove LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.win-x86_64
-        dotnet add LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
+        pwd
+        ./LB.PhotoGalleries/dotnet remove package Imageflow.NativeRuntime.win-x86_64
+        ./LB.PhotoGalleries/dotnet add package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
 
     - name: Build with dotnet
       run: dotnet build --configuration Release
