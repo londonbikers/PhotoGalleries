@@ -20,9 +20,8 @@ jobs:
 
     - name: Swap out ImageFlow runtime for target environment
       run: |
-        pwd
-        dotnet remove package Imageflow.NativeRuntime.win-x86_64
-        dotnet add package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
+        dotnet remove /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.win-x86_64
+        dotnet add /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
 
     - name: Build with dotnet
       run: dotnet build --configuration Release
