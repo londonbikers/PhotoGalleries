@@ -39,5 +39,5 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
         rm: true
-        source: "${{env.DOTNET_ROOT}}/myapp/*"
+        source: "${{env.DOTNET_ROOT}}/myapp/*.*"
         target: "${{ secrets.REMOTE_DIR }}"
