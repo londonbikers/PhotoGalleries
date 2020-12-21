@@ -28,7 +28,7 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: dotnet Publish
-      run: dotnet publish -c Release -o 
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
@@ -40,4 +40,4 @@ jobs:
         passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
         rm: true
         source: ${{env.DOTNET_ROOT}}/myapp
-        target: "${{ secrets.REMOTE_DIR }}"
+        target: ${{ secrets.REMOTE_DIR }}
