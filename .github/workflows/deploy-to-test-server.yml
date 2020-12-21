@@ -30,11 +30,6 @@ jobs:
     - name: dotnet Publish
       run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
-    - name: Sleep for 30 seconds
-      uses: jakejarvis/wait-action@master
-      with:
-        time: '10s'
-
     - name: Copying files to server
       uses: appleboy/scp-action@master
       with:
@@ -44,5 +39,5 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
         rm: true
-        source: "${{env.DOTNET_ROOT}}/myapp/*"
+        source: /home/runner/.dotnet/myapp/*
         target: "${{ secrets.REMOTE_DIR }}"
