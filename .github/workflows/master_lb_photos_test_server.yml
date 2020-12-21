@@ -22,7 +22,7 @@ jobs:
       run: dotnet remove /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.win-x86_64
 
     - name: Add Ubuntu ImageFlow runtime
-      run: dotnet add /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --prerelease
+      run: dotnet add /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package --prerelease Imageflow.NativeRuntime.ubuntu_18_04-x86_64 
 
     - name: Build with dotnet
       run: dotnet build --configuration Release
