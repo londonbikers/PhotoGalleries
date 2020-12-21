@@ -39,5 +39,5 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
         rm: true
-        source: /home/runner/.dotnet/myapp/*
+        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/*"
         target: "${{ secrets.REMOTE_DIR }}"
