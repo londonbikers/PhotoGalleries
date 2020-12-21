@@ -1,4 +1,7 @@
-name: Build and deploy LB Photos to Test
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy ASP.Net Core app to Azure Web App - lb-photos-test
 
 on:
   push:
@@ -7,7 +10,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@master
@@ -15,28 +18,18 @@ jobs:
     - name: Set up .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.x'
-
-    - name: Remove development Windows ImageFlow runtime
-      run: dotnet remove /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.win-x86_64
-
-    - name: Add Ubuntu ImageFlow runtime
-      run: dotnet add /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/LB.PhotoGalleries.csproj package Imageflow.NativeRuntime.ubuntu_18_04-x86_64 --version 1.5.4-rc58
+        dotnet-version: '3.1.102'
 
     - name: Build with dotnet
       run: dotnet build --configuration Release
 
-    - name: dotnet Publish
+    - name: dotnet publish
       run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
-    - name: Copying files to server
-      uses: appleboy/scp-action@master
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
       with:
-        host: ${{ secrets.TEST_REMOTE_HOST }}
-        port: ${{ secrets.TEST_PORT }}
-        username: ${{ secrets.TEST_REMOTE_USER }}
-        key: ${{ secrets.TEST_SSH_KEY }}
-        passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
-        rm: false
-        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/*"
-        target: "${{ secrets.TEST_REMOTE_DIR }}"
+        app-name: 'lb-photos-test'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_04b7bd7b20fc4be0bd2a47365d5f911d }}
+        package: ${{env.DOTNET_ROOT}}/myapp 
