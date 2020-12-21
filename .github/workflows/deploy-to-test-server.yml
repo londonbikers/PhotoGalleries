@@ -37,6 +37,5 @@ jobs:
         username: ${{ secrets.TEST_REMOTE_USER }}
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
-        strip_components: 8
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
