@@ -25,8 +25,9 @@ jobs:
       
     - name: Remove server specific config files
       run: |
-        rm /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/appsettings.json
-        rm /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/appsettings.Development.json
+        cd /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/
+        rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/appsettings*.json
+        rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/launchSettings.json
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
