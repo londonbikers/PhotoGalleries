@@ -25,9 +25,9 @@ jobs:
       
     - name: Remove server specific config files
       run: |
-        ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/
-        rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/appsettings*.json
-        rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/launchSettings.json
+        ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*.json
+        rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/appsettings*
+        ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*.json
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
@@ -38,5 +38,5 @@ jobs:
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         strip_components: 7
-        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/*"
+        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
