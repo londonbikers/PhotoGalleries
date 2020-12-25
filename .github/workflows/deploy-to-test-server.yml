@@ -25,7 +25,7 @@ jobs:
       
     - name: Remove server specific config files
       run: |
-        cd /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/
+        ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/
         rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/appsettings*.json
         rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/launchSettings.json
 
