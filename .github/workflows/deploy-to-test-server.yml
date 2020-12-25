@@ -27,7 +27,7 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: dotnet Publish
-      run: dotnet publish -c Release
+      run: dotnet publish --configuration Release
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
