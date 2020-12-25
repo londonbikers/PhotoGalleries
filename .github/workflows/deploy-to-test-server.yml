@@ -24,11 +24,7 @@ jobs:
       run: dotnet publish --configuration Release
       
     - name: Remove server specific config files
-      run: |
-        ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*.json
-        sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/appsettings*
-        echo "post rm:"
-        sudo ls /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*.json
+      run: sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/appsettings*
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
