@@ -37,3 +37,4 @@ jobs:
         strip_components: 7
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
+        overwrite: true
