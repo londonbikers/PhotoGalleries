@@ -11,10 +11,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.4.11-rc51" />
-    <PackageReference Include="Imageflow.Server" Version="0.3.10" />
-    <PackageReference Include="Imageflow.Server.DiskCache" Version="0.3.10" />
-    <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.3.10" />
+    <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.5-rc59" />
+    <PackageReference Include="Imageflow.Server" Version="0.5.3" />
+    <PackageReference Include="Imageflow.Server.DiskCache" Version="0.5.3" />
+    <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.5.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.1.8" />
     <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" />
