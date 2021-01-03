@@ -237,9 +237,6 @@ namespace LB.PhotoGalleries
 
         private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
         {
-
-
-
             if (!args.Query.ContainsKey("w") && !args.Query.ContainsKey("width"))
                 args.Query["w"] = 99999.ToString();
 
