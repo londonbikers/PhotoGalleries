@@ -136,9 +136,9 @@ namespace LB.PhotoGalleries
             // ImageFlow doesn't seem to be able to watermark images without width/height arguments, so use a RewriteHandler to ensure they're always set internally.
             app.UseImageflow(new ImageflowMiddlewareOptions()
                 .SetJobSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
-                    .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
+                    .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 100))
+                    .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 100))
+                    .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 100)))
                 .SetAllowDiskCaching(true)
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddRewriteHandler("/dio/", EnsureDimensionsAreSpecified)
@@ -237,6 +237,9 @@ namespace LB.PhotoGalleries
 
         private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
         {
+
+
+
             if (!args.Query.ContainsKey("w") && !args.Query.ContainsKey("width"))
                 args.Query["w"] = 99999.ToString();
 
