@@ -235,13 +235,19 @@ namespace LB.PhotoGalleries
                     .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))));
         }
 
+        /// <summary>
+        /// Ensures at least one dimension is specified in image resizing parameters to ensure watermarking can take place.
+        /// Not sure why ImageFlow.io requires this, but hey ho.
         private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
         {
-            if (!args.Query.ContainsKey("w") && !args.Query.ContainsKey("width"))
-                args.Query["w"] = 99999.ToString();
+            var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
+            var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
 
-            if (!args.Query.ContainsKey("h") && !args.Query.ContainsKey("height"))
-                args.Query["h"] = 99999.ToString();
+            if (containsWidthParam || containsHeightParam) 
+                return;
+
+            args.Query["w"] = 99999.ToString();
+            args.Query["h"] = 99999.ToString();
         }
 
         private static async Task UpdateUserFromClaimsAsync(TicketReceivedContext ctx)
