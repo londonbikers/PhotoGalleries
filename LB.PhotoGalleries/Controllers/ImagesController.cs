@@ -1,5 +1,4 @@
 ﻿using LB.PhotoGalleries.Application;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
@@ -20,12 +19,6 @@ namespace LB.PhotoGalleries.Controllers
             _configuration = configuration;
         }
         #endregion
-
-        // GET: /gi
-        public ActionResult Index()
-        {
-            return View();
-        }
 
         // GET: /gi/{galleryId}/{imageId}/{name}
         public async Task<ActionResult> Details(string galleryId, string imageId, string name)
