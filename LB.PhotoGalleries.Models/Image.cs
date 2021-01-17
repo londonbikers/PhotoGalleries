@@ -80,6 +80,11 @@ namespace LB.PhotoGalleries.Models
         /// How many times this image has been viewed by people
         /// </summary>
         public long Views { get; set; }
+
+        /// <summary>
+        /// Contains the IDs of users who have subscribed to comment notifications for this image.
+        /// </summary>
+        public List<string> UserCommentSubscriptions { get; set; }
         #endregion
 
         #region constructors
@@ -89,6 +94,7 @@ namespace LB.PhotoGalleries.Models
             Comments = new List<Comment>();
             Metadata = new Metadata();
             Files = new ImageFiles();
+            UserCommentSubscriptions = new List<string>();
         }
         #endregion
 
