@@ -1,5 +1,5 @@
 ﻿<nav class="nav flex-column nav-pills">
-    <a class="nav-link active" href="#">Profile</a>
-    @*<a class="nav-link" href="#">Email Preferences</a>
-    <a class="nav-link" href="#">Delete Account</a>*@
+    <a asp-action="Index" class="nav-link @ManageNavPages.IndexNavClass(ViewContext)">Profile</a>
+    <a asp-action="EmailPreferences" class="nav-link @ManageNavPages.EmailPreferencesNavClass(ViewContext)">Email Preferences</a>
+    @*<a class="nav-link" href="#">Delete Account</a>*@
 </nav>

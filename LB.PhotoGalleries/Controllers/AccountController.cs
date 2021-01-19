@@ -11,5 +11,13 @@ namespace LB.PhotoGalleries.Controllers
             ViewData.Model = await Server.Instance.Users.GetUserAsync(Helpers.GetUserId(User));
             return View();
         }
+
+        [Route("/account/email-preferences")]
+        [HttpGet]
+        public async Task<IActionResult> EmailPreferences()
+        {
+            ViewData.Model = await Server.Instance.Users.GetUserAsync(Helpers.GetUserId(User));
+            return View();
+        }
     }
 }
