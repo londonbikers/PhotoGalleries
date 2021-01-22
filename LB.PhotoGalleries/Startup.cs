@@ -269,6 +269,9 @@ namespace LB.PhotoGalleries
                     LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
                 };
 
+                // set any defaults
+                user.CommunicationPreferences.ReceiveCommentNotifications = true;
+
                 updateNeeded = true;
             }
             else

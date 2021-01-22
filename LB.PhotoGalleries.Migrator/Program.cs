@@ -126,6 +126,8 @@ namespace LB.PhotoGalleries.Migrator
                     Name = (string)usersReader["f_username"]
                 };
 
+                u.CommunicationPreferences.ReceiveCommentNotifications = true;
+
                 // keep track of the old and new user ids as we'll need to use them elsewhere in the migration and don't need to keep hitting the database for it
                 _userIds.Add((Guid)usersReader["f_uid"], u.Id);
 
