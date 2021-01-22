@@ -97,7 +97,8 @@ namespace LB.PhotoGalleries.Migrator
 
         private static async Task MigrateUsersAsync()
         {
-            _userIds = new Dictionary<Guid, string>();
+            lock (_userIds)
+                _userIds = new Dictionary<Guid, string>();
 
             // we need to create user objects for everyone who has commented on a gallery or photo
             await using var userConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
@@ -286,8 +287,8 @@ namespace LB.PhotoGalleries.Migrator
                 var file1600 = imagesReader["Filename1600"] != DBNull.Value ? (string)imagesReader["Filename1600"] : null;
                 var file1024 = imagesReader["Filename1024"] != DBNull.Value ? (string)imagesReader["Filename1024"] : null;
                 var path = file1600.HasValue() ?
-                    Path.Combine(_configuration["OriginalFilesPath"], "1600", file1600) :
-                    Path.Combine(_configuration["OriginalFilesPath"], "1024", file1024);
+                    Path.Combine(_configuration["OriginalFilesPath"], "1600", file1600 ?? string.Empty) :
+                    Path.Combine(_configuration["OriginalFilesPath"], "1024", file1024 ?? string.Empty);
 
                 if (!File.Exists(path))
                 {
