@@ -238,6 +238,7 @@ namespace LB.PhotoGalleries
         /// <summary>
         /// Ensures at least one dimension is specified in image resizing parameters to ensure watermarking can take place.
         /// Not sure why ImageFlow.io requires this, but hey ho.
+        /// </summary>
         private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
         {
             var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
