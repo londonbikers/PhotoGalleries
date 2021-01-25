@@ -1,4 +1,4 @@
-﻿@model User
+﻿@model EmailPreferencesModel
 @{
     ViewData["Title"] = "Email Preferences";
     ViewData.AddActivePage(ManageNavPages.EmailPreferences);
@@ -8,10 +8,10 @@
 
 <p>You can control which emails you receive from us here.</p>
 
-@*@if (Model.PreferencesUpdated)
+@if (Model.EmailPreferencesUpdated)
 {
     <div class="alert alert-success" role="alert">Got it! Email preferences updated.</div>
-}*@
+}
 
 @using (Html.BeginForm())
 {
@@ -23,7 +23,7 @@
                     <p>Receive email notifications when people leave comments on a gallery or photo you're subscribed to.</p>
                 </div>
                 <div class="col-sm-2 p-0 pt-3 text-center">
-                    @Html.CheckBoxFor(model => model.CommunicationPreferences.ReceiveCommentNotifications)
+                    @Html.CheckBoxFor(model => model.ReceiveCommentNotifications)
                 </div>
             </div>
         </div>
