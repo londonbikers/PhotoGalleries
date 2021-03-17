@@ -182,7 +182,6 @@ namespace LB.PhotoGalleries.Controllers.Api
                 if (!image.UserCommentSubscriptions.Contains(userId))
                     image.UserCommentSubscriptions.Add(userId);
 
-                // todo: update the image
                 // todo: have something async subscribe to new comments and send out notifications as needed
                 // todo: later on limit how many notifications a user gets for a single object
             }
