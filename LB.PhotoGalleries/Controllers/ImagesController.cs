@@ -32,6 +32,9 @@ namespace LB.PhotoGalleries.Controllers
             ViewData["category"] = Server.Instance.Categories.Categories.Single(c => c.Id == image.GalleryCategoryId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
 
+            if (User.Identity.IsAuthenticated)
+                ViewData["user"] = await Server.Instance.Users.GetUserAsync(Helpers.GetUserId(User));
+
             // work out the previous image in the gallery for navigation purposes
             ViewData["previousImage"] = await Server.Instance.Images.GetPreviousImageInGalleryAsync(image);
             ViewData["nextImage"] = await Server.Instance.Images.GetNextImageInGalleryAsync(image);

@@ -164,18 +164,29 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (string.IsNullOrEmpty(comment) || string.IsNullOrWhiteSpace(comment))
                 return BadRequest("comment missing");
 
-            // todo: implement comment notifications...
-            //var receiveNotifications = true; 
-            //bool.TryParse(Request.Form["receiveNotifications"], out receiveNotifications);
-
+            var userId = Helpers.GetUserId(User);
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             var imageComment = new Comment
             {
-                CreatedByUserId = Helpers.GetUserId(User),
+                CreatedByUserId = userId,
                 Text = comment.Trim()
             };
 
             image.Comments.Add(imageComment);
+
+            // subscribe the user to comment notifications if they've asked to be
+            bool.TryParse(Request.Form["receiveNotifications"], out bool receiveNotifications);
+            if (receiveNotifications)
+            {
+                // create a comment subscription
+                if (!image.UserCommentSubscriptions.Contains(userId))
+                    image.UserCommentSubscriptions.Add(userId);
+
+                // todo: update the image
+                // todo: have something async subscribe to new comments and send out notifications as needed
+                // todo: later on limit how many notifications a user gets for a single object
+            }
+
             await Server.Instance.Images.UpdateImageAsync(image);
             return Accepted();
         }
