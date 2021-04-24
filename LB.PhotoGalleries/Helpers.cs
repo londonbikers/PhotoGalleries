@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -158,6 +159,48 @@ namespace LB.PhotoGalleries
                 return $"/search?q={query}";
             else
                 return $"/search?q={query}&t={searchResultsType.ToString().ToLower()}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of an image.
+        /// </summary>
+        public static string GetFullImageUrl(IConfiguration config, Image image)
+        {
+            var baseUrl = config["BaseUrl"];
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
+            return $"{baseUrl}gi/{image.GalleryId}/{image.Id}/{EncodeParamForUrl(image.Name)}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of an image that links to a specific user comment.
+        /// </summary>
+        public static string GetFullImageUrl(IConfiguration config, Image image, DateTime commentCreated)
+        {
+            var imageUrl = GetFullImageUrl(config, image);
+            return $"{imageUrl}?c={commentCreated.Ticks}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of a gallery.
+        /// </summary>
+        public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery)
+        {
+            var baseUrl = config["BaseUrl"];
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
+            return $"{baseUrl}g/{gallery.CategoryId}/{gallery.Id}/{EncodeParamForUrl(gallery.Name)}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of a gallery that links to a specific user comment.
+        /// </summary>
+        public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery, DateTime commentCreated)
+        {
+            var imageUrl = GetFullGalleryUrl(config, gallery);
+            return $"{imageUrl}?c={commentCreated.Ticks}";
         }
 
         #region private methods

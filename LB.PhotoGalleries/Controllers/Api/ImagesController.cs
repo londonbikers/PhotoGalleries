@@ -1,11 +1,11 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Controllers.Api
 {
@@ -175,7 +175,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             image.Comments.Add(imageComment);
 
             // subscribe the user to comment notifications if they've asked to be
-            bool.TryParse(Request.Form["receiveNotifications"], out bool receiveNotifications);
+            bool.TryParse(Request.Form["receiveNotifications"], out var receiveNotifications);
             if (receiveNotifications)
             {
                 // create a comment subscription
@@ -184,6 +184,13 @@ namespace LB.PhotoGalleries.Controllers.Api
 
                 // todo: have something async subscribe to new comments and send out notifications as needed
                 // todo: later on limit how many notifications a user gets for a single object
+
+                // notification sender needs to know:
+                // - object id 1 (i.e. gallery id)
+                // - object id 2 (i.e. image id
+                // - object type
+                // - when they commented
+                // i.e. 12,13,image,01/01/2021 18:54:00
             }
 
             await Server.Instance.Images.UpdateImageAsync(image);
