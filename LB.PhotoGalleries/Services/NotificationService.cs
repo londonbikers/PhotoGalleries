@@ -153,6 +153,7 @@ namespace LB.PhotoGalleries.Services
                 if (comment != null)
                 {
                     // setup email vars
+                    var homepageUrl = _configuration["BaseUrl"];
                     var clientId = _configuration["Mailjet.ClientId"];
                     var secret = _configuration["Mailjet.Secret"];
                     var fromAddress = _configuration["Mailjet.FromAddress"];
@@ -187,8 +188,10 @@ namespace LB.PhotoGalleries.Services
                                     {"TemplateLanguage", true},
                                     {"Subject", $"{emailSubjectObjectType} comment notification"},
                                     {"Variables", new JObject {
+                                        {"homepage_url", homepageUrl },
                                         {"recipient_username", subscriptionUser.Name},
                                         {"comment_username", commentUser.Name},
+                                        {"comment_object_type", emailSubjectObjectType },
                                         {"comment_object_name", commentObjectName},
                                         {"comment_object_href", commentObjectHref},
                                         {"current_year", DateTime.Now.Year }
@@ -208,9 +211,13 @@ namespace LB.PhotoGalleries.Services
                             if (response.IsSuccessStatusCode)
                                 break;
 
+                            _log.LogWarning($"Did not receive a success status code from Mailjet: {response.StatusCode} - {response.GetErrorMessage()} - {response.GetErrorInfo()}");
                             Thread.Sleep(TimeSpan.FromSeconds(1));
                             tries++;
                         }
+
+                        if (!response.IsSuccessStatusCode)
+                            _log.LogError("Failed to send email via Mailjet. Giving up.");
                     }
                 }
 
