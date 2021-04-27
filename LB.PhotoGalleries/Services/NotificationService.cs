@@ -135,7 +135,7 @@ namespace LB.PhotoGalleries.Services
                         userCommentSubscriptions = image.UserCommentSubscriptions;
                         emailSubjectObjectType = "Photo";
                         commentObjectName = image.Name;
-                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
+                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created) + "#comments";
                         break;
                     }
                     case "gallery":
@@ -145,8 +145,8 @@ namespace LB.PhotoGalleries.Services
                         userCommentSubscriptions = gallery.UserCommentSubscriptions;
                         emailSubjectObjectType = "Gallery";
                         commentObjectName = gallery.Name;
-                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created);
-                        break;
+                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created) + "#comments";
+                            break;
                     }
                 }
 
