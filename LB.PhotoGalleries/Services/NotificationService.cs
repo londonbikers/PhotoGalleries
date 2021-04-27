@@ -37,13 +37,13 @@ namespace LB.PhotoGalleries.Services
         {
             _log.LogDebug("LB.PhotoGalleries.Services.NotificationService.ExecuteAsync() - Starting");
             stoppingToken.Register(() => _log.LogDebug("NotificationService background task is stopping."));
-            
+
             // set the message queue listener
             var queueName = _configuration["Storage:NotificationsProcessingQueueName"];
             _queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
             int.TryParse(_configuration["Services.Notifications.MessageBatchSize"], out var messageBatchSize);
             int.TryParse(_configuration["Services.Notifications.MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
-            
+
             if (!await _queueClient.ExistsAsync(stoppingToken))
             {
                 _log.LogCritical($"LB.PhotoGalleries.Services.NotificationService.ExecuteAsync() - {queueName} queue does not exist. Cannot continue.");
@@ -129,31 +129,35 @@ namespace LB.PhotoGalleries.Services
                 switch (commentObjectType)
                 {
                     case "image":
-                    {
-                        var image = await Server.Instance.Images.GetImageAsync(commentObjectId1, commentObjectId2);
-                        comment = image.Comments.Single(q => q.Created == commentCreated);
-                        userCommentSubscriptions = image.UserCommentSubscriptions;
-                        emailSubjectObjectType = "Photo";
-                        commentObjectName = image.Name;
-                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
-                        break;
-                    }
+                        {
+                            var image = await Server.Instance.Images.GetImageAsync(commentObjectId1, commentObjectId2);
+                            comment = image.Comments.Single(q => q.Created == commentCreated);
+                            userCommentSubscriptions = image.UserCommentSubscriptions;
+                            emailSubjectObjectType = "Photo";
+                            commentObjectName = image.Name;
+                            commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
+                            break;
+                        }
                     case "gallery":
-                    {
-                        var gallery = await Server.Instance.Galleries.GetGalleryAsync(commentObjectId1, commentObjectId2);
-                        comment = gallery.Comments.Single(q => q.Created == commentCreated);
-                        userCommentSubscriptions = gallery.UserCommentSubscriptions;
-                        emailSubjectObjectType = "Gallery";
-                        commentObjectName = gallery.Name;
-                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created);
-                        break;
-                    }
+                        {
+                            var gallery = await Server.Instance.Galleries.GetGalleryAsync(commentObjectId1, commentObjectId2);
+                            comment = gallery.Comments.Single(q => q.Created == commentCreated);
+                            userCommentSubscriptions = gallery.UserCommentSubscriptions;
+                            emailSubjectObjectType = "Gallery";
+                            commentObjectName = gallery.Name;
+                            commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created);
+                            break;
+                        }
                 }
 
                 if (comment != null)
                 {
                     // setup email vars
-                    var homepageUrl = _configuration["BaseUrl"];
+                    var isDevelopment = true;
+                    if (!string.IsNullOrEmpty(_configuration["IsDevelopment"]))
+                        isDevelopment = bool.Parse(_configuration["IsDevelopment"]);
+
+                    var developmentEmailAddress = _configuration["DevelopmentRedirectEmailAddress"];
                     var clientId = _configuration["Mailjet.ClientId"];
                     var secret = _configuration["Mailjet.Secret"];
                     var fromAddress = _configuration["Mailjet.FromAddress"];
@@ -167,37 +171,40 @@ namespace LB.PhotoGalleries.Services
                     {
                         var subscriptionUser = await Server.Instance.Users.GetUserAsync(subscriptionUserId);
 
+                        // if we're in development mode, do not send emails to any real members. that would be bad.
+                        // instead, redirect all outgoing mail to the test mailbox.
+                        var toEmail = subscriptionUser.Email;
+                        if (isDevelopment)
+                            toEmail = developmentEmailAddress;
+
                         // start building the email
-                        var request = new MailjetRequest
+                        var request = new MailjetRequest { Resource = Send.Resource }.Property(Send.Messages, new JArray
+                        {
+                            new JObject
                             {
-                                Resource = Send.Resource,
+                                {"From", new JObject {
+                                    {"Email", fromAddress},
+                                    {"Name", fromLabel}
+                                }},
+                                {"To", new JArray {
+                                    new JObject {
+                                        {"Email", toEmail},
+                                        {"Name", subscriptionUser.Name}
+                                    }
+                                }},
+                                {"TemplateID", newCommentEmailTemplateId},
+                                {"TemplateLanguage", true},
+                                {"Subject", $"{emailSubjectObjectType} comment notification"},
+                                {"Variables", new JObject {
+                                    {"recipient_username", subscriptionUser.Name},
+                                    {"comment_username", commentUser.Name},
+                                    {"comment_object_type", emailSubjectObjectType },
+                                    {"comment_object_name", commentObjectName},
+                                    {"comment_object_href", commentObjectHref},
+                                    {"current_year", DateTime.Now.Year }
+                                }}
                             }
-                            .Property(Send.Messages, new JArray {
-                                new JObject {
-                                    {"From", new JObject {
-                                        {"Email", fromAddress},
-                                        {"Name", fromLabel}
-                                    }},
-                                    {"To", new JArray {
-                                        new JObject {
-                                            {"Email", subscriptionUser.Email},
-                                            {"Name", subscriptionUser.Name}
-                                        }
-                                    }},
-                                    {"TemplateID", newCommentEmailTemplateId},
-                                    {"TemplateLanguage", true},
-                                    {"Subject", $"{emailSubjectObjectType} comment notification"},
-                                    {"Variables", new JObject {
-                                        {"homepage_url", homepageUrl },
-                                        {"recipient_username", subscriptionUser.Name},
-                                        {"comment_username", commentUser.Name},
-                                        {"comment_object_type", emailSubjectObjectType },
-                                        {"comment_object_name", commentObjectName},
-                                        {"comment_object_href", commentObjectHref},
-                                        {"current_year", DateTime.Now.Year }
-                                    }}
-                                }
-                            });
+                        });
 
                         // send the email
                         var response = await client.PostAsync(request);
