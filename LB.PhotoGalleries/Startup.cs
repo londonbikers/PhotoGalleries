@@ -6,6 +6,7 @@ using Imageflow.Server.Storage.AzureBlob;
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Services;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -103,6 +104,8 @@ namespace LB.PhotoGalleries
             // for production we intend on using local Azure App Service storage (d:\local). This is ephemeral but free!
             InitialiseImageFlowDiskCache();
             services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
+
+            services.AddHostedService<NotificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

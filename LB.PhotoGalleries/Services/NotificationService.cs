@@ -39,10 +39,10 @@ namespace LB.PhotoGalleries.Services
             stoppingToken.Register(() => _log.LogDebug("NotificationService background task is stopping."));
 
             // set the message queue listener
-            var queueName = _configuration["Storage:NotificationsProcessingQueueName"];
+            var queueName = _configuration["Services:Notifications:QueueName"];
             _queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
-            int.TryParse(_configuration["Services.Notifications.MessageBatchSize"], out var messageBatchSize);
-            int.TryParse(_configuration["Services.Notifications.MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
+            int.TryParse(_configuration["Services:Notifications:MessageBatchSize"], out var messageBatchSize);
+            int.TryParse(_configuration["Services:Notifications:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
 
             if (!await _queueClient.ExistsAsync(stoppingToken))
             {
@@ -50,7 +50,7 @@ namespace LB.PhotoGalleries.Services
                 return;
             }
 
-            if (!int.TryParse(_configuration["Services.Notifications.ZeroMessagesPollIntervalSeconds"], out var zeroMessagesPollIntervalSeconds))
+            if (!int.TryParse(_configuration["Services:Notifications:ZeroMessagesPollIntervalSeconds"], out var zeroMessagesPollIntervalSeconds))
                 zeroMessagesPollIntervalSeconds = 5;
             var delayTime = TimeSpan.FromSeconds(zeroMessagesPollIntervalSeconds);
             var zeroMessagesCount = 0;
@@ -162,7 +162,7 @@ namespace LB.PhotoGalleries.Services
                     var secret = _configuration["Mailjet.Secret"];
                     var fromAddress = _configuration["Mailjet.FromAddress"];
                     var fromLabel = _configuration["Mailjet.FromLabel"];
-                    var newCommentEmailTemplateId = _configuration["Services.Notifications.NewCommentEmailTemplateId"];
+                    var newCommentEmailTemplateId = _configuration["Services:Notifications:NewCommentEmailTemplateId"];
                     var client = new MailjetClient(clientId, secret);
 
                     // enumerate the comment subscriptions. don't include the comment author!
