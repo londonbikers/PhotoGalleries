@@ -99,7 +99,7 @@ namespace LB.PhotoGalleries.Services
             // message content format:
             // - object id
             // - object type
-            // - when they commented
+            // - when the author commented
             // i.e. 135,image,01/01/2021 18:54:00
 
             var messageParts = message.MessageText.Split(",");
@@ -129,25 +129,25 @@ namespace LB.PhotoGalleries.Services
                 switch (commentObjectType)
                 {
                     case "image":
-                        {
-                            var image = await Server.Instance.Images.GetImageAsync(commentObjectId1, commentObjectId2);
-                            comment = image.Comments.Single(q => q.Created == commentCreated);
-                            userCommentSubscriptions = image.UserCommentSubscriptions;
-                            emailSubjectObjectType = "Photo";
-                            commentObjectName = image.Name;
-                            commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
-                            break;
-                        }
+                    {
+                        var image = await Server.Instance.Images.GetImageAsync(commentObjectId1, commentObjectId2);
+                        comment = image.Comments.Single(q => q.Created == commentCreated);
+                        userCommentSubscriptions = image.UserCommentSubscriptions;
+                        emailSubjectObjectType = "Photo";
+                        commentObjectName = image.Name;
+                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
+                        break;
+                    }
                     case "gallery":
-                        {
-                            var gallery = await Server.Instance.Galleries.GetGalleryAsync(commentObjectId1, commentObjectId2);
-                            comment = gallery.Comments.Single(q => q.Created == commentCreated);
-                            userCommentSubscriptions = gallery.UserCommentSubscriptions;
-                            emailSubjectObjectType = "Gallery";
-                            commentObjectName = gallery.Name;
-                            commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created);
-                            break;
-                        }
+                    {
+                        var gallery = await Server.Instance.Galleries.GetGalleryAsync(commentObjectId1, commentObjectId2);
+                        comment = gallery.Comments.Single(q => q.Created == commentCreated);
+                        userCommentSubscriptions = gallery.UserCommentSubscriptions;
+                        emailSubjectObjectType = "Gallery";
+                        commentObjectName = gallery.Name;
+                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created);
+                        break;
+                    }
                 }
 
                 if (comment != null)
@@ -165,9 +165,9 @@ namespace LB.PhotoGalleries.Services
                     var newCommentEmailTemplateId = _configuration["Services.Notifications.NewCommentEmailTemplateId"];
                     var client = new MailjetClient(clientId, secret);
 
-                    // enumerate the comment subscriptions
+                    // enumerate the comment subscriptions. don't include the comment author!
                     var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
-                    foreach (var subscriptionUserId in userCommentSubscriptions)
+                    foreach (var subscriptionUserId in userCommentSubscriptions.Where(id=> id != commentUser.Id))
                     {
                         var subscriptionUser = await Server.Instance.Users.GetUserAsync(subscriptionUserId);
 
