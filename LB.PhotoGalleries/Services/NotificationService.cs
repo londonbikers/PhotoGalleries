@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Services
 {
@@ -97,13 +98,14 @@ namespace LB.PhotoGalleries.Services
         private async Task HandleMessageAsync(QueueMessage message)
         {
             // message content format:
-            // - object id
+            // - object primary id
+            // - object secondary id
             // - object type
             // - when the author commented
             // i.e. 135,image,01/01/2021 18:54:00
 
-            var messageParts = message.MessageText.Split(",");
-            if (messageParts.Length != 3)
+            var messageParts = Utilities.Base64Decode(message.MessageText).Split(':');
+            if (messageParts.Length != 4)
             {
                 _log.LogError($"Message did not have three parts as expected: '{message.MessageText}'");
             }
@@ -112,7 +114,8 @@ namespace LB.PhotoGalleries.Services
                 var commentObjectId1 = messageParts[0];
                 var commentObjectId2 = messageParts[1];
                 var commentObjectType = messageParts[2];
-                var commentCreated = DateTime.Parse(messageParts[3]);
+                var ticks = long.Parse(messageParts[3]);
+                var commentCreated = new DateTime(ticks);
 
                 // get the object
                 // get the comment
@@ -135,7 +138,7 @@ namespace LB.PhotoGalleries.Services
                         userCommentSubscriptions = image.UserCommentSubscriptions;
                         emailSubjectObjectType = "Photo";
                         commentObjectName = image.Name;
-                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created) + "#comments";
+                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created) + $"#comments?ct={commentCreated.Ticks}";
                         break;
                     }
                     case "gallery":
@@ -145,8 +148,8 @@ namespace LB.PhotoGalleries.Services
                         userCommentSubscriptions = gallery.UserCommentSubscriptions;
                         emailSubjectObjectType = "Gallery";
                         commentObjectName = gallery.Name;
-                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created) + "#comments";
-                            break;
+                        commentObjectHref = Helpers.GetFullGalleryUrl(_configuration, gallery, comment.Created) + $"#comments?ct={commentCreated.Ticks}";
+                        break;
                     }
                 }
 
@@ -158,10 +161,10 @@ namespace LB.PhotoGalleries.Services
                         isDevelopment = bool.Parse(_configuration["IsDevelopment"]);
 
                     var developmentEmailAddress = _configuration["DevelopmentRedirectEmailAddress"];
-                    var clientId = _configuration["Mailjet.ClientId"];
-                    var secret = _configuration["Mailjet.Secret"];
-                    var fromAddress = _configuration["Mailjet.FromAddress"];
-                    var fromLabel = _configuration["Mailjet.FromLabel"];
+                    var clientId = _configuration["Mailjet:ClientId"];
+                    var secret = _configuration["Mailjet:Secret"];
+                    var fromAddress = _configuration["Mailjet:FromAddress"];
+                    var fromLabel = _configuration["Mailjet:FromLabel"];
                     var newCommentEmailTemplateId = _configuration["Services:Notifications:NewCommentEmailTemplateId"];
                     var client = new MailjetClient(clientId, secret);
 

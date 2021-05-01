@@ -1,5 +1,4 @@
 ﻿using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -165,35 +164,11 @@ namespace LB.PhotoGalleries.Controllers.Api
                 return BadRequest("comment missing");
 
             var userId = Helpers.GetUserId(User);
-            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            var imageComment = new Comment
-            {
-                CreatedByUserId = userId,
-                Text = comment.Trim()
-            };
-
-            image.Comments.Add(imageComment);
 
             // subscribe the user to comment notifications if they've asked to be
             bool.TryParse(Request.Form["receiveNotifications"], out var receiveNotifications);
-            if (receiveNotifications)
-            {
-                // create a comment subscription
-                if (!image.UserCommentSubscriptions.Contains(userId))
-                    image.UserCommentSubscriptions.Add(userId);
-
-                // todo: have something async subscribe to new comments and send out notifications as needed
-                // todo: later on limit how many notifications a user gets for a single object
-
-                // notification sender needs to know:
-                // - object id 1 (i.e. gallery id)
-                // - object id 2 (i.e. image id
-                // - object type
-                // - when they commented
-                // i.e. 12,13,image,01/01/2021 18:54:00
-            }
-
-            await Server.Instance.Images.UpdateImageAsync(image);
+            
+            await Server.Instance.Images.CreateCommentAsync(comment, userId, receiveNotifications, galleryId, imageId);
             return Accepted();
         }
 
