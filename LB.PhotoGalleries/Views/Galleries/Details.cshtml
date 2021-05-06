@@ -104,6 +104,8 @@
             @foreach (var comment in Model.Comments)
             {
                 var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
+                var commentAnchorId = "c" + comment.Created.Ticks;
+                <a id="@commentAnchorId"></a>
                 <div class="row mb-4 text-left">
                     <div class="col">
                         @if (commentUser.PictureHostedUrl.HasValue())
