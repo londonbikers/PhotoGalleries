@@ -2,6 +2,7 @@
 using Azure.Storage.Queues.Models;
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Mailjet.Client;
 using Mailjet.Client.Resources;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Services
 {
@@ -164,7 +164,7 @@ namespace LB.PhotoGalleries.Services
                     var clientId = _configuration["Mailjet:ClientId"];
                     var secret = _configuration["Mailjet:Secret"];
                     var fromAddress = _configuration["Mailjet:FromAddress"];
-                    var fromLabel = _configuration["Mailjet:FromLabel"];
+                    var fromName = _configuration["Mailjet:FromLabel"];
                     var newCommentEmailTemplateId = _configuration["Services:Notifications:NewCommentEmailTemplateId"];
                     var client = new MailjetClient(clientId, secret);
 
@@ -181,33 +181,26 @@ namespace LB.PhotoGalleries.Services
                             toEmail = developmentEmailAddress;
 
                         // start building the email
-                        var request = new MailjetRequest { Resource = Send.Resource }.Property(Send.Messages, new JArray
-                        {
-                            new JObject
-                            {
-                                {"From", new JObject {
-                                    {"Email", fromAddress},
-                                    {"Name", fromLabel}
-                                }},
-                                {"To", new JArray {
+                        var request = new MailjetRequest  { Resource = Send.Resource }
+                            .Property(Send.MjTemplateID, newCommentEmailTemplateId)
+                            .Property(Send.MjTemplateLanguage, "True")
+                            .Property(Send.FromEmail, fromAddress)
+                            .Property(Send.FromName, fromName)
+                            .Property(Send.Subject, $"{emailSubjectObjectType} comment notification")
+                            .Property(Send.Recipients, new JArray {
                                     new JObject {
                                         {"Email", toEmail},
                                         {"Name", subscriptionUser.Name}
                                     }
-                                }},
-                                {"TemplateID", newCommentEmailTemplateId},
-                                {"TemplateLanguage", true},
-                                {"Subject", $"{emailSubjectObjectType} comment notification"},
-                                {"Variables", new JObject {
-                                    {"recipient_username", subscriptionUser.Name},
-                                    {"comment_username", commentUser.Name},
-                                    {"comment_object_type", emailSubjectObjectType },
-                                    {"comment_object_name", commentObjectName},
-                                    {"comment_object_href", commentObjectHref},
-                                    {"current_year", DateTime.Now.Year }
-                                }}
-                            }
-                        });
+                                })
+                            .Property(Send.Vars, new JObject {
+                                {"recipient_username", subscriptionUser.Name},
+                                {"comment_username", commentUser.Name},
+                                {"comment_object_type", emailSubjectObjectType },
+                                {"comment_object_name", commentObjectName},
+                                {"comment_object_href", commentObjectHref},
+                                {"current_year", DateTime.Now.Year }
+                            });
 
                         // send the email
                         var response = await client.PostAsync(request);
