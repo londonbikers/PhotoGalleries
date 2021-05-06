@@ -138,7 +138,7 @@ namespace LB.PhotoGalleries.Services
                         userCommentSubscriptions = image.UserCommentSubscriptions;
                         emailSubjectObjectType = "Photo";
                         commentObjectName = image.Name;
-                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created) + $"#comments?ct={commentCreated.Ticks}";
+                        commentObjectHref = Helpers.GetFullImageUrl(_configuration, image, comment.Created);
                         break;
                     }
                     case "gallery":

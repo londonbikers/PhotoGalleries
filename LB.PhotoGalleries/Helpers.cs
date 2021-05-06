@@ -170,7 +170,7 @@ namespace LB.PhotoGalleries
             if (!baseUrl.EndsWith("/"))
                 baseUrl += "/";
 
-            return $"{baseUrl}gi/{image.GalleryId}/{image.Id}/{EncodeParamForUrl(image.Name)}";
+            return $"{baseUrl}i/{image.GalleryId}/{image.Id}/{EncodeParamForUrl(image.Name)}";
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace LB.PhotoGalleries
         public static string GetFullImageUrl(IConfiguration config, Image image, DateTime commentCreated)
         {
             var imageUrl = GetFullImageUrl(config, image);
-            return $"{imageUrl}?c={commentCreated.Ticks}";
+            return $"{imageUrl}#c{commentCreated.Ticks}";
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace LB.PhotoGalleries
         public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery, DateTime commentCreated)
         {
             var imageUrl = GetFullGalleryUrl(config, gallery);
-            return $"{imageUrl}?c={commentCreated.Ticks}";
+            return $"{imageUrl}#c{commentCreated.Ticks}";
         }
 
         #region private methods
