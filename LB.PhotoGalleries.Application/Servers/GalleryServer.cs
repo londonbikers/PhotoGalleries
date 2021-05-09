@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Utilities;
+using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
@@ -306,6 +307,43 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             var gallery = await GetGalleryAsync(categoryId, galleryId);
             gallery.ImageCount = await GetGalleryImageCount(gallery);
+            await UpdateGalleryAsync(gallery);
+        }
+
+        public async Task CreateCommentAsync(string comment, string userId, bool receiveNotifications, string categoryId, string galleryId)
+        {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            var galleryComment = new Comment
+            {
+                CreatedByUserId = userId,
+                Text = comment.Trim()
+            };
+
+            gallery.Comments.Add(galleryComment);
+
+            // subscribe the user to comment notifications if they've asked to be
+            if (receiveNotifications)
+            {
+                // create a comment subscription
+                if (!gallery.UserCommentSubscriptions.Contains(userId))
+                    gallery.UserCommentSubscriptions.Add(userId);
+
+                // todo: later on limit how many notifications a user gets for a single object
+                // add message to queue for notifications
+
+                // notification sender needs to know:
+                // - object id 1 (i.e. category id)
+                // - object id 2 (i.e. gallery id
+                // - object type
+                // - when they commented
+                // i.e. 12,13,image,01/01/2021 18:54:00
+
+                // create the message and send to the Azure Storage notifications queue
+                var message = $"{categoryId}:{galleryId}:gallery:{galleryComment.Created.Ticks}";
+                var encodedMessage = Utilities.Base64Encode(message);
+                await Server.Instance.NotificationProcessingQueueClient.SendMessageAsync(encodedMessage);
+            }
+
             await UpdateGalleryAsync(gallery);
         }
         #endregion

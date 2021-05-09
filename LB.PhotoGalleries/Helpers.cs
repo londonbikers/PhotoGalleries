@@ -1,4 +1,5 @@
-﻿using LB.PhotoGalleries.Models;
+﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Extensions.Configuration;
@@ -191,7 +192,9 @@ namespace LB.PhotoGalleries
             if (!baseUrl.EndsWith("/"))
                 baseUrl += "/";
 
-            return $"{baseUrl}g/{gallery.CategoryId}/{gallery.Id}/{EncodeParamForUrl(gallery.Name)}";
+            var category = Server.Instance.Categories.GetCategory(gallery.CategoryId);
+            var categoryParam = EncodeParamForUrl(category.Name);
+            return $"{baseUrl}g/{categoryParam}/{gallery.Id}/{EncodeParamForUrl(gallery.Name)}";
         }
 
         /// <summary>
@@ -199,8 +202,8 @@ namespace LB.PhotoGalleries
         /// </summary>
         public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery, DateTime commentCreated)
         {
-            var imageUrl = GetFullGalleryUrl(config, gallery);
-            return $"{imageUrl}#c{commentCreated.Ticks}";
+            var galleryUrl = GetFullGalleryUrl(config, gallery);
+            return $"{galleryUrl}#c{commentCreated.Ticks}";
         }
 
         #region private methods
