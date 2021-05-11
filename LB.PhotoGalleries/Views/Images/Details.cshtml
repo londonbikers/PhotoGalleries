@@ -7,7 +7,7 @@
     ViewData["useContainer"] = false;
     var gallery = (Gallery)ViewData["gallery"];
     var category = (Category)ViewData["category"];
-    var user = (User)ViewData["user"];
+    var imageUser = (User)ViewData["user"];
     var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
     var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
     var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
@@ -17,7 +17,10 @@
     var nextImage = (Image)ViewData["nextImage"];
     var photoLeftColClass = previousImage != null ? "class=\"col pointer\"" : "class=\"col\"";
     var photoRightColClass = nextImage != null ? "class=\"col pointer\"" : "class=\"col\"";
-    var subscribeToCommentRepliesParam = user != null && user.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var userId = Helpers.GetUserId(User);
+    var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
+    var subscribeToCommentRepliesParam = user != null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 
 <div class="container-max text-center">
@@ -208,6 +211,13 @@
         else
         {
             <text><a asp-controller="Home" asp-action="SignIn" asp-route-returnUrl="@Context.Request.Path">Sign-in</a> to leave a comment</text>
+        }
+        
+        @if (userIsSubscribedToCommentReplies)
+        {
+            <div class="info-box mt-2">
+                You're subscribed to this image's comments. <a href="javascript:void(0)" data-bind="click:Unsubscribe">Unsubscribe</a>.
+            </div>
         }
 
         <div class="mt-3">
@@ -504,6 +514,19 @@
                     location.reload();
                 }).fail(function(response) {
                     console.log("something went wrong when deleting the comment: " + response);
+                });
+            }
+
+            self.Unsubscribe = function() {
+                $.ajax({
+                    url: '/api/images/comment-subscriptions?galleryId=@Model.GalleryId&imageId=@Model.Id',
+                    type: 'DELETE'
+                }).done(function () {
+                    // unsubscribed the user, refresh the page to show no sub info
+                    // todo: show a nicer fading prompt instead of refreshing the page
+                    location.reload();
+                }).fail(function(response) {
+                    console.log("something went wrong when unsubscribing from comment notifications: " + response);
                 });
             }
         }

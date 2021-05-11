@@ -54,6 +54,22 @@ namespace LB.PhotoGalleries.Controllers.Api
             return NoContent();
         }
 
+        [Authorize]
+        [HttpDelete("/api/galleries/comment-subscriptions")]
+        public async Task<ActionResult> DeleteUserCommentSubscription(string categoryId, string galleryId)
+        {
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            var userId = Helpers.GetUserId(User);
+            if (gallery.UserCommentSubscriptions.Contains(userId))
+            {
+                gallery.UserCommentSubscriptions.Remove(userId);
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                return Accepted();
+            }
+
+            return NotFound();
+        }
+
         [HttpDelete("/api/galleries/remove-tag")]
         [Authorize(Roles = "Administrator,Photographer")]
         public async Task<ActionResult> RemoveTag(string categoryId, string galleryId, string tag)

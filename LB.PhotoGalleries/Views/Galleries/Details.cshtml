@@ -8,11 +8,14 @@
     ViewData["Title"] = ViewData.Model.Name;
     var category = Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId);
     var images = (List<Image>) ViewData["images"];
-    var user = (User) ViewData["user"];
+    var galleryUser = (User) ViewData["user"];
     var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
     var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
-    var subscribeToCommentRepliesParam = user != null && user.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var userId = Helpers.GetUserId(User);
+    var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
+    var subscribeToCommentRepliesParam = user != null && galleryUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 
 <div class="text-center">
@@ -32,9 +35,9 @@
             <small class="text-muted">
                 Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a>
                 - Created @ViewData.Model.Created.ToShortDateString()
-                @if (user != null)
+                @if (galleryUser != null)
                 {
-                    <text>- by </text>@user.Name
+                    <text>- by </text>@galleryUser.Name
                 }
                 - @images.Count photos
                 @if (User.IsInRole(Roles.Administrator.ToString()) || User.IsInRole(Roles.Photographer.ToString()))
@@ -91,6 +94,13 @@
         else
         {
             <text><a asp-controller="Home" asp-action="SignIn" asp-route-returnUrl="@Context.Request.Path">Sign-in</a> to leave a comment</text>
+        }
+        
+        @if (userIsSubscribedToCommentReplies)
+        {
+            <div class="info-box mt-2">
+                You're subscribed to this gallery's comments. <a href="javascript:void(0)" data-bind="click:Unsubscribe">Unsubscribe</a>.
+            </div>
         }
 
         <div class="mt-3">
@@ -154,10 +164,12 @@
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
-            // parse the images from a json blob
-            this.Images = ko.observableArray(payload);
+            const self = this;
 
-            this.CreateComment = function ()
+            // parse the images from a json blob
+            self.Images = ko.observableArray(payload);
+
+            self.CreateComment = function ()
             {
                 var comment = $("#comment-postbox").val();
                 var receiveNotifications = $("#get-notifications").prop("checked") === true;
@@ -177,7 +189,7 @@
                     });
             }
 
-            this.DeleteComment = function (commentCreated, commentCreatedByUserId) {
+            self.DeleteComment = function (commentCreated, commentCreatedByUserId) {
                 $.ajax({
                     url: `/api/galleries/comments?categoryId=@Model.CategoryId&galleryId=@Model.Id&commentCreatedTicks=${commentCreated}&commentCreatedByUserId=${commentCreatedByUserId}`,
                     type: 'DELETE'
@@ -189,7 +201,20 @@
                 });
             }
 
-            this.ToggleMoreDescription = function () {
+            self.Unsubscribe = function() {
+                $.ajax({
+                    url: '/api/galleries/comment-subscriptions?categoryId=@Model.CategoryId&galleryId=@Model.Id',
+                    type: 'DELETE'
+                }).done(function () {
+                    // unsubscribed the user, refresh the page to show no sub info
+                    // todo: show a nicer fading prompt instead of refreshing the page
+                    location.reload();
+                }).fail(function(response) {
+                    console.log("something went wrong when unsubscribing from comment notifications: " + response);
+                });
+            }
+
+            self.ToggleMoreDescription = function () {
                 var $subsequentParas = $("#subsequent-paras");
                 if ($subsequentParas.is(":visible")) {
                     $subsequentParas.slideUp();

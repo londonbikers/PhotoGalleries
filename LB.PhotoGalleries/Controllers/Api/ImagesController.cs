@@ -198,6 +198,22 @@ namespace LB.PhotoGalleries.Controllers.Api
             return NoContent();
         }
 
+        [Authorize]
+        [HttpDelete("/api/images/comment-subscriptions")]
+        public async Task<ActionResult> DeleteUserCommentSubscription(string galleryId, string imageId)
+        {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            var userId = Helpers.GetUserId(User);
+            if (image.UserCommentSubscriptions.Contains(userId))
+            {
+                image.UserCommentSubscriptions.Remove(userId);
+                await Server.Instance.Images.UpdateImageAsync(image);
+                return Accepted();
+            }
+
+            return NotFound();
+        }
+
         [HttpPost("/api/images/add-tag")]
         [Authorize(Roles = "Administrator,Photographer")]
         public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
