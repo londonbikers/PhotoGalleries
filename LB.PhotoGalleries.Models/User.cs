@@ -12,7 +12,7 @@ namespace LB.PhotoGalleries.Models
         /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
-        
+
         /// <summary>
         /// The name of the user, how they're displayed on the site.
         /// </summary>
@@ -29,7 +29,7 @@ namespace LB.PhotoGalleries.Models
         /// </summary>
         [DisplayName("Picture URL (Hosted)")]
         public string PictureHostedUrl { get; set; }
-        
+
         /// <summary>
         /// The email address of the user.
         /// </summary>
@@ -41,7 +41,7 @@ namespace LB.PhotoGalleries.Models
         /// </summary>
         [DisplayName("Partition Key")]
         public string PartitionKey { get; set; }
-        
+
         /// <summary>
         /// The date when the user was created on the site.
         /// </summary>
@@ -52,6 +52,8 @@ namespace LB.PhotoGalleries.Models
         /// </summary>
         [DisplayName("Apollo Legacy Id")]
         public string LegacyApolloId { get; set; }
+
+        public CommunicationPreferences CommunicationPreferences { get; }
         #endregion
 
         #region constructors
@@ -59,6 +61,7 @@ namespace LB.PhotoGalleries.Models
         {
             // default value for when the user was created
             Created = DateTime.Now;
+            CommunicationPreferences = new CommunicationPreferences();
         }
         #endregion
 
@@ -79,5 +82,10 @@ namespace LB.PhotoGalleries.Models
             return true;
         }
         #endregion
+    }
+
+    public class CommunicationPreferences
+    {
+        public bool ReceiveCommentNotifications { get; set; }
     }
 }

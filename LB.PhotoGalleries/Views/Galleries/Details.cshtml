@@ -12,6 +12,7 @@
     var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
     var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
+    var subscribeToCommentRepliesParam = user != null && user.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
 }
 
 <div class="text-center">
@@ -73,12 +74,12 @@
                     </div>
                     <div class="row">
                         <div class="col-6 text-left post-box-bottom-row">
-                            @*
-                            <input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
+                            
+                            <input class="form-check-input" type="checkbox" id="get-notifications" @subscribeToCommentRepliesParam>
                             <label class="form-check-label" for="get-notifications">
-                                Get notification of replies
+                                Get notified of replies
                             </label>
-                            *@
+
                         </div>
                         <div class="col-6 text-right">
                             <button type="submit" class="btn btn-primary">Post Comment</button>
@@ -104,6 +105,8 @@
             @foreach (var comment in Model.Comments)
             {
                 var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
+                var commentAnchorId = "c" + comment.Created.Ticks;
+                <a id="@commentAnchorId"></a>
                 <div class="row mb-4 text-left">
                     <div class="col">
                         @if (commentUser.PictureHostedUrl.HasValue())

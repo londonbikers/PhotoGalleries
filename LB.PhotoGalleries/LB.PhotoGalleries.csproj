@@ -15,6 +15,7 @@
     <PackageReference Include="Imageflow.Server" Version="0.5.3" />
     <PackageReference Include="Imageflow.Server.DiskCache" Version="0.5.3" />
     <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.5.3" />
+    <PackageReference Include="Mailjet.Api" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.1.8" />
     <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" />

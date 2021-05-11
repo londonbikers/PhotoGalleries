@@ -43,6 +43,7 @@ namespace LB.PhotoGalleries.Application
         internal Database Database { get; set; }
         internal BlobServiceClient BlobServiceClient { get; set; }
         internal QueueClient ImageProcessingQueueClient { get; set; }
+        internal QueueClient NotificationProcessingQueueClient { get; set; }
         #endregion
 
         #region constructors
@@ -251,13 +252,18 @@ namespace LB.PhotoGalleries.Application
         private async Task InitialiseQueuesAsync()
         {
             ImageProcessingQueueClient = new QueueClient(Configuration["Storage:ConnectionString"], Constants.QueueImagesToProcess);
+            NotificationProcessingQueueClient = new QueueClient(Configuration["Storage:ConnectionString"], Constants.QueueNotificationsToProcess);
 
-            // Create the queue
-            var response = await ImageProcessingQueueClient.CreateIfNotExistsAsync();
-
-            Debug.WriteLine(response != null
-                ? $"Server.InitialiseQueuesAsync: Created {ImageProcessingQueueClient.Name} queue? {response.ReasonPhrase}"
+            // create the queues
+            var imageProcessingQueueResponse = await ImageProcessingQueueClient.CreateIfNotExistsAsync();
+            Debug.WriteLine(imageProcessingQueueResponse != null
+                ? $"Server.InitialiseQueuesAsync: Created {ImageProcessingQueueClient.Name} queue? {imageProcessingQueueResponse.ReasonPhrase}"
                 : $"Server.InitialiseQueuesAsync: {ImageProcessingQueueClient.Name} already exists.");
+
+            var notificationsQueueResponse = await NotificationProcessingQueueClient.CreateIfNotExistsAsync();
+            Debug.WriteLine(notificationsQueueResponse != null
+                ? $"Server.InitialiseQueuesAsync: Created {NotificationProcessingQueueClient.Name} queue? {notificationsQueueResponse.ReasonPhrase}"
+                : $"Server.InitialiseQueuesAsync: {NotificationProcessingQueueClient.Name} already exists.");
         }
         #endregion
     }

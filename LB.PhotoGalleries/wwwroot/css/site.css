@@ -357,3 +357,10 @@ img.image-fade, .image-fade img {
 .mt-75 {
     margin-top: 75px;
 }
+
+.container-light {
+    padding: 10px;
+    background-color: #fafafa;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}

@@ -31,5 +31,10 @@
         /// The name of the Azure Storage message queue we use to post-process images on upload.
         /// </summary>
         public static string QueueImagesToProcess => "images-to-process";
+
+        /// <summary>
+        /// The name of the Azure Storage message queue we use to send notifications.
+        /// </summary>
+        public static string QueueNotificationsToProcess => "notifications-to-process";
     }
 }

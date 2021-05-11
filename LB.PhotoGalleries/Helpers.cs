@@ -1,6 +1,8 @@
-﻿using LB.PhotoGalleries.Models;
+﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -158,6 +160,50 @@ namespace LB.PhotoGalleries
                 return $"/search?q={query}";
             else
                 return $"/search?q={query}&t={searchResultsType.ToString().ToLower()}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of an image.
+        /// </summary>
+        public static string GetFullImageUrl(IConfiguration config, Image image)
+        {
+            var baseUrl = config["BaseUrl"];
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
+            return $"{baseUrl}i/{image.GalleryId}/{image.Id}/{EncodeParamForUrl(image.Name)}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of an image that links to a specific user comment.
+        /// </summary>
+        public static string GetFullImageUrl(IConfiguration config, Image image, DateTime commentCreated)
+        {
+            var imageUrl = GetFullImageUrl(config, image);
+            return $"{imageUrl}#c{commentCreated.Ticks}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of a gallery.
+        /// </summary>
+        public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery)
+        {
+            var baseUrl = config["BaseUrl"];
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
+            var category = Server.Instance.Categories.GetCategory(gallery.CategoryId);
+            var categoryParam = EncodeParamForUrl(category.Name);
+            return $"{baseUrl}g/{categoryParam}/{gallery.Id}/{EncodeParamForUrl(gallery.Name)}";
+        }
+
+        /// <summary>
+        /// Returns the absolute URL of a gallery that links to a specific user comment.
+        /// </summary>
+        public static string GetFullGalleryUrl(IConfiguration config, Gallery gallery, DateTime commentCreated)
+        {
+            var galleryUrl = GetFullGalleryUrl(config, gallery);
+            return $"{galleryUrl}#c{commentCreated.Ticks}";
         }
 
         #region private methods

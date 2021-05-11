@@ -1,11 +1,10 @@
 ﻿using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Controllers.Api
 {
@@ -164,19 +163,12 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (string.IsNullOrEmpty(comment) || string.IsNullOrWhiteSpace(comment))
                 return BadRequest("comment missing");
 
-            // todo: implement comment notifications...
-            //var receiveNotifications = true; 
-            //bool.TryParse(Request.Form["receiveNotifications"], out receiveNotifications);
+            var userId = Helpers.GetUserId(User);
 
-            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            var imageComment = new Comment
-            {
-                CreatedByUserId = Helpers.GetUserId(User),
-                Text = comment.Trim()
-            };
-
-            image.Comments.Add(imageComment);
-            await Server.Instance.Images.UpdateImageAsync(image);
+            // subscribe the user to comment notifications if they've asked to be
+            bool.TryParse(Request.Form["receiveNotifications"], out var receiveNotifications);
+            
+            await Server.Instance.Images.CreateCommentAsync(comment, userId, receiveNotifications, galleryId, imageId);
             return Accepted();
         }
 

@@ -73,6 +73,11 @@ namespace LB.PhotoGalleries.Models
         /// </remarks>
         [DisplayName("Image Count")]
         public int ImageCount { get; set; }
+
+        /// <summary>
+        /// Contains the IDs of users who have subscribed to comment notifications for this gallery.
+        /// </summary>
+        public List<string> UserCommentSubscriptions { get; set; }
         #endregion
 
         #region constructors
@@ -80,6 +85,7 @@ namespace LB.PhotoGalleries.Models
         {
             Comments = new List<Comment>();
             Created = DateTime.Now;
+            UserCommentSubscriptions = new List<string>();
         }
         #endregion
 

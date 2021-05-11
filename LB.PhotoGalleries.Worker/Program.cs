@@ -116,7 +116,7 @@ namespace LB.PhotoGalleries.Worker
                     var messages = await _queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins));
                     if (zeroMessagesCount < 2)
                         _log.Information($"LB.PhotoGalleries.Worker.Program.Main() - Received {messages.Value.Length} messages from the {queueName} queue ");
-                    
+
                     if (messages.Value.Length > 0)
                     {
                         // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
@@ -376,7 +376,7 @@ namespace LB.PhotoGalleries.Worker
 
             var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(gid, new PartitionKey(pk));
             var g = readItemResponse.Resource;
-            
+
             if (g.ThumbnailFiles == null)
             {
                 // get the first image

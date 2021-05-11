@@ -7,6 +7,7 @@
     ViewData["useContainer"] = false;
     var gallery = (Gallery)ViewData["gallery"];
     var category = (Category)ViewData["category"];
+    var user = (User)ViewData["user"];
     var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
     var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
     var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
@@ -16,6 +17,7 @@
     var nextImage = (Image)ViewData["nextImage"];
     var photoLeftColClass = previousImage != null ? "class=\"col pointer\"" : "class=\"col\"";
     var photoRightColClass = nextImage != null ? "class=\"col pointer\"" : "class=\"col\"";
+    var subscribeToCommentRepliesParam = user != null && user.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
 }
 
 <div class="container-max text-center">
@@ -189,12 +191,12 @@
                     </div>
                     <div class="row">
                         <div class="col-6 text-left post-box-bottom-row">
-                            @*
-                                <input class="form-check-input" type="checkbox" id="get-notifications" checked="checked">
-                                <label class="form-check-label" for="get-notifications">
-                                    Get notification of replies
-                                </label>
-                            *@
+                            
+                            <input class="form-check-input" type="checkbox" id="get-notifications" @subscribeToCommentRepliesParam>
+                            <label class="form-check-label" for="get-notifications">
+                                Get notified of replies
+                            </label>
+                            
                         </div>
                         <div class="col-6 text-right">
                             <button type="submit" class="btn btn-primary">Post Comment</button>
@@ -220,6 +222,8 @@
             @foreach (var comment in Model.Comments)
             {
                 var commentUser = await Server.Instance.Users.GetUserAsync(comment.CreatedByUserId);
+                var commentAnchorId = "c" + comment.Created.Ticks;
+                <a id="@commentAnchorId"></a>
                 <div class="row mb-4 text-left">
                     <div class="col">
                         @if (commentUser.PictureHostedUrl.HasValue())

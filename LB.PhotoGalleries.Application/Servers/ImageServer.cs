@@ -512,6 +512,46 @@ namespace LB.PhotoGalleries.Application.Servers
             var id = await GetImageIdByQueryAsync(query);
             return await GetImageAsync(currentImage.GalleryId, id);
         }
+
+        public async Task CreateCommentAsync(string comment, string userId, bool receiveNotifications, string galleryId, string imageId)
+        {
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            var imageComment = new Comment
+            {
+                CreatedByUserId = userId,
+                Text = comment.Trim()
+            };
+
+            image.Comments.Add(imageComment);
+            
+
+            // subscribe the user to comment notifications if they've asked to be
+            if (receiveNotifications)
+            {
+                // create a comment subscription
+                if (!image.UserCommentSubscriptions.Contains(userId))
+                    image.UserCommentSubscriptions.Add(userId);
+
+                // todo: have something async subscribe to new comments and send out notifications as needed
+                // todo: later on limit how many notifications a user gets for a single object
+
+                // add message to queue for notifications
+
+                // notification sender needs to know:
+                // - object id 1 (i.e. gallery id)
+                // - object id 2 (i.e. image id
+                // - object type
+                // - when they commented
+                // i.e. 12,13,image,01/01/2021 18:54:00
+
+                // create the message and send to the Azure Storage notifications queue
+                var message = $"{galleryId}:{imageId}:image:{imageComment.Created.Ticks}";
+                var encodedMessage = Utilities.Base64Encode(message);
+                await Server.Instance.NotificationProcessingQueueClient.SendMessageAsync(encodedMessage);
+            }
+
+            await UpdateImageAsync(image);
+        }
         #endregion
 
         #region admin methods

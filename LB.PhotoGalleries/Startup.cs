@@ -6,6 +6,7 @@ using Imageflow.Server.Storage.AzureBlob;
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Services;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -103,6 +104,8 @@ namespace LB.PhotoGalleries
             // for production we intend on using local Azure App Service storage (d:\local). This is ephemeral but free!
             InitialiseImageFlowDiskCache();
             services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
+
+            services.AddHostedService<NotificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -238,6 +241,7 @@ namespace LB.PhotoGalleries
         /// <summary>
         /// Ensures at least one dimension is specified in image resizing parameters to ensure watermarking can take place.
         /// Not sure why ImageFlow.io requires this, but hey ho.
+        /// </summary>
         private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
         {
             var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
@@ -267,6 +271,9 @@ namespace LB.PhotoGalleries
                     Picture = ctx.Principal.FindFirstValue("picture"),
                     LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
                 };
+
+                // set any defaults
+                user.CommunicationPreferences.ReceiveCommentNotifications = true;
 
                 updateNeeded = true;
             }
