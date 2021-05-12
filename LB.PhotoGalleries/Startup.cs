@@ -9,15 +9,18 @@ using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Services;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
@@ -87,6 +90,22 @@ namespace LB.PhotoGalleries
                 // or update them if claims/attributes change
                 options.Events.OnTicketReceived = async ctx => { await UpdateUserFromClaimsAsync(ctx); };
             });
+
+            // the site can be configured to require a staff role to access the entire site.
+            // this is useful for launching the site or performing emergency maintenance.
+            if (bool.Parse(Configuration["Authentication:CloseSiteToThePublic"]))
+            {
+                services.AddMvc(config =>
+                {
+                    // only allow authenticated users with an staff role
+                    var policy = new AuthorizationPolicyBuilder()
+                        .RequireAuthenticatedUser()
+                        .RequireRole(new List<string> { "Administrator", "Photographer" })
+                        .Build();
+
+                    config.Filters.Add(new AuthorizeFilter(policy));
+                });
+            }
 
             // configure the application tier
             Server.Instance.SetConfigurationAsync(Configuration).Wait();

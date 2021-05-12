@@ -1,5 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -34,6 +35,12 @@ namespace LB.PhotoGalleries.Controllers
             await Server.Instance.Users.CreateOrUpdateUserAsync(user);
             emailPreferencesModel.EmailPreferencesUpdated = true;
             return View(emailPreferencesModel);
+        }
+
+        [AllowAnonymous]
+        public ActionResult AccessDenied()
+        {
+            return View();
         }
     }
 }
