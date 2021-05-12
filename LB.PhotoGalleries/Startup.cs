@@ -64,9 +64,9 @@ namespace LB.PhotoGalleries
             .AddOpenIdConnect("oidc", options =>
             {
                 // idp configuration (implicit grant type)
-                options.Authority = Configuration["Authentication.Authority"];
-                options.ClientId = Configuration["Authentication.ClientId"];
-                options.ClientSecret = Configuration["Authentication.ClientSecret"];
+                options.Authority = Configuration["Authentication:Authority"];
+                options.ClientId = Configuration["Authentication:ClientId"];
+                options.ClientSecret = Configuration["Authentication:ClientSecret"];
 
                 // token and claim configuration
                 options.SaveTokens = true;
