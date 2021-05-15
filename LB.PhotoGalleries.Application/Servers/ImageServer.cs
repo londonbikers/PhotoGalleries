@@ -714,7 +714,7 @@ namespace LB.PhotoGalleries.Application.Servers
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
 
-        private string TidyImageName(string name)
+        private static string TidyImageName(string name)
         {
             name = name.Replace("_", " ");
             name = Regex.Replace(name, " {2,}", " ");
