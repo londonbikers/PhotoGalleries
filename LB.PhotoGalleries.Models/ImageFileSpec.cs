@@ -20,7 +20,7 @@ namespace LB.PhotoGalleries.Models
         /// <summary>
         /// The level of quality the image should be created at (0-100).
         /// </summary>
-        public float Quality { get; set; }
+        public int Quality { get; set; }
 
         /// <summary>
         /// The name of the Azure Blob storage container these files reside in.
@@ -28,7 +28,7 @@ namespace LB.PhotoGalleries.Models
         public string ContainerName { get; set; }
 
         #region constructors
-        public ImageFileSpec(FileSpec fileSpec, int pixelLength, float quality, string containerName)
+        public ImageFileSpec(FileSpec fileSpec, int pixelLength, int quality, string containerName)
         {
             FileSpec = fileSpec;
             PixelLength = pixelLength;
@@ -40,7 +40,7 @@ namespace LB.PhotoGalleries.Models
         #region internal methods
         public string GetStorageId(Image image)
         {
-            return image.Id + ".webp";
+            return image.Id + ".jpg";
         }
         #endregion
     }

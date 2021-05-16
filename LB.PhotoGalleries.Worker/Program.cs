@@ -80,6 +80,7 @@ namespace LB.PhotoGalleries.Worker
                     break;
             }
             loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
+            loggerConfiguration.WriteTo.Console();
             _log = loggerConfiguration.CreateLogger();
 
             try
@@ -312,12 +313,8 @@ namespace LB.PhotoGalleries.Worker
             using (var job = new ImageJob())
             {
                 var result = await job.Decode(originalImage)
-                    //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(41.0f, SharpenWhen.Always).SetResampleFilters(InterpolationFilter.Robidoux, InterpolationFilter.Cubic))
-                    //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(35.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
                     .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(25.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                    //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(10.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                    //.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength)
-                    .EncodeToBytes(new WebPLossyEncoder(imageFileSpec.Quality))
+                    .EncodeToBytes(new MozJpegEncoder(imageFileSpec.Quality, true))
                     .Finish()
                     .SetSecurityOptions(new SecurityOptions()
                         .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
