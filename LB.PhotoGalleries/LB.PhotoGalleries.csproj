@@ -11,7 +11,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.5-rc59" />
+    <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.8-rc62" />
     <PackageReference Include="Imageflow.Server" Version="0.5.3" />
     <PackageReference Include="Imageflow.Server.DiskCache" Version="0.5.3" />
     <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.5.3" />
