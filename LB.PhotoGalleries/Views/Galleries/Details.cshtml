@@ -14,7 +14,7 @@
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
     var userId = Helpers.GetUserId(User);
     var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
-    var subscribeToCommentRepliesParam = user != null && galleryUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var subscribeToCommentRepliesParam = user != null && galleryUser?.CommunicationPreferences != null && galleryUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 

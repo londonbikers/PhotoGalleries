@@ -19,7 +19,7 @@
     var photoRightColClass = nextImage != null ? "class=\"col pointer\"" : "class=\"col\"";
     var userId = Helpers.GetUserId(User);
     var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
-    var subscribeToCommentRepliesParam = user != null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var subscribeToCommentRepliesParam = user != null && imageUser?.CommunicationPreferences!=null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 
