@@ -164,7 +164,7 @@ namespace LB.PhotoGalleries
                     .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 100))
                     .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 100))
                     .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 100)))
-                .SetAllowDiskCaching(true)
+                .SetAllowDiskCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddRewriteHandler("/dio/", EnsureDimensionsAreSpecified)
                 .AddRewriteHandler("/di3840/", EnsureDimensionsAreSpecified)
