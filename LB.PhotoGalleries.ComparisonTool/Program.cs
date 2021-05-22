@@ -58,23 +58,28 @@ namespace LB.PhotoGalleries.ComparisonTool
             // get the list of specifications for images we want to produce and compare with each other
             var specs = ProduceImageFileSpecs();
 
-            foreach (var file in files)
+            Parallel.ForEach(files, file =>
             {
-                Console.WriteLine($"Processing file: {file}...");
-                var fileBytes = await File.ReadAllBytesAsync(file);
+                ProcessInputFileAsync(file, specs, outputPath).GetAwaiter().GetResult();
+            });
 
-                foreach (var spec in specs)
-                {
-                    var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
-                    var filename = $"file-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
-                    var filePath = Path.Combine(outputPath, filename);
-                    Console.WriteLine($"\tCreating image: {filePath}...");
+            //foreach (var file in files)
+            //{
+            //    Console.WriteLine($"Processing file: {file}...");
+            //    var fileBytes = await File.ReadAllBytesAsync(file);
 
-                    await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
-                    await using var fileStream = File.OpenWrite(filePath);
-                    await resizedImageStream.CopyToAsync(fileStream);
-                }
-            }
+            //    foreach (var spec in specs)
+            //    {
+            //        var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+            //        var filename = $"file-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
+            //        var filePath = Path.Combine(outputPath, filename);
+            //        Console.WriteLine($"\tCreating image: {filePath}...");
+
+            //        await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
+            //        await using var fileStream = File.OpenWrite(filePath);
+            //        await resizedImageStream.CopyToAsync(fileStream);
+            //    }
+            //}
 
             stopwatch.Stop();
             Console.WriteLine($"Tool took {stopwatch.Elapsed.Minutes}m {stopwatch.Elapsed.Seconds}s {stopwatch.Elapsed.Milliseconds}ms to complete.");
@@ -171,6 +176,25 @@ namespace LB.PhotoGalleries.ComparisonTool
 
             stopwatch.Stop();
             return null;
+        }
+
+        private static async Task ProcessInputFileAsync(string file, List<ImageFileSpec> specs, string outputPath)
+        {
+            Console.WriteLine($"Processing file: {file}...");
+            var fileBytes = await File.ReadAllBytesAsync(file);
+
+            foreach (var spec in specs)
+            {
+                var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+                var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+                var filename = $"{inputFilenameWithoutExtension}-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
+                var filePath = Path.Combine(outputPath, filename);
+                Console.WriteLine($"\tCreating image: {filePath}...");
+
+                await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
+                await using var fileStream = File.OpenWrite(filePath);
+                await resizedImageStream.CopyToAsync(fileStream);
+            }
         }
     }
 }
