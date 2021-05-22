@@ -134,7 +134,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.WebP, 800, 90, 0f, FileSpec.Spec800.ToString()),
 
 
-
                 // lower quality, higher efficiency, max support
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 50, 0f, FileSpec.Spec1920.ToString()),
                 // low quality, high efficiency, max support
