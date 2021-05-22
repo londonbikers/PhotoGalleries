@@ -12,4 +12,14 @@
         Spec800,
         SpecLowRes
     }
+
+    /// <summary>
+    /// Describes a supported file format.
+    /// </summary>
+    public enum FileSpecFormat
+    {
+        Undefined,
+        Jpeg,
+        WebP
+    }
 }

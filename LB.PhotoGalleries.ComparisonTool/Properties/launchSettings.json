@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LB.PhotoGalleries.ComparisonTool": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"C:\\Temp\\LB Photos Comparison Tool\""
+    }
+  }
+}
