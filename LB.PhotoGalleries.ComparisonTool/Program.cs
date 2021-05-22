@@ -63,24 +63,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 ProcessInputFileAsync(file, specs, outputPath).GetAwaiter().GetResult();
             });
 
-            //foreach (var file in files)
-            //{
-            //    Console.WriteLine($"Processing file: {file}...");
-            //    var fileBytes = await File.ReadAllBytesAsync(file);
-
-            //    foreach (var spec in specs)
-            //    {
-            //        var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
-            //        var filename = $"file-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
-            //        var filePath = Path.Combine(outputPath, filename);
-            //        Console.WriteLine($"\tCreating image: {filePath}...");
-
-            //        await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
-            //        await using var fileStream = File.OpenWrite(filePath);
-            //        await resizedImageStream.CopyToAsync(fileStream);
-            //    }
-            //}
-
             stopwatch.Stop();
             Console.WriteLine($"Tool took {stopwatch.Elapsed.Minutes}m {stopwatch.Elapsed.Seconds}s {stopwatch.Elapsed.Milliseconds}ms to complete.");
         }
@@ -111,14 +93,14 @@ namespace LB.PhotoGalleries.ComparisonTool
                 new ImageFileSpec(FileSpec.Spec3840, FileSpecFormat.Jpeg, 3840, 80, 0f, FileSpec.Spec3840.ToString()),
 
                 // high quality, medium efficiency, max support
-                new ImageFileSpec(FileSpec.SpecLowRes, FileSpecFormat.Jpeg, 400, 75, 0f, FileSpec.SpecLowRes.ToString()),
+                new ImageFileSpec(FileSpec.SpecLowRes, FileSpecFormat.Jpeg, 400, 80, 0f, FileSpec.SpecLowRes.ToString()),
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 90, 0f, FileSpec.Spec800.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 0f, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 90, 0f, FileSpec.Spec2560.ToString()),
                 new ImageFileSpec(FileSpec.Spec3840, FileSpecFormat.Jpeg, 3840, 90, 0f, FileSpec.Spec3840.ToString()),
 
                 // very high quality, low efficiency, max support
-                new ImageFileSpec(FileSpec.SpecLowRes, FileSpecFormat.Jpeg, 400, 75, 0f, FileSpec.SpecLowRes.ToString()),
+                new ImageFileSpec(FileSpec.SpecLowRes, FileSpecFormat.Jpeg, 400, 90, 0f, FileSpec.SpecLowRes.ToString()),
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 100, 0f, FileSpec.Spec800.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 100, 0f, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 100, 0f, FileSpec.Spec2560.ToString()),
@@ -146,7 +128,7 @@ namespace LB.PhotoGalleries.ComparisonTool
                 if (imageFileSpec.SharpeningAmount > 0)
                     resampleHints.SetSharpen(25.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null);
 
-                buildNode = buildNode.ConstrainWithin((uint?) imageFileSpec.PixelLength, (uint?) imageFileSpec.PixelLength, resampleHints);
+                buildNode = buildNode.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, resampleHints);
                 IEncoderPreset encoderPreset;
 
                 if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebP)
@@ -183,22 +165,27 @@ namespace LB.PhotoGalleries.ComparisonTool
             Console.WriteLine($"Processing file: {file}...");
             var fileBytes = await File.ReadAllBytesAsync(file);
 
-            foreach (var spec in specs)
+            // each input file should have it's own folder to make navigation and comparison easier
+            var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+            var inputImageOutputDirectory = Path.Combine(outputPath, inputFilenameWithoutExtension);
+            Directory.CreateDirectory(inputImageOutputDirectory);
+
+            Parallel.ForEach(specs, spec =>
             {
-                var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
-                var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+                ProcessImageFileSpecAsync(fileBytes, spec, inputImageOutputDirectory).GetAwaiter().GetResult();
+            });
+        }
 
+        private static async Task ProcessImageFileSpecAsync(byte[] fileBytes, ImageFileSpec spec, string inputImageOutputDirectory)
+        {
+            var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+            var filename = $"{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
+            var filePath = Path.Combine(inputImageOutputDirectory, filename);
+            Console.WriteLine($"\tCreating image: {filePath}...");
 
-
-
-                var filename = $"{inputFilenameWithoutExtension}-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
-                var filePath = Path.Combine(outputPath, filename);
-                Console.WriteLine($"\tCreating image: {filePath}...");
-
-                await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
-                await using var fileStream = File.OpenWrite(filePath);
-                await resizedImageStream.CopyToAsync(fileStream);
-            }
+            await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
+            await using var fileStream = File.OpenWrite(filePath);
+            await resizedImageStream.CopyToAsync(fileStream);
         }
     }
 }
