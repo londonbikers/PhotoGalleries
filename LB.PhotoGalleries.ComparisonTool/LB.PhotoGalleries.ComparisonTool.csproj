@@ -9,6 +9,7 @@
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.8-rc62" />
     <PackageReference Include="Imageflow.Server" Version="0.5.10" />
+    <PackageReference Include="Spectre.Console" Version="0.39.0" />
   </ItemGroup>
 
   <ItemGroup>

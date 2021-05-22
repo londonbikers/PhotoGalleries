@@ -46,11 +46,14 @@ namespace LB.PhotoGalleries.Models
         }
         #endregion
 
-        #region internal methods
         public string GetStorageId(Image image)
         {
             return image.Id + ".jpg";
         }
-        #endregion
+
+        public override string ToString()
+        {
+            return $"{FileSpec}-{FileSpecFormat}-{PixelLength}px-{Quality}q-{SharpeningAmount}s";
+        }
     }
 }

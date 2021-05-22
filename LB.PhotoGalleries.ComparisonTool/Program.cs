@@ -2,6 +2,7 @@
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +16,10 @@ namespace LB.PhotoGalleries.ComparisonTool
     /// </summary>
     internal class Program
     {
+        #region members
+        private static double OverallProgressIncrementAmount { get; set; }
+        #endregion
+
         public class Options
         {
             [Option('i', "inputpath", Required = true, HelpText = "Where to find input images for processing.")]
@@ -28,6 +33,20 @@ namespace LB.PhotoGalleries.ComparisonTool
             // know where to output generates files to
             // generate a selection of output images using different encoders and settings
 
+            // stats we want:
+            // Images
+            // >>> File Specs
+            //     >>> Generation time
+            //     >>> Byte size
+            // Overall tool run time
+
+            // Input Image
+            // ------------------------------
+            // File Spec | time       | size
+            // ------------------------------
+            // spec3840  | 0m 0s 50ms | 34kb
+            // ------------------------------
+
             var inputPath = string.Empty;
             Parser.Default.ParseArguments<Options>(args).WithParsed(o => { inputPath = o.InputPath; });
 
@@ -38,8 +57,8 @@ namespace LB.PhotoGalleries.ComparisonTool
             }
 
             // start an overall timer
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            var overallStopwatch = new Stopwatch();
+            overallStopwatch.Start();
 
             // get a list of all images in the input folder
             var files = Directory.GetFiles(inputPath, "*.jp*g", SearchOption.TopDirectoryOnly);
@@ -57,14 +76,29 @@ namespace LB.PhotoGalleries.ComparisonTool
 
             // get the list of specifications for images we want to produce and compare with each other
             var specs = ProduceImageFileSpecs();
+            var imagesToGenerate = specs.Count * files.Length;
+            OverallProgressIncrementAmount = 100d / imagesToGenerate;
+            Console.WriteLine($"Generating {imagesToGenerate} images...");
 
-            Parallel.ForEach(files, file =>
+            AnsiConsole.Progress().Start(ctx =>
             {
-                ProcessInputFileAsync(file, specs, outputPath).GetAwaiter().GetResult();
+                // define progress tasks
+                var overallProgress = ctx.AddTask("[green]Generating images[/]");
+
+                Parallel.ForEach(files, file =>
+                {
+                    var table = new Table();
+                    table.AddColumn("Image File Spec");
+                    table.AddColumn("Generation Time (ms)");
+                    table.AddColumn("Byte Size");
+
+                    ProcessInputFileAsync(file, specs, outputPath, table, overallProgress).GetAwaiter().GetResult();
+                    AnsiConsole.Render(table);
+                });
             });
 
-            stopwatch.Stop();
-            Console.WriteLine($"Tool took {stopwatch.Elapsed.Minutes}m {stopwatch.Elapsed.Seconds}s {stopwatch.Elapsed.Milliseconds}ms to complete.");
+            overallStopwatch.Stop();
+            Console.WriteLine($"Tool took {overallStopwatch.Elapsed.Minutes}m {overallStopwatch.Elapsed.Seconds}s {overallStopwatch.Elapsed.Milliseconds}ms to complete.");
         }
 
         private static List<ImageFileSpec> ProduceImageFileSpecs()
@@ -115,10 +149,42 @@ namespace LB.PhotoGalleries.ComparisonTool
             };
         }
 
-        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec)
+        private static async Task ProcessInputFileAsync(string file, IEnumerable<ImageFileSpec> specs, string outputPath, Table table, ProgressTask overallProgress)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            var inputImageStopwatch = new Stopwatch();
+            inputImageStopwatch.Start();
+            var fileBytes = await File.ReadAllBytesAsync(file);
+
+            // each input file should have it's own folder to make navigation and comparison easier
+            var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+            var inputImageOutputDirectory = Path.Combine(outputPath, inputFilenameWithoutExtension);
+            Directory.CreateDirectory(inputImageOutputDirectory);
+
+            Parallel.ForEach(specs, spec =>
+            {
+                ProcessImageFileSpecAsync(fileBytes, spec, inputImageOutputDirectory, table, overallProgress).GetAwaiter().GetResult();
+            });
+
+            inputImageStopwatch.Stop();
+        }
+
+        private static async Task ProcessImageFileSpecAsync(byte[] fileBytes, ImageFileSpec spec, string inputImageOutputDirectory, Table table, ProgressTask overallProgress)
+        {
+            var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+            var filename = $"{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
+            var filePath = Path.Combine(inputImageOutputDirectory, filename);
+
+            await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec, table);
+            await using var fileStream = File.OpenWrite(filePath);
+            await resizedImageStream.CopyToAsync(fileStream);
+
+            overallProgress.Increment(OverallProgressIncrementAmount);
+        }
+
+        private static async Task<Stream> GenerateImageAsync(byte[] originalImage, ImageFileSpec imageFileSpec, Table table)
+        {
+            var individualImageStopwatch = new Stopwatch();
+            individualImageStopwatch.Start();
 
             using (var job = new ImageJob())
             {
@@ -150,42 +216,18 @@ namespace LB.PhotoGalleries.ComparisonTool
                 {
                     var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
-                    stopwatch.Stop();
-                    //_log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
+                    individualImageStopwatch.Stop();
+                    var kb = newImageBytes.Value.Count / 1024;
+                    var size = $"{kb} kb";
+                    table.AddRow(imageFileSpec.ToString(), individualImageStopwatch.ElapsedMilliseconds.ToString(), size);
+
                     return newStream;
                 }
             }
 
-            stopwatch.Stop();
+            individualImageStopwatch.Stop();
+            AnsiConsole.Render(new Markup("[bold red]Something went wrong with an image generation.[/]"));
             return null;
-        }
-
-        private static async Task ProcessInputFileAsync(string file, List<ImageFileSpec> specs, string outputPath)
-        {
-            Console.WriteLine($"Processing file: {file}...");
-            var fileBytes = await File.ReadAllBytesAsync(file);
-
-            // each input file should have it's own folder to make navigation and comparison easier
-            var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
-            var inputImageOutputDirectory = Path.Combine(outputPath, inputFilenameWithoutExtension);
-            Directory.CreateDirectory(inputImageOutputDirectory);
-
-            Parallel.ForEach(specs, spec =>
-            {
-                ProcessImageFileSpecAsync(fileBytes, spec, inputImageOutputDirectory).GetAwaiter().GetResult();
-            });
-        }
-
-        private static async Task ProcessImageFileSpecAsync(byte[] fileBytes, ImageFileSpec spec, string inputImageOutputDirectory)
-        {
-            var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
-            var filename = $"{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
-            var filePath = Path.Combine(inputImageOutputDirectory, filename);
-            Console.WriteLine($"\tCreating image: {filePath}...");
-
-            await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec);
-            await using var fileStream = File.OpenWrite(filePath);
-            await resizedImageStream.CopyToAsync(fileStream);
         }
     }
 }
