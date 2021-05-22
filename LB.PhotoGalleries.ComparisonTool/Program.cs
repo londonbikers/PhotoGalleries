@@ -21,7 +21,7 @@ namespace LB.PhotoGalleries.ComparisonTool
             public string InputPath { get; set; }
         }
 
-        private static async Task Main(string[] args)
+        private static void Main(string[] args)
         {
             // needs to:
             // know where to find source files
@@ -48,7 +48,7 @@ namespace LB.PhotoGalleries.ComparisonTool
                 Console.WriteLine($"Input path \"{inputPath}\" doesn't contain any jpg/jpeg files. Cannot continue.");
                 return;
             }
-            
+
             // create the output folder if necessary
             // under this we will create a timestamped folder for each run of the program to allow for comparisons over time
             var outputPath = Path.Combine(inputPath, "output", DateTime.Now.Ticks.ToString());
@@ -187,6 +187,10 @@ namespace LB.PhotoGalleries.ComparisonTool
             {
                 var inputFilenameWithoutExtension = Path.GetFileNameWithoutExtension(file);
                 var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
+
+
+
+
                 var filename = $"{inputFilenameWithoutExtension}-{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
                 var filePath = Path.Combine(outputPath, filename);
                 Console.WriteLine($"\tCreating image: {filePath}...");
