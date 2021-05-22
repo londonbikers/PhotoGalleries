@@ -203,7 +203,7 @@ namespace LB.PhotoGalleries.ComparisonTool
         private static async Task ProcessImageFileSpecAsync(byte[] fileBytes, ImageFileSpec spec, string inputImageOutputDirectory, Table table, ProgressTask overallProgress)
         {
             var extension = spec.FileSpecFormat == FileSpecFormat.Jpeg ? "jpg" : "webp";
-            var filename = $"{spec.PixelLength}pl-{spec.Quality}q-{spec.SharpeningAmount}s.{extension}";
+            var filename = $"{spec}.{extension}";
             var filePath = Path.Combine(inputImageOutputDirectory, filename);
 
             await using var resizedImageStream = await GenerateImageAsync(fileBytes, spec, table);
