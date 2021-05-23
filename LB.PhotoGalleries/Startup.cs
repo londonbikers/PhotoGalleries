@@ -250,7 +250,6 @@ namespace LB.PhotoGalleries
                 return;
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
-            //var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
             const int watermarkSizeAsPercent = 12;
 
             args.AppliedWatermarks.Add(
