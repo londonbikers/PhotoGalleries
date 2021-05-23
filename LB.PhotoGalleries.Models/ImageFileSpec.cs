@@ -16,7 +16,7 @@ namespace LB.PhotoGalleries.Models
         /// <summary>
         /// The length in pixels along the longest side of the image.
         /// </summary>
-        public int PixelLength { get; set; }
+        public uint PixelLength { get; set; }
 
         /// <summary>
         /// The level of quality the image should be created at (0-100).
@@ -51,7 +51,7 @@ namespace LB.PhotoGalleries.Models
             InterpolationFilter = InterpolationFilter.Robidoux;
         }
 
-        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, int pixelLength, int quality, string containerName)
+        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, uint pixelLength, int quality, string containerName)
         {
             FileSpec = fileSpec;
             FileSpecFormat = fileSpecFormat;
@@ -61,7 +61,7 @@ namespace LB.PhotoGalleries.Models
             ContainerName = containerName;
         }
 
-        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, int pixelLength, int quality, float sharpeningAmount, InterpolationFilter interpolationFilter, string containerName)
+        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, uint pixelLength, int quality, float sharpeningAmount, InterpolationFilter interpolationFilter, string containerName)
         {
             FileSpec = fileSpec;
             FileSpecFormat = fileSpecFormat;
