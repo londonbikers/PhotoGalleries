@@ -23,7 +23,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 // high quality, high efficiency, lower support
                 new ImageFileSpec(FileSpec.SpecLowRes, FileSpecFormat.WebP, 400, 75, FileSpec.SpecLowRes.ToString()),
 
-
                 // lower quality, higher efficiency, max support
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 50, FileSpec.Spec800.ToString()),
                 // low quality, high efficiency, max support
@@ -36,7 +35,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 100, FileSpec.Spec800.ToString()),
                 // high quality, high efficiency, lower support
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.WebP, 800, 90, FileSpec.Spec800.ToString()),
-
 
                 // lower quality, higher efficiency, max support
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 50, FileSpec.Spec1920.ToString()),
@@ -51,7 +49,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 // high quality, high efficiency, lower support
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.WebP, 1920, 90, FileSpec.Spec1920.ToString()),
 
-
                 // lower quality, higher efficiency, max support
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 50, FileSpec.Spec2560.ToString()),
                 // low quality, high efficiency, max support
@@ -64,7 +61,6 @@ namespace LB.PhotoGalleries.ComparisonTool
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 100, FileSpec.Spec2560.ToString()),
                 // high quality, high efficiency, lower support
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.WebP, 2560, 90, FileSpec.Spec2560.ToString()),
-
 
                 // lower quality, higher efficiency, max support
                 new ImageFileSpec(FileSpec.Spec3840, FileSpecFormat.Jpeg, 3840, 50, FileSpec.Spec3840.ToString()),
