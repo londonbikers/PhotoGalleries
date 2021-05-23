@@ -1,4 +1,5 @@
-﻿using LB.PhotoGalleries.Models.Enums;
+﻿using Imageflow.Fluent;
+using LB.PhotoGalleries.Models.Enums;
 
 namespace LB.PhotoGalleries.Models
 {
@@ -30,18 +31,44 @@ namespace LB.PhotoGalleries.Models
         public float SharpeningAmount { get; set; }
 
         /// <summary>
+        /// The filter to use when sharpening images.
+        /// </summary>
+        public InterpolationFilter InterpolationFilter { get; set; }
+
+        /// <summary>
         /// The name of the Azure Blob storage container these files reside in.
         /// </summary>
         public string ContainerName { get; set; }
 
         #region constructors
-        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, int pixelLength, int quality, float sharpeningAmount, string containerName)
+        public ImageFileSpec(FileSpec fileSpec, string containerName)
+        {
+            FileSpec = fileSpec;
+            ContainerName = containerName;
+            FileSpecFormat = FileSpecFormat.Undefined;
+            
+            // this will never be used for this simple constructor, it's just that a valid is needed.
+            InterpolationFilter = InterpolationFilter.Robidoux;
+        }
+
+        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, int pixelLength, int quality, string containerName)
+        {
+            FileSpec = fileSpec;
+            FileSpecFormat = fileSpecFormat;
+            PixelLength = pixelLength;
+            Quality = quality;
+            InterpolationFilter = InterpolationFilter.Robidoux;
+            ContainerName = containerName;
+        }
+
+        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, int pixelLength, int quality, float sharpeningAmount, InterpolationFilter interpolationFilter, string containerName)
         {
             FileSpec = fileSpec;
             FileSpecFormat = fileSpecFormat;
             PixelLength = pixelLength;
             Quality = quality;
             SharpeningAmount = sharpeningAmount;
+            InterpolationFilter = interpolationFilter;
             ContainerName = containerName;
         }
         #endregion
