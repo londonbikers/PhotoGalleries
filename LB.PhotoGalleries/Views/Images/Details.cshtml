@@ -332,7 +332,7 @@
 
     <script language="javascript">
 
-        function GetImageUrl(image, imageContainerWidth, imageContainerHeight) {
+        function GetImageSrc(image, imageContainerWidth, imageContainerHeight) {
             const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
 
             // choose an appropriate ImageFileSpec for scaled dimensions:
@@ -427,7 +427,7 @@
                 imgTag.src = img.src;
             };
 
-            imgTag.src = GetImageUrl(image, imageContainerWidth, imageContainerHeight);
+            imgTag.src = GetImageSrc(image, imageContainerWidth, imageContainerHeight);
         }
 
         // the view model that KnockoutJS uses to bind data and events to the html
