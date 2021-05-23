@@ -18,10 +18,10 @@ jobs:
         dotnet-version: '3.1.x'
 
     - name: Build with dotnet
-      run: dotnet build --configuration Release
+      run: dotnet build LB.PhotoGalleries/LB.PhotoGalleries.csproj --configuration Release
 
     - name: dotnet Publish
-      run: dotnet publish --configuration Release
+      run: dotnet publish LB.PhotoGalleries/LB.PhotoGalleries.csproj --configuration Release
       
     - name: Remove server specific config files
       run: sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/appsettings*
