@@ -76,9 +76,11 @@ namespace LB.PhotoGalleries.ComparisonTool
 
             // get the list of specifications for images we want to produce and compare with each other
             //var specs = ImageFileSpecsTestingQuality.ProduceImageFileSpecs();
-            //var specs = ImageFileSpecsTestingSharpness.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTestingSharpnessWithRobidoux.ProduceImageFileSpecs();
+            var specs = ImageFileSpecsTestingSharpnessWithMitchell.ProduceImageFileSpecs();
             //var specs = ImageFileSpecsTesting20s.ProduceImageFileSpecs();
-            var specs = ImageFileSpecsTesting10s.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTesting10s.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTesting5s.ProduceImageFileSpecs();
 
             var imagesToGenerate = specs.Count * files.Length;
             OverallProgressIncrementAmount = 100d / imagesToGenerate;
@@ -105,8 +107,6 @@ namespace LB.PhotoGalleries.ComparisonTool
             overallStopwatch.Stop();
             Console.WriteLine($"Tool took {overallStopwatch.Elapsed.Minutes}m {overallStopwatch.Elapsed.Seconds}s {overallStopwatch.Elapsed.Milliseconds}ms to complete.");
         }
-
-        
 
         private static async Task ProcessInputFileAsync(string file, IEnumerable<ImageFileSpec> specs, string outputPath, Table table, ProgressTask overallProgress)
         {
@@ -154,7 +154,7 @@ namespace LB.PhotoGalleries.ComparisonTool
                 var resampleHints = new ResampleHints();
 
                 if (imageFileSpec.SharpeningAmount > 0)
-                    resampleHints.SetSharpen(25.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null);
+                    resampleHints.SetSharpen(imageFileSpec.SharpeningAmount, SharpenWhen.Downscaling).SetResampleFilters(imageFileSpec.InterpolationFilter, null);
 
                 buildNode = buildNode.ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, resampleHints);
                 IEncoderPreset encoderPreset;
