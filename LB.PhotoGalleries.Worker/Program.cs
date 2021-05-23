@@ -312,9 +312,24 @@ namespace LB.PhotoGalleries.Worker
 
             using (var job = new ImageJob())
             {
-                var result = await job.Decode(originalImage)
-                    .ConstrainWithin((uint?)imageFileSpec.PixelLength, (uint?)imageFileSpec.PixelLength, new ResampleHints().SetSharpen(25.0f, SharpenWhen.Downscaling).SetResampleFilters(InterpolationFilter.Robidoux, null))
-                    .EncodeToBytes(new MozJpegEncoder(imageFileSpec.Quality, true))
+                var buildNode = job.Decode(originalImage);
+                var resampleHints = new ResampleHints();
+
+                if (imageFileSpec.FileSpecFormat != FileSpecFormat.WebPLossless && imageFileSpec.SharpeningAmount > 0)
+                    resampleHints.SetSharpen(imageFileSpec.SharpeningAmount, SharpenWhen.Downscaling).SetResampleFilters(imageFileSpec.InterpolationFilter, null);
+
+                buildNode = buildNode.ConstrainWithin(imageFileSpec.PixelLength, imageFileSpec.PixelLength, resampleHints);
+                IEncoderPreset encoderPreset;
+
+                if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebPLossless)
+                    encoderPreset = new WebPLosslessEncoder();
+                else if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebPLossy)
+                    encoderPreset = new WebPLossyEncoder(imageFileSpec.Quality);
+                else
+                    encoderPreset = new MozJpegEncoder(imageFileSpec.Quality, true);
+
+                var result = await buildNode
+                    .EncodeToBytes(encoderPreset)
                     .Finish()
                     .SetSecurityOptions(new SecurityOptions()
                         .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
