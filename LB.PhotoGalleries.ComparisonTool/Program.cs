@@ -155,7 +155,7 @@ namespace LB.PhotoGalleries.ComparisonTool
                 var buildNode = job.Decode(originalImage);
                 var resampleHints = new ResampleHints();
 
-                if (imageFileSpec.FileSpecFormat == FileSpecFormat.Jpeg && imageFileSpec.SharpeningAmount > 0)
+                if (imageFileSpec.FileSpecFormat != FileSpecFormat.WebPLossless && imageFileSpec.SharpeningAmount > 0)
                     resampleHints.SetSharpen(imageFileSpec.SharpeningAmount, SharpenWhen.Downscaling).SetResampleFilters(imageFileSpec.InterpolationFilter, null);
 
                 buildNode = buildNode.ConstrainWithin(imageFileSpec.PixelLength, imageFileSpec.PixelLength, resampleHints);
