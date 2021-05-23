@@ -51,6 +51,15 @@ namespace LB.PhotoGalleries.Models
             InterpolationFilter = InterpolationFilter.Robidoux;
         }
 
+        public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, uint pixelLength, string containerName)
+        {
+            FileSpec = fileSpec;
+            FileSpecFormat = fileSpecFormat;
+            PixelLength = pixelLength;
+            InterpolationFilter = InterpolationFilter.Robidoux;
+            ContainerName = containerName;
+        }
+
         public ImageFileSpec(FileSpec fileSpec, FileSpecFormat fileSpecFormat, uint pixelLength, int quality, string containerName)
         {
             FileSpec = fileSpec;
@@ -80,6 +89,9 @@ namespace LB.PhotoGalleries.Models
 
         public override string ToString()
         {
+            if (FileSpecFormat == FileSpecFormat.WebPLossless)
+                return $"{FileSpec}-{FileSpecFormat}-{PixelLength}px";
+
             return $"{FileSpec}-{FileSpecFormat}-{PixelLength}px-{Quality}q-{SharpeningAmount}s";
         }
     }

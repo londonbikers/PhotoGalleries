@@ -78,9 +78,10 @@ namespace LB.PhotoGalleries.ComparisonTool
             //var specs = ImageFileSpecsTestingQuality.ProduceImageFileSpecs();
             //var specs = ImageFileSpecsTestingSharpnessWithRobidoux.ProduceImageFileSpecs();
             //var specs = ImageFileSpecsTestingSharpnessWithMitchell.ProduceImageFileSpecs();
-            //var specs = ImageFileSpecsTesting20s.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTesting05s.ProduceImageFileSpecs();
             //var specs = ImageFileSpecsTesting10s.ProduceImageFileSpecs();
-            //var specs = ImageFileSpecsTesting5s.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTesting15s.ProduceImageFileSpecs();
+            //var specs = ImageFileSpecsTesting20s.ProduceImageFileSpecs();
             var specs = ImageFileSpecsTestingFormats.ProduceImageFileSpecs();
 
             var imagesToGenerate = specs.Count * files.Length;
@@ -154,14 +155,16 @@ namespace LB.PhotoGalleries.ComparisonTool
                 var buildNode = job.Decode(originalImage);
                 var resampleHints = new ResampleHints();
 
-                if (imageFileSpec.SharpeningAmount > 0)
+                if (imageFileSpec.FileSpecFormat == FileSpecFormat.Jpeg && imageFileSpec.SharpeningAmount > 0)
                     resampleHints.SetSharpen(imageFileSpec.SharpeningAmount, SharpenWhen.Downscaling).SetResampleFilters(imageFileSpec.InterpolationFilter, null);
 
                 buildNode = buildNode.ConstrainWithin(imageFileSpec.PixelLength, imageFileSpec.PixelLength, resampleHints);
                 IEncoderPreset encoderPreset;
 
-                if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebP)
+                if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebPLossless)
                     encoderPreset = new WebPLosslessEncoder();
+                else if (imageFileSpec.FileSpecFormat == FileSpecFormat.WebPLossy)
+                    encoderPreset = new WebPLossyEncoder(imageFileSpec.Quality);
                 else
                     encoderPreset = new MozJpegEncoder(imageFileSpec.Quality, true);
 

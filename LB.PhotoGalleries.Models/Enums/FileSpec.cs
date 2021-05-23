@@ -20,6 +20,7 @@
     {
         Undefined,
         Jpeg,
-        WebP
+        WebPLossless,
+        WebPLossy
     }
 }

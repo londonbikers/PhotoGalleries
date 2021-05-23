@@ -25,14 +25,12 @@ namespace LB.PhotoGalleries.ComparisonTool
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 90, 25f, InterpolationFilter.Mitchell, FileSpec.Spec800.ToString()),
                 new ImageFileSpec(FileSpec.Spec800, FileSpecFormat.Jpeg, 800, 90, 50f, InterpolationFilter.Mitchell, FileSpec.Spec800.ToString()),
 
-
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 10f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 15f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 20f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 25f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString()),
                 new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.Jpeg, 1920, 90, 50f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString()),
-
 
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 90, FileSpec.Spec2560.ToString()),
                 new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.Jpeg, 2560, 90, 10f, InterpolationFilter.Mitchell, FileSpec.Spec2560.ToString()),
