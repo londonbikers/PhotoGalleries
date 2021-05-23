@@ -251,7 +251,7 @@ namespace LB.PhotoGalleries
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
             //var watermarkSizeAsPercent = size.Width > size.Height ? 12 : 25;
-            var watermarkSizeAsPercent = 12;
+            const int watermarkSizeAsPercent = 12;
 
             args.AppliedWatermarks.Add(
                 new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
