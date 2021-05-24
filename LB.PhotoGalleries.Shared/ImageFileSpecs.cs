@@ -10,6 +10,7 @@ namespace LB.PhotoGalleries.Shared
     {
         public static List<ImageFileSpec> Specs => new List<ImageFileSpec>
         {
+            new ImageFileSpec(FileSpec.SpecOriginal, "originals"),
             new ImageFileSpec(FileSpec.Spec3840, FileSpecFormat.WebPLossy, 3840, 80, 25f, InterpolationFilter.Mitchell, FileSpec.Spec3840.ToString().ToLower()),
             new ImageFileSpec(FileSpec.Spec2560, FileSpecFormat.WebPLossy, 2560, 80, 25f, InterpolationFilter.Mitchell, FileSpec.Spec2560.ToString().ToLower()),
             new ImageFileSpec(FileSpec.Spec1920, FileSpecFormat.WebPLossy, 1920, 80, 25f, InterpolationFilter.Mitchell, FileSpec.Spec1920.ToString().ToLower()),
