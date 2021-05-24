@@ -396,7 +396,7 @@
 
             vm.DeletePreGenImages = function() {
                 console.log('DeletePreGenImages()');
-                $.post('/api/images/delete-pregen-image-files?galleryId=@Model.Id')
+                $.post('/api/images/delete-pregen-image-files?categoryId=@Model.CategoryId&galleryId=@Model.Id')
                     .done(function(responses) {
                         console.log("DeletePreGenImages(): done");
                         console.log(responses);

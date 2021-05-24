@@ -146,12 +146,15 @@ namespace LB.PhotoGalleries.Controllers.Api
 
         [HttpPost("/api/images/delete-pregen-image-files")]
         [Authorize(Roles = "Administrator")]
-        public async Task<ActionResult> DeletePreGenImageFiles(string galleryId)
+        public async Task<ActionResult> DeletePreGenImageFiles(string categoryId, string galleryId)
         {
+            if (string.IsNullOrEmpty(categoryId))
+                return BadRequest("categoryId value missing");
+
             if (string.IsNullOrEmpty(galleryId))
                 return BadRequest("galleryId value missing");
 
-            await Server.Instance.Images.DeletePreGenImageFilesAsync(galleryId);
+            await Server.Instance.Images.DeletePreGenImageFilesAsync(categoryId, galleryId);
             return Ok();
         }
 

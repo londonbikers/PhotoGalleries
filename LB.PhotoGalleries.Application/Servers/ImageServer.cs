@@ -572,11 +572,17 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Deletes all pre-generated image files and updates the image object.
         /// </summary>
-        public async Task DeletePreGenImageFilesAsync(string galleryId)
+        public async Task DeletePreGenImageFilesAsync(string categoryId, string galleryId)
         {
+            // delete the files
             var images = await GetGalleryImagesAsync(galleryId);
             var tasks = images.Select(HandleDeletePreGenImagesAsync).ToList();
             await Task.WhenAll(tasks);
+
+            // clear the gallery thumbnails references
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            gallery.ThumbnailFiles = null;
+            await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
         }
         #endregion
 
