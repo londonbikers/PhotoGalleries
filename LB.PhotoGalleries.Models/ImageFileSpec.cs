@@ -84,7 +84,10 @@ namespace LB.PhotoGalleries.Models
 
         public string GetStorageId(Image image)
         {
-            return image.Id + ".jpg";
+            if (FileSpecFormat == FileSpecFormat.Jpeg)
+                return image.Id + ".jpg";
+            
+            return image.Id + ".webp";
         }
 
         public override string ToString()

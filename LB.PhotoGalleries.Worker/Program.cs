@@ -39,8 +39,6 @@ namespace LB.PhotoGalleries.Worker
 
         private static async Task Main(string[] args)
         {
-            Console.WriteLine("Starting worker...");
-
             if (args == null || args.Length == 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -82,6 +80,8 @@ namespace LB.PhotoGalleries.Worker
             loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
             loggerConfiguration.WriteTo.Console();
             _log = loggerConfiguration.CreateLogger();
+            _log.Information("Starting worker...");
+
 
             try
             {
@@ -343,7 +343,7 @@ namespace LB.PhotoGalleries.Worker
                     var newStream = new MemoryStream(newImageBytes.Value.ToArray());
 
                     stopwatch.Stop();
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec.FileSpec} done. Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.GenerateImageAsync() - Image {image.Id} and spec {imageFileSpec} done. Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
                     return newStream;
                 }
             }
@@ -391,9 +391,10 @@ namespace LB.PhotoGalleries.Worker
 
             if (g.ThumbnailFiles == null)
             {
-                // get the first image
+                // get the first image:
                 // try and get where position = 0 first
                 // if no results, then get where date created is earliest
+                // check if the files have been generated, if not then exit and wait until this is run as part of another batch of messages
 
                 var query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId AND i.Position = 0";
                 var queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", g.Id);
@@ -407,6 +408,14 @@ namespace LB.PhotoGalleries.Worker
 
                     foreach (var item in queryResponse.Resource)
                     {
+                        if (string.IsNullOrEmpty(item.Files.SpecLowResId))
+                        {
+                            // this image should be the thumbnail, but it hasn't had it's image files processed yet, so exit for now
+                            // and we'll pick it up in a subsequent message batch processing hopefully.
+                            _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Thumbnail image found, but it hasn't been processed yet, skipping for now. GalleryId: {gid}");
+                            return;
+                        }
+
                         imageFiles = item.Files;
                         _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gid}");
                         break;
@@ -416,7 +425,7 @@ namespace LB.PhotoGalleries.Worker
                 if (imageFiles == null)
                 {
                     // no position value set on images, get first image created
-                    query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId ORDER BY i.Created";
+                    query = "SELECT TOP 1 * FROM i WHERE i.GalleryId = @galleryId AND NOT IS_NULL(i.Files.SpecLowResId) ORDER BY i.Created";
                     queryDefinition = new QueryDefinition(query).WithParameter("@galleryId", g.Id);
                     queryResult = _imagesContainer.GetItemQueryIterator<Image>(queryDefinition);
 
@@ -436,7 +445,7 @@ namespace LB.PhotoGalleries.Worker
 
                 if (imageFiles == null)
                 {
-                    _log.Error($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Couldn't retrieve first image in gallery. imageFiles is null. GalleryID: {g.Id}");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Couldn't retrieve first image in gallery. imageFiles is null. GalleryID: {g.Id}");
                     return;
                 }
 
