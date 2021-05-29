@@ -123,3 +123,41 @@ function TagsCsvContains(tags, tag) {
     const array = tags.split(",");
     return array.includes(tag);
 }
+
+function DoesBrowserSupportWebP() {
+    console.log("DoesBrowserSupportWebP()");
+    const elem = document.createElement('canvas');
+
+    if (!!(elem.getContext && elem.getContext('2d'))) {
+        // was able or not to get WebP representation
+        return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
+    }
+    else {
+        // very old browser like IE 8, canvas not supported
+        return false;
+    }
+}
+
+$(document).ready(function () {
+
+    // work out if the browser supports WebP
+    var webpTested = false;
+    var webpSupported = false;
+
+    if (sessionStorage) {
+        const sessionItem = sessionStorage.getItem('webpsupport');
+        if (sessionItem != undefined) {
+            console.log("got webpsupport session item: " + sessionItem);
+            webpTested = true;
+            webpSupported = sessionItem;
+        }
+    }
+
+    if (!webpTested) {
+        webpSupported = DoesBrowserSupportWebP();
+        sessionStorage.setItem('webpsupport', webpSupported);
+    }
+
+    console.log("webpSupported: " + webpSupported);
+
+});
