@@ -82,7 +82,7 @@ function GetImageThumbnailUrl(files, element) {
     const cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
     const scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
     const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
-    const doesBrowserSupportWebP = DoesBrowserSupportWebP();
+    const doesBrowserSupportWebP = Boolean(DoesBrowserSupportWebP());
 
     console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 

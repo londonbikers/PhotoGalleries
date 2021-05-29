@@ -334,7 +334,7 @@
 
         function GetImageSrc(image, imageContainerWidth, imageContainerHeight) {
             const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
-            const doesBrowserSupportWebP = DoesBrowserSupportWebP();
+            const doesBrowserSupportWebP = Boolean(DoesBrowserSupportWebP());
             console.log(`page: doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
             // our pre-generated images use the WebP format. Some old browsers don't support
