@@ -11,7 +11,7 @@ function DoesBrowserSupportWebP() {
         if (sessionItem != undefined) {
             //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
             webpTested = true;
-            webpSupported = sessionItem;
+            webpSupported = (sessionItem === "true");
         }
     }
 
@@ -29,7 +29,7 @@ function DoesBrowserSupportWebP() {
     }
 
     console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
-    return webpSupported ? 1 : 0;
+    return webpSupported;
 }
 
 // aggressively encodes a piece of text to be placed into a URL.
@@ -89,7 +89,7 @@ function GetImageThumbnailUrl(files, element) {
 
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
-    if (doesBrowserSupportWebP === 0) {
+    if (doesBrowserSupportWebP === false) {
         console.log("GetImageThumbnailUrl(): returning first dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
