@@ -29,7 +29,7 @@ function DoesBrowserSupportWebP() {
     }
 
     console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
-    return webpSupported;
+    return webpSupported ? 1 : 0;
 }
 
 // aggressively encodes a piece of text to be placed into a URL.
@@ -82,13 +82,14 @@ function GetImageThumbnailUrl(files, element) {
     const cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
     const scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
     const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
-    const doesBrowserSupportWebP = Boolean(DoesBrowserSupportWebP());
+    const doesBrowserSupportWebP = DoesBrowserSupportWebP();
 
+    console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP type: ${typeof (doesBrowserSupportWebP)}`);
     console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
-    if (doesBrowserSupportWebP === false) {
+    if (doesBrowserSupportWebP === 0) {
         console.log("GetImageThumbnailUrl(): returning first dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
