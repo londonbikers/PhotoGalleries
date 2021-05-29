@@ -98,7 +98,6 @@ function GetBackgroundImage(image) {
 }
 
 function AddTagToCsv(tags, tag) {
-
     if (tags === undefined || tags === null || tags.length === 0)
         return tag;
 
