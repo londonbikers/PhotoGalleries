@@ -1,5 +1,5 @@
 ﻿function ImageModel(data) {
-    var self = this;
+    const self = this;
     self.Id = data.Id;
     self.GalleryId = data.GalleryId;
     self.Name = ko.observable(data.Name);
