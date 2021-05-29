@@ -86,14 +86,20 @@ function GetImageThumbnailUrl(files, element) {
 
     console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
+    // our pre-generated images use the WebP format. Some old browsers don't support
+    // this, so for these, just return the original image as a fall-back.
+    if (!doesBrowserSupportWebP) {
+        return `/dio/${image.Files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}`;
+    }
+
     // choose ImageFileSpec for scaled dimensions
-    if (doesBrowserSupportWebP && scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
+    if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
         return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (doesBrowserSupportWebP && scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
+    } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
         return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (doesBrowserSupportWebP && scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
+    } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
         return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (doesBrowserSupportWebP && scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
+    } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
         return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else {
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
