@@ -89,7 +89,7 @@ function GetImageThumbnailUrl(files, element) {
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
     if (!doesBrowserSupportWebP) {
-        return `/dio/${image.Files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}`;
+        return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 
     // choose ImageFileSpec for scaled dimensions
