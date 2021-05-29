@@ -51,15 +51,16 @@ function GetImageThumbnailUrl(files, element) {
     const cardInnerHeight = Math.round(cardInnerWidth / 1.52); // 1.52 is the ratio of height to width we'd like to show the image at
     const scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
     const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
+    const doesBrowserSupportWebP = DoesBrowserSupportWebP();
 
     // choose ImageFileSpec for scaled dimensions
-    if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
+    if (doesBrowserSupportWebP && scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
         return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
+    } else if (doesBrowserSupportWebP && scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
         return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
+    } else if (doesBrowserSupportWebP && scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
         return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
-    } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
+    } else if (doesBrowserSupportWebP && scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
         return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else {
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
@@ -126,38 +127,31 @@ function TagsCsvContains(tags, tag) {
 
 function DoesBrowserSupportWebP() {
     console.log("DoesBrowserSupportWebP()");
-    const elem = document.createElement('canvas');
-
-    if (!!(elem.getContext && elem.getContext('2d'))) {
-        // was able or not to get WebP representation
-        return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
-    }
-    else {
-        // very old browser like IE 8, canvas not supported
-        return false;
-    }
-}
-
-$(document).ready(function () {
-
-    // work out if the browser supports WebP
     var webpTested = false;
     var webpSupported = false;
 
     if (sessionStorage) {
-        const sessionItem = sessionStorage.getItem('webpsupport');
+        const sessionItem = sessionStorage.getItem("webpsupport");
         if (sessionItem != undefined) {
-            console.log("got webpsupport session item: " + sessionItem);
+            //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
             webpTested = true;
             webpSupported = sessionItem;
         }
     }
 
     if (!webpTested) {
-        webpSupported = DoesBrowserSupportWebP();
-        sessionStorage.setItem('webpsupport', webpSupported);
+        const elem = document.createElement("canvas");
+        if (!!(elem.getContext && elem.getContext("2d"))) {
+            // was able or not to get WebP representation
+            webpSupported = elem.toDataURL("image/webp").indexOf("data:image/webp") === 0;
+        } else {
+            // very old browser like IE 8, canvas not supported
+            webpSupported = false;
+        }
+
+        sessionStorage.setItem("webpsupport", webpSupported);
     }
 
-    console.log("webpSupported: " + webpSupported);
-
-});
+    //console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
+    return webpSupported;
+}

@@ -51,7 +51,6 @@
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
     <script type="text/javascript">
-
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @Html.Raw(JsonConvert.SerializeObject(galleries.Select(g => new
