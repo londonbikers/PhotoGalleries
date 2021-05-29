@@ -335,6 +335,7 @@
         function GetImageSrc(image, imageContainerWidth, imageContainerHeight) {
             const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
             const doesBrowserSupportWebP = DoesBrowserSupportWebP();
+            console.log(`page: doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
             // choose an appropriate ImageFileSpec for scaled dimensions:
             // find first available image spec that is larger than scaled dims

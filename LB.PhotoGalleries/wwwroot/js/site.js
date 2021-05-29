@@ -1,6 +1,37 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
+function DoesBrowserSupportWebP() {
+    //console.log("DoesBrowserSupportWebP()");
+    var webpTested = false;
+    var webpSupported = false;
+
+    if (sessionStorage) {
+        const sessionItem = sessionStorage.getItem("webpsupport");
+        if (sessionItem != undefined) {
+            //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
+            webpTested = true;
+            webpSupported = sessionItem;
+        }
+    }
+
+    if (!webpTested) {
+        const elem = document.createElement("canvas");
+        if (!!(elem.getContext && elem.getContext("2d"))) {
+            // was able or not to get WebP representation
+            webpSupported = elem.toDataURL("image/webp").indexOf("data:image/webp") === 0;
+        } else {
+            // very old browser like IE 8, canvas not supported
+            webpSupported = false;
+        }
+
+        sessionStorage.setItem("webpsupport", webpSupported);
+    }
+
+    console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
+    return webpSupported;
+}
+
 // aggressively encodes a piece of text to be placed into a URL.
 // is not guaranteed to be reversible so best used just for aesthetic reasons.
 function EncodeParamForUrl(parameter)
@@ -52,6 +83,8 @@ function GetImageThumbnailUrl(files, element) {
     const scaledWidth = Math.round(cardInnerWidth * window.devicePixelRatio);
     const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
     const doesBrowserSupportWebP = DoesBrowserSupportWebP();
+
+    console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
     // choose ImageFileSpec for scaled dimensions
     if (doesBrowserSupportWebP && scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
@@ -123,35 +156,4 @@ function RemoveTagFromCsv(tags, tag) {
 function TagsCsvContains(tags, tag) {
     const array = tags.split(",");
     return array.includes(tag);
-}
-
-function DoesBrowserSupportWebP() {
-    console.log("DoesBrowserSupportWebP()");
-    var webpTested = false;
-    var webpSupported = false;
-
-    if (sessionStorage) {
-        const sessionItem = sessionStorage.getItem("webpsupport");
-        if (sessionItem != undefined) {
-            //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
-            webpTested = true;
-            webpSupported = sessionItem;
-        }
-    }
-
-    if (!webpTested) {
-        const elem = document.createElement("canvas");
-        if (!!(elem.getContext && elem.getContext("2d"))) {
-            // was able or not to get WebP representation
-            webpSupported = elem.toDataURL("image/webp").indexOf("data:image/webp") === 0;
-        } else {
-            // very old browser like IE 8, canvas not supported
-            webpSupported = false;
-        }
-
-        sessionStorage.setItem("webpsupport", webpSupported);
-    }
-
-    //console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
-    return webpSupported;
 }
