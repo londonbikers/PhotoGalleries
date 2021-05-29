@@ -89,19 +89,25 @@ function GetImageThumbnailUrl(files, element) {
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
     if (!doesBrowserSupportWebP) {
+        console.log("GetImageThumbnailUrl(): returning first dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 
     // choose ImageFileSpec for scaled dimensions
     if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
+        console.log("GetImageThumbnailUrl(): returning di800");
         return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
+        console.log("GetImageThumbnailUrl(): returning di800");
         return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
+        console.log("GetImageThumbnailUrl(): returning di800");
         return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
+        console.log("GetImageThumbnailUrl(): returning di800");
         return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else {
+        console.log("GetImageThumbnailUrl(): returning second dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 }

@@ -340,6 +340,7 @@
             // our pre-generated images use the WebP format. Some old browsers don't support
             // this, so for these, just return the original image as a fall-back.
             if (!doesBrowserSupportWebP) {
+                console.log("GetImageSrc(): returning first dio");
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;
             }
 
@@ -347,14 +348,19 @@
             // find first available image spec that is larger than scaled dims
 
             if (dims.width <= 800 && dims.height <= 800 && image.Files.Spec800Id != null) {
+                console.log("GetImageSrc(): returning di800");
                 return `/di800/${image.Files.Spec800Id}`;
             } else if (dims.width <= 1920 && dims.height <= 1920 && image.Files.Spec1920Id != null) {
+                console.log("GetImageSrc(): returning di1920");
                 return `/di1920/${image.Files.Spec1920Id}`;
             } else if (dims.width <= 2560 && dims.height <= 2560 && image.Files.Spec2560Id != null) {
+                console.log("GetImageSrc(): returning di2560");
                 return `/di2560/${image.Files.Spec2560Id}`;
             } else if (dims.width <= 3840 && dims.height <= 3840 && image.Files.Spec3840Id != null) {
+                console.log("GetImageSrc(): returning di3840");
                 return `/di3840/${image.Files.Spec3840Id}`;
             } else {
+                console.log("GetImageSrc(): returning second dio");
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;
             }
         }
@@ -428,6 +434,9 @@
         // pre-loads the main image and only assigns it to the img tag when fully loaded.
         // this allows us to show the preview image and loader right up until the main image is ready to be shown.
         function LoadImage(image, imageContainerWidth, imageContainerHeight) {
+
+            console.log("LoadImage()");
+
             const imgPlaceholder = new Image();
             var imgTag = document.getElementById("image");
 
