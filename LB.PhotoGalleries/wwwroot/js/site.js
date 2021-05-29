@@ -88,7 +88,7 @@ function GetImageThumbnailUrl(files, element) {
 
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
-    if (!doesBrowserSupportWebP) {
+    if (doesBrowserSupportWebP === false) {
         console.log("GetImageThumbnailUrl(): returning first dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
