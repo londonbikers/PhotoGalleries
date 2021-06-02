@@ -1,28 +1,43 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
+function CheckWebpSupport() {
+    if (!self.createImageBitmap)
+        return false;
+
+    const webpData = "data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=";
+    const blob = fetch(webpData).then(r => r.blob());
+    return createImageBitmap(blob).then(() => true, () => false);
+}
+
 function DoesBrowserSupportWebP() {
-    //console.log("DoesBrowserSupportWebP()");
+    console.log("DoesBrowserSupportWebP()");
     var webpTested = false;
     var webpSupported = false;
 
     if (sessionStorage) {
         const sessionItem = sessionStorage.getItem("webpsupport");
         if (sessionItem != undefined) {
-            //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
+            console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
             webpTested = true;
             webpSupported = (sessionItem === "true");
         }
     }
 
     if (!webpTested) {
-        const elem = document.createElement("canvas");
-        if (!!(elem.getContext && elem.getContext("2d"))) {
-            // was able or not to get WebP representation
-            webpSupported = elem.toDataURL("image/webp").indexOf("data:image/webp") === 0;
-        } else {
-            // very old browser like IE 8, canvas not supported
-            webpSupported = false;
+
+        //const elem = document.createElement("canvas");
+        //if (!!(elem.getContext && elem.getContext("2d"))) {
+        //    // was able or not to get WebP representation
+        //    webpSupported = elem.toDataURL("image/webp").indexOf("data:image/webp") === 0;
+        //} else {
+        //    // very old browser like IE 8, canvas not supported
+        //    webpSupported = false;
+        //}
+  
+        if (CheckWebpSupport()) {
+            console.log("webp does support");
+            webpSupported = true;
         }
 
         sessionStorage.setItem("webpsupport", webpSupported);
