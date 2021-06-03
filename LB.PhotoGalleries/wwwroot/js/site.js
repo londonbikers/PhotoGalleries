@@ -18,13 +18,15 @@ function DoesBrowserSupportWebP() {
     if (!webpTested) {
         // old safari doesn't support webp
         var os_main_version = platform.os.version.substring(0, platform.os.version.indexOf('.'))
-        if (platform.os.family == 'OS X' && os_main_version < 11 && platform.name == 'Safari' && platform.version < 14) {
+        var platform_main_version = platform.version.substring(0, platform.version.indexOf('.'))
+        if (platform.os.family == 'OS X' && os_main_version < 11 && platform.name == 'Safari' && platform_main_version < 14) {
             console.log("DoesBrowserSupportWebP(): No, because of old Safari/macOS")
             webpSupported = false;
         }
         console.log(`platform.name: ${platform.name}`)
         console.log(`platform.version: ${platform.version}`) 
         console.log(`platform.os.family: ${platform.os.family}`)
+        console.log(`platform.os.version: ${platform.os.version}`)
         sessionStorage.setItem("webpsupport", webpSupported);
     }
 
