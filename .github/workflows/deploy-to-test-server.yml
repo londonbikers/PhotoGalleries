@@ -38,3 +38,13 @@ jobs:
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/netcoreapp3.1/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
         overwrite: true
+        
+    - name: Restart lbp-test service
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.TEST_REMOTE_HOST }}
+        port: ${{ secrets.TEST_PORT }}
+        username: ${{ secrets.TEST_REMOTE_USER }}
+        key: ${{ secrets.TEST_SSH_KEY }}
+        passhprase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
+        script: sudo /bin/systemctl restart lbp-test.service
