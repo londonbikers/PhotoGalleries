@@ -46,5 +46,5 @@ jobs:
         port: ${{ secrets.TEST_PORT }}
         username: ${{ secrets.TEST_REMOTE_USER }}
         key: ${{ secrets.TEST_SSH_KEY }}
-        passhprase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
+        passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         script: sudo /bin/systemctl restart lbp-test.service
