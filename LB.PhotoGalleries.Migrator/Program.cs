@@ -97,8 +97,8 @@ namespace LB.PhotoGalleries.Migrator
 
         private static async Task MigrateUsersAsync()
         {
-            lock (_userIds)
-                _userIds = new Dictionary<Guid, string>();
+            // ReSharper disable once InconsistentlySynchronizedField
+            _userIds = new Dictionary<Guid, string>();
 
             // we need to create user objects for everyone who has commented on a gallery or photo
             await using var userConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
@@ -130,7 +130,8 @@ namespace LB.PhotoGalleries.Migrator
                 u.CommunicationPreferences.ReceiveCommentNotifications = true;
 
                 // keep track of the old and new user ids as we'll need to use them elsewhere in the migration and don't need to keep hitting the database for it
-                _userIds.Add((Guid)usersReader["f_uid"], u.Id);
+                lock (_userIds)
+                    _userIds.Add((Guid)usersReader["f_uid"], u.Id);
 
                 // create the new user object
                 await Server.Instance.Users.CreateOrUpdateUserAsync(u);
@@ -290,11 +291,29 @@ namespace LB.PhotoGalleries.Migrator
                     Path.Combine(_configuration["OriginalFilesPath"], "1600", file1600 ?? string.Empty) :
                     Path.Combine(_configuration["OriginalFilesPath"], "1024", file1024 ?? string.Empty);
 
+                var imageFound = true;
                 if (!File.Exists(path))
                 {
-                    _log.Error($"File doesn't exist! {path}");
-                    continue;
+                    imageFound = false;
+                    _log.Warning($"File doesn't exist! {path}. Will search for alternative file...");
+
+                    if (path.Contains("\\1600\\") && file1024.HasValue())
+                    {
+                        path = Path.Combine(_configuration["OriginalFilesPath"], "1024", file1024 ?? string.Empty);
+                        if (!File.Exists(path))
+                        {
+                            _log.Error($"No suitable file can be found. Last tried {path}. This image won't get migrated.");
+                        }
+                        else
+                        {
+                            _log.Information($"Found a suitable smaller image: {path}");
+                            imageFound = true;
+                        }
+                    }
                 }
+
+                if (!imageFound)
+                    continue;
 
                 var i = new Image
                 {
