@@ -39,26 +39,29 @@
                 <div class="navbar-collapse collapse" id="navbarCollapse" style="">
                     <ul class="navbar-nav mr-auto">
 
-                        @if (User.IsInRole("Administrator"))
+                        @if (User.IsInRole("Administrator") || User.IsInRole("Photographer"))
                         {
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index">Admin</a>
-            </li>}
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index">Admin</a>
+                            </li>
+                        }
 
                         @if (User.Identity.IsAuthenticated)
                         {
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-controller="Account" asp-action="Index">Account</a>
-            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Index">Account</a>
+                            </li>
 
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Home" asp-action="SignOut">Sign Out</a>
-                            </li> }
-                                        else
-                                        {
+                            </li>
+                         }
+                         else
+                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Home" asp-action="SignIn" asp-route-returnUrl="@Context.Request.Path">Sign In</a>
-                            </li>}
+                            </li>
+                         }
 
                     </ul>
 
