@@ -19,7 +19,7 @@
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
     var config = (IConfiguration)ViewData["Configuration"];
     var ogDescription = !string.IsNullOrEmpty(Model.Description) ? Helpers.GetFirstParagraph(Model.Description) : null;
-    var ogImage = images.Count > 0 ? $"{config["BaseUrl"]}di800/{images[0].Files.Spec800Id}" : null;
+    var ogImage = images.Count > 0 ? $"{config["BaseUrl"]}di1920/{images[0].Files.Spec1920Id}" : null;
 }
 
 @section OpenGraph
@@ -27,7 +27,7 @@
     <meta property="og:title" content="@Model.Name" />
 
     @if (ogDescription != null) {
-        <meta property="og:description" content="@Helpers.GetFirstParagraph(Model.Description)" />
+        <meta property="og:description" content="@ogDescription" />
     }
 
     <meta property="og:type" content="website" />
@@ -36,7 +36,7 @@
     <meta property="og:url" content="@Helpers.GetFullGalleryUrl(config, Model)" />
 
     @if (ogImage != null) {
-        <meta property="og:image" content="@config["BaseUrl"]di800/@images[0].Files.Spec800Id" />
+        <meta property="og:image" content="@ogImage" />
         <meta property="og:image:type" content="image/webp"/>
     }
 }
