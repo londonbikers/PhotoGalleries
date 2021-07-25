@@ -6,14 +6,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace LB.PhotoGalleries.Controllers
 {
     public class GalleriesController : Controller
     {
+        #region members
+        private readonly IConfiguration _configuration;
+        #endregion
+
+        #region constructors
+        public GalleriesController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        #endregion
+
         // GET: /g/<category>/<galleryId>/<name>
         public async Task<ActionResult> Details(string categoryName, string galleryId, string name)
         {
+            ViewData["Configuration"] = _configuration;
             var decodedCategoryName = Helpers.DecodeParameterFromUrl(categoryName);
             var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(decodedCategoryName, StringComparison.CurrentCultureIgnoreCase));
             if (category == null)
