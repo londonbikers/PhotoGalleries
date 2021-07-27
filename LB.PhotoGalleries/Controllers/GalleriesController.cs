@@ -60,32 +60,36 @@ namespace LB.PhotoGalleries.Controllers
 
             if (images.Count > 0)
             {
-                var image = images[0];
-                var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{image.Files.OriginalId}" };
+                // try and take the first four images
+                var previewImages = images.Count >= 4 ? images.GetRange(0, 4) : new List<Image> {images[0]};
 
-                if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
+                foreach (var previewImage in previewImages)
                 {
-                    int width;
-                    int height;
-
-                    if (image.Metadata.Width > image.Metadata.Height)
+                    var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{previewImage.Files.OriginalId}" };
+                    if (previewImage.Metadata.Width.HasValue && previewImage.Metadata.Height.HasValue)
                     {
-                        width = 1080;
-                        var dHeight = (decimal) image.Metadata.Height / ((decimal) image.Metadata.Width / (decimal) 1080);
-                        height = (int)Math.Round(dHeight);
-                    }
-                    else
-                    {
-                        height = 1080;
-                        var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)1080);
-                        width = (int)Math.Round(dWidth);
+                        int width;
+                        int height;
+
+                        if (previewImage.Metadata.Width > previewImage.Metadata.Height)
+                        {
+                            width = 1080;
+                            var dHeight = (decimal)previewImage.Metadata.Height / ((decimal)previewImage.Metadata.Width / (decimal)1080);
+                            height = (int)Math.Round(dHeight);
+                        }
+                        else
+                        {
+                            height = 1080;
+                            var dWidth = (decimal)previewImage.Metadata.Width / ((decimal)previewImage.Metadata.Height / (decimal)1080);
+                            width = (int)Math.Round(dWidth);
+                        }
+
+                        openGraphImage.Width = width;
+                        openGraphImage.Height = height;
                     }
 
-                    openGraphImage.Width = width;
-                    openGraphImage.Height = height;
+                    openGraphModel.Images.Add(openGraphImage);
                 }
-
-                openGraphModel.Images.Add(openGraphImage);
             }
 
             if (!string.IsNullOrEmpty(gallery.Description))
