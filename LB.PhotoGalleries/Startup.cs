@@ -172,6 +172,7 @@ namespace LB.PhotoGalleries
                 .AddRewriteHandler("/di1920/", EnsureDimensionsAreSpecified)
                 .AddRewriteHandler("/diog/", OpenGraphImageHandler)
                 .AddWatermarkingHandler("/dio/", AddWatermark)
+                .AddWatermarkingHandler("/diog/", AddWatermark)
                 .AddWatermarkingHandler("/di3840/", AddWatermark)
                 .AddWatermarkingHandler("/di2560/", AddWatermark)
                 .AddWatermarkingHandler("/di1920/", AddWatermark));
