@@ -10,7 +10,7 @@
     var category = Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId);
     var images = (List<Image>)ViewData["images"];
     var galleryUser = (User)ViewData["user"];
-    var openGraphModel = (OpenGraphModel) ViewData["openGraphModel"];
+    var openGraphModel = (OpenGraphModel)ViewData["openGraphModel"];
     var commentCount = Model.Comments.Count > 0 ? Model.Comments.Count + " " : string.Empty;
     var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
@@ -20,7 +20,10 @@
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 
-@await Component.InvokeAsync("OpenGraph", new { openGraphModel })
+@section OpenGraphSection
+{
+    @await Component.InvokeAsync("OpenGraph", new { openGraphModel })
+}
 
 <div class="text-center">
     <h1 class="display-4">@ViewData.Model.Name</h1>

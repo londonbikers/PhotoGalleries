@@ -24,7 +24,10 @@
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
 
-@await Component.InvokeAsync("OpenGraph", new { openGraphModel })
+@section OpenGraphSection
+{
+    @await Component.InvokeAsync("OpenGraph", new { openGraphModel })    
+}
 
 <div class="container-max text-center">
 
