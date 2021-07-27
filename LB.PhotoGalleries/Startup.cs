@@ -112,6 +112,7 @@ namespace LB.PhotoGalleries
 
             // add ImageFlow services for dynamic image generation
             AddImageFlowBlobService(services, FileSpec.SpecOriginal, "/dio/");
+            AddImageFlowBlobService(services, FileSpec.SpecOriginal, "/diog/");
             AddImageFlowBlobService(services, FileSpec.Spec3840, "/di3840/");
             AddImageFlowBlobService(services, FileSpec.Spec2560, "/di2560/");
             AddImageFlowBlobService(services, FileSpec.Spec1920, "/di1920/");
@@ -169,6 +170,7 @@ namespace LB.PhotoGalleries
                 .AddRewriteHandler("/di3840/", EnsureDimensionsAreSpecified)
                 .AddRewriteHandler("/di2560/", EnsureDimensionsAreSpecified)
                 .AddRewriteHandler("/di1920/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/diog/", OpenGraphImageHandler)
                 .AddWatermarkingHandler("/dio/", AddWatermark)
                 .AddWatermarkingHandler("/di3840/", AddWatermark)
                 .AddWatermarkingHandler("/di2560/", AddWatermark)
@@ -272,6 +274,13 @@ namespace LB.PhotoGalleries
 
             args.Query["w"] = 99999.ToString();
             args.Query["h"] = 99999.ToString();
+        }
+
+        private static void OpenGraphImageHandler(UrlEventArgs args)
+        {
+            args.Query["w"] = 1080.ToString();
+            args.Query["h"] = 1080.ToString();
+            args.Query["mode"] = "max";
         }
 
         private static async Task UpdateUserFromClaimsAsync(TicketReceivedContext ctx)

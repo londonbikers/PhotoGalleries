@@ -1,4 +1,6 @@
-﻿using LB.PhotoGalleries.Application;
+﻿using System;
+using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
@@ -47,6 +49,41 @@ namespace LB.PhotoGalleries.Controllers
                 viewedImages.Add(image.Id);
                 HttpContext.Session.Set("viewedImages", viewedImages);
             }
+
+            // build the open-graph model to enable great presentation when pages are indexed/shared
+            var openGraphModel = new OpenGraphModel {Title = image.Name, Url = Request.GetRawUrl().AbsoluteUri};
+
+            if (!string.IsNullOrEmpty(image.Caption))
+                openGraphModel.Description = image.Caption;
+
+            var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{image.Files.OriginalId}" };
+
+            if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
+            {
+                int width;
+                int height;
+
+                if (image.Metadata.Width > image.Metadata.Height)
+                {
+                    width = 1080;
+                    var dHeight = (decimal)image.Metadata.Height / ((decimal)image.Metadata.Width / (decimal)1080);
+                    height = (int)Math.Round(dHeight);
+                }
+                else
+                {
+                    height = 1080;
+                    var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)1080);
+                    width = (int)Math.Round(dWidth);
+                }
+
+                openGraphImage.Width = width;
+                openGraphImage.Height = height;
+            }
+
+            openGraphModel.Images.Add(openGraphImage);
+
+
+            ViewData["openGraphModel"] = openGraphModel;
 
             return View();
         }

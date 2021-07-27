@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace LB.PhotoGalleries
 {
@@ -227,5 +229,16 @@ namespace LB.PhotoGalleries
     {
         Administrator,
         Photographer
+    }
+
+    public static class HttpRequestExtensions
+    {
+        public static Uri GetRawUrl(this HttpRequest request)
+        {
+            var httpContext = request.HttpContext;
+            var requestFeature = httpContext.Features.Get<IHttpRequestFeature>();
+            var url = $"{request.Scheme}://{request.Host}{requestFeature.RawTarget}";
+            return new Uri(url);
+        }
     }
 }

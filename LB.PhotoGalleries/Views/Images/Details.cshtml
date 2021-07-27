@@ -8,6 +8,7 @@
     var gallery = (Gallery)ViewData["gallery"];
     var category = (Category)ViewData["category"];
     var imageUser = (User)ViewData["user"];
+    var openGraphModel = (OpenGraphModel)ViewData["openGraphModel"];
     var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
     var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
     var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
@@ -19,9 +20,11 @@
     var photoRightColClass = nextImage != null ? "class=\"col pointer\"" : "class=\"col\"";
     var userId = Helpers.GetUserId(User);
     var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
-    var subscribeToCommentRepliesParam = user != null && imageUser?.CommunicationPreferences!=null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
+    var subscribeToCommentRepliesParam = user != null && imageUser?.CommunicationPreferences != null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
 }
+
+@await Component.InvokeAsync("OpenGraph", new { openGraphModel })
 
 <div class="container-max text-center">
 
@@ -194,12 +197,12 @@
                     </div>
                     <div class="row">
                         <div class="col-6 text-left post-box-bottom-row">
-                            
+
                             <input class="form-check-input" type="checkbox" id="get-notifications" @subscribeToCommentRepliesParam>
                             <label class="form-check-label" for="get-notifications">
                                 Get notified of replies
                             </label>
-                            
+
                         </div>
                         <div class="col-6 text-right">
                             <button type="submit" class="btn btn-primary">Post Comment</button>
@@ -212,7 +215,7 @@
         {
             <text><a asp-controller="Home" asp-action="SignIn" asp-route-returnUrl="@Context.Request.Path">Sign-in</a> to leave a comment</text>
         }
-        
+
         @if (userIsSubscribedToCommentReplies)
         {
             <div class="info-box mt-2">
@@ -238,7 +241,7 @@
                     <div class="col">
                         @if (commentUser.PictureHostedUrl.HasValue())
                         {
-                            <img src="@commentUser.PictureHostedUrl" width="50" title="@commentUser.Name" class="comment-user-pic rounded" alt="User photo"/>
+                            <img src="@commentUser.PictureHostedUrl" width="50" title="@commentUser.Name" class="comment-user-pic rounded" alt="User photo" />
                         }
                         else
                         {
