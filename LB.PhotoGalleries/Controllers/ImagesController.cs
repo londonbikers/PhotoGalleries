@@ -54,7 +54,7 @@ namespace LB.PhotoGalleries.Controllers
             var openGraphModel = new OpenGraphModel {Title = image.Name, Url = Request.GetRawUrl().AbsoluteUri};
 
             if (!string.IsNullOrEmpty(image.Caption))
-                openGraphModel.Description = image.Caption;
+                openGraphModel.Description = Helpers.GetFirstParagraph(image.Caption);
 
             var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{image.Files.OriginalId}" };
 

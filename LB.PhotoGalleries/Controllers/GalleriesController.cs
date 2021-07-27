@@ -89,7 +89,7 @@ namespace LB.PhotoGalleries.Controllers
             }
 
             if (!string.IsNullOrEmpty(gallery.Description))
-                openGraphModel.Description = gallery.Description;
+                openGraphModel.Description = Helpers.GetFirstParagraph(gallery.Description);
             ViewData["openGraphModel"] = openGraphModel;
 
             return View();
