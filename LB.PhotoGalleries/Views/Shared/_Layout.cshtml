@@ -9,6 +9,10 @@
     {
         openGraphModel.Url = Context.Request.GetRawUrl().AbsoluteUri;
     }
+    if (openGraphModel.Images.Count == 0)
+    {
+        openGraphModel.Images.Add(new OpenGraphModel.OpenGraphImageModel { Url = $"https://{Context.Request.Host}/img/lb-photos-trans.png", Width = 4774, Height = 1125, ContentType = OpenGraphModel.OpenGraphImageContentTypes.Png });
+    }
 }
 <!DOCTYPE html>
 <html lang="en">

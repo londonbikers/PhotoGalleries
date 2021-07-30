@@ -13,6 +13,7 @@ namespace LB.PhotoGalleries.Models
         public string Url { get; set; }
         public string Type { get; set; }
         public List<OpenGraphImageModel> Images { get; set; }
+        public string FbAppId => "131542586870292";
 
         public OpenGraphModel()
         {
@@ -24,7 +25,7 @@ namespace LB.PhotoGalleries.Models
             SiteName = "LB Photos";
             Locale = "en_gb";
             Type = OpenGraphTypes.Website;
-    }
+        }
 
         public static class OpenGraphTypes
         {
@@ -42,12 +43,18 @@ namespace LB.PhotoGalleries.Models
             public static string Website => "website";
         }
 
+        public static class OpenGraphImageContentTypes
+        {
+            public static string Jpeg => "image/jpeg";
+            public static string Png => "image/png";
+        }
+
         public class OpenGraphImageModel
         {
             public string Url { get; set; }
             public int? Width { get; set; }
             public int? Height { get; set; }
-            public string ContentType => "image/jpeg";
+            public string ContentType { get; set; }
         }
     }
 }

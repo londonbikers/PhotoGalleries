@@ -86,6 +86,7 @@ namespace LB.PhotoGalleries.Controllers
 
                         openGraphImage.Width = width;
                         openGraphImage.Height = height;
+                        openGraphImage.ContentType = OpenGraphModel.OpenGraphImageContentTypes.Jpeg;
                     }
 
                     openGraphModel.Images.Add(openGraphImage);

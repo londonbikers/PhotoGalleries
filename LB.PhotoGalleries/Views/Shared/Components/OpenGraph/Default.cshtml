@@ -5,6 +5,7 @@
 <meta property="og:locale" content="@Html.Raw(Model.Locale)" />
 <meta property="og:site_name" content="@Html.Raw(Model.SiteName)" />
 <meta property="og:url" content="@Html.Raw(Model.Url)" />
+<meta property="fb:app_id" content="@Html.Raw(Model.FbAppId)"/>
 @foreach (var image in Model.Images)
 {
     <meta property="og:image" content="@Html.Raw(image.Url)" />
