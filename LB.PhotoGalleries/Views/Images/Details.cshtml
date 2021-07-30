@@ -8,7 +8,6 @@
     var gallery = (Gallery)ViewData["gallery"];
     var category = (Category)ViewData["category"];
     var imageUser = (User)ViewData["user"];
-    var openGraphModel = (OpenGraphModel)ViewData["openGraphModel"];
     var settingsToShow = !string.IsNullOrEmpty(Model.Metadata.Aperture) || !string.IsNullOrEmpty(Model.Metadata.ExposureTime) || Model.Metadata.Iso.HasValue;
     var cameraToShow = !string.IsNullOrEmpty(Model.Metadata.CameraModel) || !string.IsNullOrEmpty(Model.Metadata.LensMake) || !string.IsNullOrEmpty(Model.Metadata.LensModel);
     var locationToShow = Model.Metadata.LocationLatitude.HasValue && Model.Metadata.LocationLongitude.HasValue;
@@ -22,11 +21,6 @@
     var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
     var subscribeToCommentRepliesParam = user != null && imageUser?.CommunicationPreferences != null && imageUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
-}
-
-@section OpenGraphSection
-{
-    @await Component.InvokeAsync("OpenGraph", new { openGraphModel })    
 }
 
 <div class="container-max text-center">
