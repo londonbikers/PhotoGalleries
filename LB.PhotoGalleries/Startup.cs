@@ -167,9 +167,9 @@ namespace LB.PhotoGalleries
                 .SetAllowDiskCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddRewriteHandler("/dio/", EnsureDimensionsAreSpecified)
-                .AddRewriteHandler("/di3840/", EnsureDimensionsAreSpecified)
-                .AddRewriteHandler("/di2560/", EnsureDimensionsAreSpecified)
-                .AddRewriteHandler("/di1920/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/di3840/", EnsureDi3840DimensionsAreSpecified)
+                .AddRewriteHandler("/di2560/", EnsureDi2560DimensionsAreSpecified)
+                .AddRewriteHandler("/di1920/", EnsureDi1920DimensionsAreSpecified)
                 .AddRewriteHandler("/diog/", OpenGraphImageHandler)
                 .AddWatermarkingHandler("/dio/", AddWatermark)
                 .AddWatermarkingHandler("/diog/", AddWatermark)
@@ -235,6 +235,9 @@ namespace LB.PhotoGalleries
 
         private static void AddWatermark(WatermarkingEventArgs args)
         {
+            // PROBLEM: we don't know when an image is portrait when default incoming dims are equal!
+            // need original dims, don't want to trust client
+
             var modeSpecified = args.Query.ContainsKey("mode");
             var size = new Size();
             if (args.Query.ContainsKey("w") && int.TryParse(args.Query["w"], out var wParam))
@@ -253,7 +256,9 @@ namespace LB.PhotoGalleries
                 return;
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
-            var watermarkSizeAsPercent = size.Width >= size.Height ? 13 : 25;
+            var watermarkSizeAsPercent = 13;
+            if ((args.Query.ContainsKey("o") && args.Query["o"] == "p") || size.Height > size.Width)
+                watermarkSizeAsPercent = 25;
 
             args.AppliedWatermarks.Add(
                 new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
@@ -269,12 +274,44 @@ namespace LB.PhotoGalleries
         {
             var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
             var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
-
             if (containsWidthParam || containsHeightParam) 
                 return;
 
             args.Query["w"] = 99999.ToString();
             args.Query["h"] = 99999.ToString();
+        }
+
+        private static void EnsureDi3840DimensionsAreSpecified(UrlEventArgs args)
+        {
+            var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
+            var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
+            if (containsWidthParam || containsHeightParam)
+                return;
+
+            args.Query["w"] = 3840.ToString();
+            args.Query["h"] = 3840.ToString();
+        }
+
+        private static void EnsureDi2560DimensionsAreSpecified(UrlEventArgs args)
+        {
+            var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
+            var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
+            if (containsWidthParam || containsHeightParam)
+                return;
+
+            args.Query["w"] = 2560.ToString();
+            args.Query["h"] = 2560.ToString();
+        }
+
+        private static void EnsureDi1920DimensionsAreSpecified(UrlEventArgs args)
+        {
+            var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
+            var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
+            if (containsWidthParam || containsHeightParam)
+                return;
+
+            args.Query["w"] = 1920.ToString();
+            args.Query["h"] = 1920.ToString();
         }
 
         private static void OpenGraphImageHandler(UrlEventArgs args)

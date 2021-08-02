@@ -335,32 +335,36 @@
         function GetImageSrc(image, imageContainerWidth, imageContainerHeight) {
             const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);
             const doesBrowserSupportWebP = DoesBrowserSupportWebP();
+            const orientation = dims.width >= dims.height ? "l" : "p";
 
             console.log(`page: doesBrowserSupportWebP type: ${typeof(doesBrowserSupportWebP)}`);
             console.log(`page: doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
             // our pre-generated images use the WebP format. Some old browsers don't support
-            // this, so for these, just return the original image as a fall-back.
+            // this, so for these, just return a resized version of the original image as a fall-back.
             if (doesBrowserSupportWebP === false) {
                 console.log("GetImageSrc(): returning first dio");
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;
             }
 
+            console.log(`o: ${orientation}`);
+            console.log(`image dims: ${image.Width} x ${image.Height}`);
+            console.log(`scaled dims: ${dims.width} x ${dims.height}`);
+
             // choose an appropriate ImageFileSpec for scaled dimensions:
             // find first available image spec that is larger than scaled dims
-
             if (dims.width <= 800 && dims.height <= 800 && image.Files.Spec800Id != null) {
                 console.log("GetImageSrc(): returning di800");
                 return `/di800/${image.Files.Spec800Id}`;
             } else if (dims.width <= 1920 && dims.height <= 1920 && image.Files.Spec1920Id != null) {
                 console.log("GetImageSrc(): returning di1920");
-                return `/di1920/${image.Files.Spec1920Id}`;
+                return `/di1920/${image.Files.Spec1920Id}?o=${orientation}`;
             } else if (dims.width <= 2560 && dims.height <= 2560 && image.Files.Spec2560Id != null) {
                 console.log("GetImageSrc(): returning di2560");
-                return `/di2560/${image.Files.Spec2560Id}`;
+                return `/di2560/${image.Files.Spec2560Id}?o=${orientation}`;
             } else if (dims.width <= 3840 && dims.height <= 3840 && image.Files.Spec3840Id != null) {
                 console.log("GetImageSrc(): returning di3840");
-                return `/di3840/${image.Files.Spec3840Id}`;
+                return `/di3840/${image.Files.Spec3840Id}?o=${orientation}`;
             } else {
                 console.log("GetImageSrc(): returning second dio");
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;
@@ -478,14 +482,14 @@
                 console.log("detected mobile device");
                 $("#image").swipe({
                     allowPageScroll: 'horizontal',
-                    swipe: function (event, direction, distance, duration, fingerCount, fingerData) {
+                    swipe: function(event, direction, distance, duration, fingerCount, fingerData) {
                         @if (previousImage != null)
                         {
-                             <text>
+                            <text>
                                 if (direction === 'right') {
                                     NavigateToImage('@previousImage.GalleryId', '@previousImage.Id', '@previousImage.Name');
-                                 }
-                             </text>
+                                }
+                            </text>
                         }
 
                         @if (nextImage != null)
@@ -540,7 +544,7 @@
                 $.ajax({
                     url: '/api/images/comment-subscriptions?galleryId=@Model.GalleryId&imageId=@Model.Id',
                     type: 'DELETE'
-                }).done(function () {
+                }).done(function() {
                     // unsubscribed the user, refresh the page to show no sub info
                     // todo: show a nicer fading prompt instead of refreshing the page
                     location.reload();
