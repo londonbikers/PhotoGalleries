@@ -244,7 +244,7 @@ namespace LB.PhotoGalleries
             if (args.Query.ContainsKey("h") && int.TryParse(args.Query["h"], out var hParam))
                 size.Height = hParam;
             else if (args.Query.ContainsKey("height") && int.TryParse(args.Query["height"], out var heightParam))
-                size.Width = heightParam;
+                size.Height = heightParam;
 
             var imageSizeRequiresWatermark = size.Width < 1 || size.Height < 1 || (size.Width > 1000 || size.Height > 1000);
             var referer = args.Context.Request.GetTypedHeaders().Referer;
@@ -253,7 +253,7 @@ namespace LB.PhotoGalleries
                 return;
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
-            const int watermarkSizeAsPercent = 12;
+            var watermarkSizeAsPercent = size.Width >= size.Height ? 13 : 25;
 
             args.AppliedWatermarks.Add(
                 new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
