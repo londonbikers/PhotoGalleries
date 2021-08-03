@@ -19,6 +19,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MetadataExtractor.Formats.Xmp;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Models.Image;
 
@@ -884,6 +885,31 @@ namespace LB.PhotoGalleries.Application.Servers
                         image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword);
             }
 
+            var xmpDirectory = directories.OfType<XmpDirectory>().FirstOrDefault();
+            if (xmpDirectory != null)
+            {
+                // see if there's any tags (subjects in xmp)
+                var subjects = xmpDirectory.XmpMeta.Properties.Where(q => q.Path != null && q.Path.StartsWith("dc:subject") && !string.IsNullOrEmpty(q.Value));
+                foreach (var subject in subjects)
+                    image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, subject.Value);
+
+                // sometimes we have no camera in, but some can be inferred from lens profile info
+                var lensProfileFilename = xmpDirectory.XmpMeta.GetPropertyString("http://ns.adobe.com/camera-raw-settings/1.0/", "crs:LensProfileFilename");
+                if (!string.IsNullOrEmpty(lensProfileFilename) && string.IsNullOrEmpty(image.Metadata.CameraModel))
+                {
+                    var camera = lensProfileFilename.Substring(0, lensProfileFilename.IndexOf(" (", StringComparison.Ordinal));
+                    image.Metadata.CameraModel = camera;
+                }
+                
+                var lensProfileName = xmpDirectory.XmpMeta.GetPropertyString("http://ns.adobe.com/camera-raw-settings/1.0/", "crs:LensProfileName");
+                if (!string.IsNullOrEmpty(lensProfileName) && string.IsNullOrEmpty(image.Metadata.LensModel))
+                {
+                    var lens = Regex.Match(lensProfileName, @"\((.*?)\)", RegexOptions.Compiled);
+                    if (lens.Success && lens.Value.Contains("(") && lens.Value.Contains(")"))
+                        image.Metadata.LensModel = lens.Value.TrimStart('(').TrimEnd(')');
+                }
+            }
+
             // wind the stream back to allow other code to work with the stream
             imageStream.Position = 0;
         }
@@ -956,25 +982,34 @@ namespace LB.PhotoGalleries.Application.Servers
         /// Attempts to extract image credit information from image metadata.
         /// </summary>
         /// <param name="directories">Metadata directories extracted from the image stream.</param>
-        public static string GetImageCredit(IEnumerable<Directory> directories)
+        public static string GetImageCredit(IReadOnlyList<Directory> directories)
         {
-            var enumerable = directories as Directory[] ?? directories.ToArray();
-            var exifIfd0Directory = enumerable.OfType<ExifIfd0Directory>().FirstOrDefault();
+            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
             if (exifIfd0Directory != null)
             {
                 var creditTag = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagCopyright);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (creditTag != null && creditTag.Description.HasValue())
                     return creditTag.Description;
             }
 
-            var iptcDirectory = enumerable.OfType<IptcDirectory>().FirstOrDefault();
+            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
             if (iptcDirectory != null)
             {
                 var creditTag = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCredit);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (creditTag != null && creditTag.Description.HasValue())
                     return creditTag.Description;
+            }
+
+            var xmpDirectory = directories.OfType<XmpDirectory>().FirstOrDefault();
+            if (xmpDirectory?.XmpMeta != null)
+            {
+                var creator = xmpDirectory.XmpMeta.Properties.SingleOrDefault(q => q.Path != null && q.Path.Equals("dc:creator[1]", StringComparison.CurrentCultureIgnoreCase) && !string.IsNullOrEmpty(q.Value));
+                if (creator != null)
+                    return creator.Value;
+
+                var rights = xmpDirectory.XmpMeta.Properties.SingleOrDefault(q => q.Path != null && q.Path.Equals("dc:rights[1]", StringComparison.CurrentCultureIgnoreCase) && !string.IsNullOrEmpty(q.Value));
+                if (rights != null)
+                    return rights.Value;
             }
 
             return null;

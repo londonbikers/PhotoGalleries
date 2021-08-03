@@ -14,7 +14,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LB.PhotoGalleries.Worker", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LB.PhotoGalleries.Migrator", "LB.PhotoGalleries.Migrator\LB.PhotoGalleries.Migrator.csproj", "{E96E620F-A7ED-43C4-976E-413155D005D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LB.PhotoGalleries.ComparisonTool", "LB.PhotoGalleries.ComparisonTool\LB.PhotoGalleries.ComparisonTool.csproj", "{D479B8AF-DD7A-41DD-842F-5713BD381199}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LB.PhotoGalleries.ComparisonTool", "LB.PhotoGalleries.ComparisonTool\LB.PhotoGalleries.ComparisonTool.csproj", "{D479B8AF-DD7A-41DD-842F-5713BD381199}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LB.PhotoGalleries.MetadataPrinter", "LB.PhotoGalleries.MetadataPrinter\LB.PhotoGalleries.MetadataPrinter.csproj", "{0385F002-ED15-4B48-BFC9-709A5B5FF6E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +52,10 @@ Global
 		{D479B8AF-DD7A-41DD-842F-5713BD381199}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D479B8AF-DD7A-41DD-842F-5713BD381199}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D479B8AF-DD7A-41DD-842F-5713BD381199}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0385F002-ED15-4B48-BFC9-709A5B5FF6E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0385F002-ED15-4B48-BFC9-709A5B5FF6E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0385F002-ED15-4B48-BFC9-709A5B5FF6E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0385F002-ED15-4B48-BFC9-709A5B5FF6E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
