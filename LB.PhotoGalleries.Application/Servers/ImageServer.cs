@@ -724,7 +724,7 @@ namespace LB.PhotoGalleries.Application.Servers
         private static string TidyImageName(string name)
         {
             name = name.Replace("_", " ");
-            name = Regex.Replace(name, " {2,}", " ");
+            name = Regex.Replace(name, " {2,}", " ", RegexOptions.Compiled);
             return name;
         }
         #endregion
