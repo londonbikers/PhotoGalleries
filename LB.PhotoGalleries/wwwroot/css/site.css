@@ -125,16 +125,15 @@ body {
 }
 
 .info-box {
-    background-color: #fafafa;
-    border-radius: 5px;
-    border: 1px solid #ddd;
+    background-color: #f0f0f0;
+    border-radius: 10px;
     padding: 10px;
 }
     .info-box .badge {
         font-size: 80%;
         padding: 7px;
         margin: 1px;
-        background-color: #ccc;
+        background-color: #d7d7d7;
         color: #666;
     }
 

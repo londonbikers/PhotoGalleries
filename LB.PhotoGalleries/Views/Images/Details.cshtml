@@ -83,6 +83,7 @@
         }
         <h6>@Model.Name</h6>
         <div>
+            Shown in: 
             <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a> /
             <a asp-controller="Galleries" asp-action="Details" asp-route-categoryName="@Helpers.EncodeParamForUrl(category.Name)" asp-route-galleryId="@gallery.Id" asp-route-name="@Helpers.EncodeParamForUrl(gallery.Name)">@gallery.Name</a>
         </div>
@@ -108,7 +109,7 @@
                 <small>
                     @if (!Model.Credit.Contains('©'))
                     {
-                        <text>Credit </text>
+                        <text>Credit: </text>
                     }
                     @Model.Credit
                 </small>
