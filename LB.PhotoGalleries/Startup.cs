@@ -166,7 +166,7 @@ namespace LB.PhotoGalleries
                     .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 100)))
                 .SetAllowDiskCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
-                .AddRewriteHandler("/dio/", EnsureDimensionsAreSpecified)
+                .AddRewriteHandler("/dio/", EnsureOriginalImageDimensionsAreLimited)
                 .AddRewriteHandler("/di3840/", EnsureDi3840DimensionsAreSpecified)
                 .AddRewriteHandler("/di2560/", EnsureDi2560DimensionsAreSpecified)
                 .AddRewriteHandler("/di1920/", EnsureDi1920DimensionsAreSpecified)
@@ -267,18 +267,32 @@ namespace LB.PhotoGalleries
         }
 
         /// <summary>
-        /// Ensures at least one dimension is specified in image resizing parameters to ensure watermarking can take place.
-        /// Not sure why ImageFlow.io requires this, but hey ho.
+        /// Original images should only be requested by legacy clients and should be size-constrained so the endpoint can't be used to download the entire original image
         /// </summary>
-        private static void EnsureDimensionsAreSpecified(UrlEventArgs args)
+        private static void EnsureOriginalImageDimensionsAreLimited(UrlEventArgs args)
         {
-            var containsWidthParam = args.Query.ContainsKey("w") || args.Query.ContainsKey("width");
-            var containsHeightParam = args.Query.ContainsKey("h") || args.Query.ContainsKey("height");
-            if (containsWidthParam || containsHeightParam) 
-                return;
+            const int maxSize = 3840;
+            var width = maxSize;
+            var height = maxSize;
 
-            args.Query["w"] = 99999.ToString();
-            args.Query["h"] = 99999.ToString();
+            if (args.Query.ContainsKey("w"))
+                width = int.Parse(args.Query["w"]);
+            else if (args.Query.ContainsKey("width"))
+                width = int.Parse(args.Query["w"]);
+
+            if (args.Query.ContainsKey("h"))
+                height = int.Parse(args.Query["h"]);
+            else if (args.Query.ContainsKey("height"))
+                height = int.Parse(args.Query["h"]);
+
+            if (width > maxSize)
+                width = maxSize;
+
+            if (height > maxSize)
+                height = maxSize;
+
+            args.Query["w"] = width.ToString();
+            args.Query["h"] = height.ToString();
         }
 
         private static void EnsureDi3840DimensionsAreSpecified(UrlEventArgs args)

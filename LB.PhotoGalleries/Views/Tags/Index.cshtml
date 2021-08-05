@@ -1,0 +1,64 @@
+﻿@using Newtonsoft.Json
+@model PagedResultSet<Image>
+@{
+    var tag = (string)ViewData["tag"];
+    ViewData["Title"] = $"{tag} Photos";
+}
+
+<div class="text-center">
+    <h4 class="display-4">Tag: @tag</h4>
+    <div class="text-format text-link">We tag our photos so you can find them more easily. These are the ones we've tagged with @tag.</div>
+    <hr />
+
+    @await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
+    
+    @if (Model.TotalResults == 0)
+    {
+        <p class="lead">
+            Sorry, we haven't got any photos for @tag yet
+        </p>
+    }
+
+    <div class="row mt-3" data-bind="foreach: Images">
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid"/></a>
+                <div class="card-body card-body-thin">
+                    <p class="card-text" data-bind="text: Name"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pb-3">
+        @await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
+    </div>
+
+</div>
+@section Scripts
+{
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
+
+    <script type="text/javascript">
+
+        // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
+        // and convert to json so the Knockout script can parse it and use it.
+        var payload = @Html.Raw(JsonConvert.SerializeObject(Model.Results.Select(i => new
+                      {
+                          i.Id,
+                          i.GalleryId,
+                          i.Name,
+                          i.Files
+                      })));
+
+        // the view model that knockout uses to bind data to the html
+        function ViewModel() {
+            // parse the images from a json blob
+            this.Images = ko.observableArray(payload);
+        }
+
+        $(document).ready(function() {
+            ko.applyBindings(new ViewModel());
+        });
+    </script>
+}
