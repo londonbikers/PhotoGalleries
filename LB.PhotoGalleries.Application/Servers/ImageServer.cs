@@ -738,15 +738,28 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="image">The Image object to assign the metadata to.</param>
         /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
         /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
-        private void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
+        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
         {
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             using var bm = new Bitmap(imageStream);
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
 
-            if (performImageDimensionsCheck && (image.Metadata.Width < 800 || image.Metadata.Height < 800))
-                throw new ImageTooSmallException($"Image must be equal or bigger than 800 x 800 pixels in size. Detected size {image.Metadata.Width}x{image.Metadata.Height}");
+            var orientation = image.Metadata.Width.Value >= image.Metadata.Height.Value
+                ? ImageOrientation.Landscape
+                : ImageOrientation.Portrait;
+
+            var imageTooSmallErrorMessage = $"Image must be equal or bigger than 800px on the longest side. Detected size {image.Metadata.Width}x{image.Metadata.Height}";
+            if (performImageDimensionsCheck)
+            {
+                switch (orientation)
+                {
+                    case ImageOrientation.Landscape when image.Metadata.Width < 800:
+                        throw new ImageTooSmallException(imageTooSmallErrorMessage);
+                    case ImageOrientation.Portrait when image.Metadata.Height < 800:
+                        throw new ImageTooSmallException(imageTooSmallErrorMessage);
+                }
+            }
 
             if (imageStream.CanSeek && imageStream.Position != 0)
                 imageStream.Position = 0;
