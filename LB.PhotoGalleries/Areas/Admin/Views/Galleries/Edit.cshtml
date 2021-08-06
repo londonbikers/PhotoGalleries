@@ -477,7 +477,7 @@
                         var tag = vm.Filter().substring(4).toLowerCase();
                         console.log(`tag: ${tag}`);
                         return ko.utils.arrayFilter(vm.Images(),
-                            function (i) {
+                            function(i) {
                                 return window.TagsCsvContains(i.TagsCsv(), tag);
                             });
                     } else {
@@ -529,7 +529,7 @@
                                     i.TagsCsv(RemoveTagFromCsv(i.TagsCsv(), tag));
 
                                     console.log(`removed tag '${tag}' from ${i.Id}`);
-                                    if (event.options.preventPost) {
+                                    if (event.options && event.options.preventPost) {
                                         console.log("preventing tag removal post-back");
                                         return;
                                     }
@@ -581,6 +581,7 @@
                         // remove tag from images
                         vm.Images().forEach(function(i) {
                             if (window.TagsCsvContains(i.TagsCsv(), tag)) {
+                                console.log(`removing tag ${tag} from  #uit-${i.Id}`);
                                 $(`#uit-${i.Id}`).tagsinput('remove', tag, { preventPost: true });
                             }
                         });
