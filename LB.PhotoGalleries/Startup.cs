@@ -2,10 +2,8 @@ using Imageflow.Fluent;
 using Imageflow.Server;
 using Imageflow.Server.DiskCache;
 using LB.PhotoGalleries.Application;
-using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Services;
-using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -17,12 +15,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries
 {
