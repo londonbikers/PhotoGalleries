@@ -2,14 +2,14 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 function DoesBrowserSupportWebP() {
-    console.log("DoesBrowserSupportWebP()");
+    //console.log("DoesBrowserSupportWebP()");
     var webpTested = false;
     var webpSupported = true;
 
     if (sessionStorage) {
         const sessionItem = sessionStorage.getItem("webpsupport");
         if (sessionItem != undefined) {
-            console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
+            //console.log(`DoesBrowserSupportWebP(): got webpsupport session item: ${sessionItem}`);
             webpTested = true;
             webpSupported = (sessionItem === "true");
         }
@@ -25,7 +25,7 @@ function DoesBrowserSupportWebP() {
         if (platform.os.version) {
             var os_main_version = platform.os.version.substring(0, platform.os.version.indexOf('.'))
             if (platform.os.family == 'OS X' && os_main_version < 11 && platform.name == 'Safari') {
-                console.log("DoesBrowserSupportWebP(): No, because of old macOS")
+                //console.log("DoesBrowserSupportWebP(): No, because of old macOS");
                 webpSupported = false;
             }
         }
@@ -33,7 +33,7 @@ function DoesBrowserSupportWebP() {
         sessionStorage.setItem("webpsupport", webpSupported);
     }
 
-    console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
+    //console.log(`DoesBrowserSupportWebP(): webpSupported=${webpSupported}`);
     return webpSupported;
 }
 
@@ -89,31 +89,31 @@ function GetImageThumbnailUrl(files, element) {
     const scaledHeight = Math.round(cardInnerHeight * window.devicePixelRatio);
     const doesBrowserSupportWebP = DoesBrowserSupportWebP();
 
-    console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP type: ${typeof (doesBrowserSupportWebP)}`);
-    console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
+    //console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP type: ${typeof (doesBrowserSupportWebP)}`);
+    //console.log(`GetImageThumbnailUrl(): doesBrowserSupportWebP=${doesBrowserSupportWebP}`);
 
     // our pre-generated images use the WebP format. Some old browsers don't support
     // this, so for these, just return the original image as a fall-back.
     if (doesBrowserSupportWebP === false) {
-        console.log("GetImageThumbnailUrl(): returning first dio");
+        //console.log("GetImageThumbnailUrl(): returning first dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 
     // choose ImageFileSpec for scaled dimensions
     if (scaledWidth <= 800 && scaledHeight <= 800 && files.Spec800Id !== null) {
-        console.log("GetImageThumbnailUrl(): returning di800");
+        //console.log("GetImageThumbnailUrl(): returning di800");
         return `/di800/${files.Spec800Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 1920 && scaledHeight <= 1920 && files.Spec1920Id !== null) {
-        console.log("GetImageThumbnailUrl(): returning di800");
+        //console.log("GetImageThumbnailUrl(): returning di800");
         return `/di1920/${files.Spec1920Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 2560 && scaledHeight <= 2560 && files.Spec2560Id !== null) {
-        console.log("GetImageThumbnailUrl(): returning di800");
+        //console.log("GetImageThumbnailUrl(): returning di800");
         return `/di2560/${files.Spec2560Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else if (scaledWidth <= 3840 && scaledHeight <= 3840 && files.Spec3840Id !== null) {
-        console.log("GetImageThumbnailUrl(): returning di800");
+        //console.log("GetImageThumbnailUrl(): returning di800");
         return `/di3840/${files.Spec3840Id}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     } else {
-        console.log("GetImageThumbnailUrl(): returning second dio");
+        //console.log("GetImageThumbnailUrl(): returning second dio");
         return `/dio/${files.OriginalId}?w=${scaledWidth}&h=${scaledHeight}&mode=crop`;
     }
 }
