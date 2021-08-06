@@ -291,6 +291,9 @@ namespace LB.PhotoGalleries
             if (height > maxSize)
                 height = maxSize;
 
+            if (!args.Query.ContainsKey("mode"))
+                args.Query["mode"] = "max";
+
             args.Query["w"] = width.ToString();
             args.Query["h"] = height.ToString();
         }
