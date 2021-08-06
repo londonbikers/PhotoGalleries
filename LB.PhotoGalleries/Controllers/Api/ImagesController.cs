@@ -222,7 +222,9 @@ namespace LB.PhotoGalleries.Controllers.Api
         public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            if (image.TagsCsv.Contains(tag)) 
+
+            var list = Utilities.CsvToList(image.TagsCsv);
+            if (list.Contains(tag))
                 return BadRequest("Tag already exists on image");
 
             image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, tag);
