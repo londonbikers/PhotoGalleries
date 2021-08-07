@@ -1,4 +1,5 @@
 ﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
@@ -7,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Models.Enums;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
