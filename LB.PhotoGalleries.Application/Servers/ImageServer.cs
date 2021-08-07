@@ -84,7 +84,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     };
                 }
 
-                ParseAndAssignImageMetadata(image, imageStream, performImageDimensionsCheck);
+                ParseAndAssignImageMetadata(image, imageStream, filename, performImageDimensionsCheck);
 
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
@@ -730,6 +730,7 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region metadata parsing methods
+
         /// <summary>
         /// Images contain metadata that describes the photo to varying degrees. This method extracts the metadata
         /// and parses out the most interesting pieces we're interested in and assigns it to the image object so we can
@@ -737,13 +738,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         /// <param name="image">The Image object to assign the metadata to.</param>
         /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
+        /// <param name="originalFilename">The name of the originally-uploaded image file.</param>
         /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
-        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, bool performImageDimensionsCheck)
+        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, string originalFilename, bool performImageDimensionsCheck)
         {
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             using var bm = new Bitmap(imageStream);
             image.Metadata.Width = bm.Width;
             image.Metadata.Height = bm.Height;
+            image.Metadata.OriginalFilename = originalFilename;
 
             var orientation = image.Metadata.Width.Value >= image.Metadata.Height.Value
                 ? ImageOrientation.Landscape

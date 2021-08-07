@@ -129,6 +129,10 @@
         <h3>Metadata</h3>
 
         <ul>
+            @if (!string.IsNullOrEmpty(Model.Metadata.OriginalFilename))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.OriginalFilename)</b>: @Html.DisplayFor(model => model.Metadata.OriginalFilename)</li>
+            }
             @if (Model.Metadata.TakenDate.HasValue)
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.TakenDate)</b>: @Html.DisplayFor(model => model.Metadata.TakenDate)</li>
