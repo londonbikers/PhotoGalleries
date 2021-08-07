@@ -383,6 +383,14 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 throw new InvalidOperationException("Ordered images were not produced");
             }
+
+            // update the gallery thumbnail if necessary
+            if (gallery.ThumbnailFiles.OriginalId != orderedImages[0].Files.OriginalId)
+            {
+                gallery.ThumbnailFiles = orderedImages[0].Files;
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                Debug.WriteLine("OrderImagesAsync(): Updating gallery thumbnail");
+            }
         }
         #endregion
 
