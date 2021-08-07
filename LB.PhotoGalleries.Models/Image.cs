@@ -167,6 +167,9 @@ namespace LB.PhotoGalleries.Models
 
         [DisplayName("Location Longitude")]
         public double? LocationLongitude { get; set; }
+        
+        [DisplayName("Original Filename")]
+        public string OriginalFilename { get; set; }
     }
 
     public class ImageFiles

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Models.Enums;
 
 namespace LB.PhotoGalleries.Application.Servers
 {
@@ -345,6 +346,43 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             await UpdateGalleryAsync(gallery);
+        }
+
+        /// <summary>
+        /// Updates all of the image position values by re-ordering the images in a gallery by a given property.
+        /// </summary>
+        public async Task OrderImagesAsync(Gallery gallery, OrderBy orderBy)
+        {
+            var images = await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id);
+            List<Image> orderedImages = null;
+
+            switch (orderBy)
+            {
+                case OrderBy.Name:
+                    orderedImages = images.OrderBy(q => q.Name).ToList();
+                    break;
+                case OrderBy.Filename:
+                    orderedImages = images.OrderBy(q => q.Metadata.OriginalFilename).ToList();
+                    break;
+                case OrderBy.TakenDate:
+                    orderedImages = images.OrderBy(q => q.Metadata.TakenDate).ToList();
+                    break;
+            }
+
+            if (orderedImages != null)
+            {
+                for (var x = 0; x < orderedImages.Count; x++)
+                {
+                    var image = orderedImages[x];
+                    image.Position = x;
+                    await Server.Instance.Images.UpdateImageAsync(image);
+                    Debug.WriteLine($"OrderImagesAsync(): Updated image {image.Id} with position {image.Position}");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Ordered images were not produced");
+            }
         }
         #endregion
 

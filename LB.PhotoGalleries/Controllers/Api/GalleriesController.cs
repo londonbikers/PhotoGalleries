@@ -1,7 +1,9 @@
 ﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -92,6 +94,35 @@ namespace LB.PhotoGalleries.Controllers.Api
             }
 
             return Ok($"{tag} tag removed from all gallery images");
+        }
+
+        [Authorize(Roles = "Administrator,Photographer")]
+        [HttpPut("/api/galleries/order-images")]
+        public async Task<ActionResult> OrderImages(string categoryId, string galleryId, string by)
+        {
+            if (!categoryId.HasValue())
+                return BadRequest("categoryId is empty!");
+            if (!galleryId.HasValue())
+                return BadRequest("galleryId is empty!");
+            if (!by.HasValue())
+                return BadRequest("by is empty!");
+
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+                return BadRequest("Apologies, you're not authorised to do that.");
+
+            OrderBy orderBy;
+            try
+            {
+                orderBy = (OrderBy)Enum.Parse(typeof(OrderBy), by, true);
+            }
+            catch
+            {
+                return BadRequest("Invalid parameter 'by' value");
+            }
+
+            await Server.Instance.Galleries.OrderImagesAsync(gallery, orderBy);
+            return Ok();
         }
     }
 }
