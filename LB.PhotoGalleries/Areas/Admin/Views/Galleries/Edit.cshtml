@@ -187,9 +187,9 @@
         </div>
 
         <div class="mt-3 mb-3 float-right">
-            <a href="#" data-bind="click: function(){SetThumbnailSize('small')}"><img src="/img/photo.svg" width="15"/></a>
-            <a href="#" data-bind="click: function(){SetThumbnailSize('medium')}"><img src="/img/photo.svg" width="20"/></a>
-            <a href="#" data-bind="click: function(){SetThumbnailSize('large')}"><img src="/img/photo.svg" width="25"/></a>
+            <a href="#" data-bind="click: function() { SetThumbnailSize('small') }"><img src="/img/photo.svg" width="15"/></a>
+            <a href="#" data-bind="click: function() { SetThumbnailSize('medium') }"><img src="/img/photo.svg" width="20"/></a>
+            <a href="#" data-bind="click: function() { SetThumbnailSize('large') }"><img src="/img/photo.svg" width="25"/></a>
         </div>
 
         <div id="card-container" class="float-clear row mt-3" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }">
