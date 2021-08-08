@@ -1,4 +1,5 @@
 ﻿@using Newtonsoft.Json
+@using LB.PhotoGalleries.Shared
 @model Image
 @{
     ViewData["Title"] = "Edit Image";
@@ -212,6 +213,16 @@
                 frameborder="0" 
                 style="border: solid 1px #ccc"
                 src="https://www.google.com/maps/embed/v1/view?key=@mapsKey&center=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&zoom=18" allowfullscreen>
+            </iframe>
+        }
+        else if (Model.Metadata.CombinedLocation.HasValue())
+        {
+            <iframe
+                width="550"
+                height="450"
+                frameborder="0" 
+                style="border: solid 1px #ccc"
+                src="https://www.google.com/maps/embed/v1/place?key=@mapsKey&q=@Model.Metadata.CombinedLocation&zoom=18" allowfullscreen>
             </iframe>
         }
 

@@ -171,9 +171,25 @@ namespace LB.PhotoGalleries.Models
         public string Location { get; set; }
         public string State { get; set; }
         public string Country { get; set; }
-        
+
         [DisplayName("Original Filename")]
         public string OriginalFilename { get; set; }
+
+        /// <summary>
+        /// Gets a comma-separated version of the different location metadata properties.
+        /// </summary>
+        [JsonIgnore]
+        public string CombinedLocation
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Location) && string.IsNullOrEmpty(City) && string.IsNullOrEmpty(State) && string.IsNullOrEmpty(Country))
+                    return null;
+
+                var components = new List<string> {Location, City, State, Country};
+                return string.Join(',', components);
+            }
+        }
     }
 
     public class ImageFiles
