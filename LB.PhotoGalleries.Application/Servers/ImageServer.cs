@@ -729,7 +729,6 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region metadata parsing methods
-
         /// <summary>
         /// Images contain metadata that describes the photo to varying degrees. This method extracts the metadata
         /// and parses out the most interesting pieces we're interested in and assigns it to the image object so we can
