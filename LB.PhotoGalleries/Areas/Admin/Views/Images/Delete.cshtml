@@ -123,6 +123,22 @@
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.FocalLength)</b>: @Html.DisplayFor(model => model.Metadata.FocalLength)</li>
             }
+            @if (!string.IsNullOrEmpty(Model.Metadata.Location))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.Location)</b>: @Html.DisplayFor(model => model.Metadata.Location)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.City))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.City)</b>: @Html.DisplayFor(model => model.Metadata.City)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.State))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.State)</b>: @Html.DisplayFor(model => model.Metadata.State)</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.Metadata.Country))
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.Country)</b>: @Html.DisplayFor(model => model.Metadata.Country)</li>
+            }
         </ul>
 
         @if (Model.Metadata.LocationLatitude.HasValue)

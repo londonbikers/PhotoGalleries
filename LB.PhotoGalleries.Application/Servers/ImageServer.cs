@@ -880,6 +880,34 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (keywords != null)
                     foreach (var keyword in keywords.Where(k => k.HasValue()))
                         image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword);
+
+                if (!image.Metadata.Location.HasValue())
+                {
+                    var objectLocation = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagSubLocation);
+                    if (objectLocation != null && objectLocation.Description.HasValue())
+                        image.Metadata.Location = objectLocation.Description;
+                }
+
+                if (!image.Metadata.City.HasValue())
+                {
+                    var objectCity = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCity);
+                    if (objectCity != null && objectCity.Description.HasValue())
+                        image.Metadata.City = objectCity.Description;
+                }
+
+                if (!image.Metadata.State.HasValue())
+                {
+                    var objectState = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagProvinceOrState);
+                    if (objectState != null && objectState.Description.HasValue())
+                        image.Metadata.State = objectState.Description;
+                }
+
+                if (!image.Metadata.Country.HasValue())
+                {
+                    var objectCountry = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCountryOrPrimaryLocationName);
+                    if (objectCountry != null && objectCountry.Description.HasValue())
+                        image.Metadata.Country = objectCountry.Description;
+                }
             }
 
             var xmpDirectory = directories.OfType<XmpDirectory>().FirstOrDefault();
