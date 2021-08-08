@@ -785,19 +785,16 @@ namespace LB.PhotoGalleries.Application.Servers
             if (exifIfd0Directory != null)
             {
                 var make = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMake);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (make != null && make.Description.HasValue())
                     image.Metadata.CameraMake = make.Description;
 
                 var model = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagModel);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                 if (model != null && model.Description.HasValue())
                     image.Metadata.CameraModel = model.Description;
 
                 if (!image.Caption.HasValue())
                 {
                     var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
-                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                     if (imageDescription != null && imageDescription.Description.HasValue())
                         image.Caption = imageDescription.Description;
                 }
@@ -871,7 +868,6 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (!image.Name.HasValue())
                 {
                     var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
-                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
                     if (objectName != null && objectName.Description.HasValue())
                         image.Name = TidyImageName(objectName.Description);
                 }
