@@ -56,32 +56,31 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (string.IsNullOrEmpty(filename))
                     throw new ArgumentNullException(nameof(filename));
 
-                if (image != null)
-                {
-                    // the Image already exists but may not be sufficiently populated...
-                    if (!image.Id.HasValue())
-                        image.Id = Utilities.GenerateId();
-                    if (!image.Name.HasValue())
-                        image.Name = TidyImageName(Path.GetFileNameWithoutExtension(filename));
-                    if (!image.GalleryCategoryId.HasValue())
-                        image.GalleryCategoryId = galleryCategoryId;
-                    if (!image.GalleryId.HasValue())
-                        image.GalleryId = galleryId;
-                    if (!image.Files.OriginalId.HasValue())
-                        image.Files.OriginalId = image.Id + Path.GetExtension(filename).ToLower();
-                }
-                else
+                // TODO: make sure metadata titles/names take priority over our filename-derived name
+
+                if (image == null)
                 {
                     // create the Image object anew
                     var id = Utilities.GenerateId();
                     image = new Image
                     {
                         Id = id,
-                        Name = TidyImageName(Path.GetFileNameWithoutExtension(filename)),
                         GalleryCategoryId = galleryCategoryId,
                         GalleryId = galleryId,
                         Files = { OriginalId = id + Path.GetExtension(filename).ToLower() }
                     };
+                }
+                else
+                {
+                    // the Image already exists but may not be sufficiently populated...
+                    if (!image.Id.HasValue())
+                        image.Id = Utilities.GenerateId();
+                    if (!image.GalleryCategoryId.HasValue())
+                        image.GalleryCategoryId = galleryCategoryId;
+                    if (!image.GalleryId.HasValue())
+                        image.GalleryId = galleryId;
+                    if (!image.Files.OriginalId.HasValue())
+                        image.Files.OriginalId = image.Id + Path.GetExtension(filename).ToLower();
                 }
 
                 ParseAndAssignImageMetadata(image, imageStream, filename, performImageDimensionsCheck);
@@ -925,6 +924,10 @@ namespace LB.PhotoGalleries.Application.Servers
                         image.Metadata.LensModel = lens.Value.TrimStart('(').TrimEnd(')');
                 }
             }
+
+            // use the original filename as a fall-back for there being no name in the metadata
+            if (string.IsNullOrEmpty(image.Name))
+                image.Name = TidyImageName(Path.GetFileNameWithoutExtension(originalFilename));
 
             // wind the stream back to allow other code to work with the stream
             imageStream.Position = 0;
