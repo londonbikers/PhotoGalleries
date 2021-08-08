@@ -10,7 +10,8 @@
     var createdByUser = (User)ViewData["createdByUser"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
     var categoryNameForUrl = Helpers.EncodeParamForUrl(Server.Instance.Categories.Categories.Single(c => c.Id == Model.CategoryId).Name);
-
+    var orderByFilenameDisabled = images.Any(q => !string.IsNullOrEmpty(q.Metadata.OriginalFilename)) ? "" : " disabled";
+    var orderByTakenDateDisabled = images.Any(q => q.Metadata.TakenDate.HasValue) ? "" : " disabled";
 }
 
 @section Styles {
@@ -181,8 +182,8 @@
         
         <div class="mt-3 mb-3 float-left">
             <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: OrderImagesByName">Order by Name</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: function() { OrderImagesByFileName() }">Order by Filename</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: function() { OrderImagesByDateCaptured() }">Order by Capture Date</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: function() { OrderImagesByFileName() }"@orderByFilenameDisabled>Order by Filename</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: function() { OrderImagesByDateCaptured() }"@orderByTakenDateDisabled>Order by Capture Date</button>
         </div>
 
         <div class="mt-3 mb-3 float-right">
