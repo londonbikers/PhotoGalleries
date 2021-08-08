@@ -768,24 +768,6 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var directories = ImageMetadataReader.ReadMetadata(imageStream);
 
-            // debug info
-            // ----------------------------------------------------------------------------------
-            //Debug.WriteLine("-------------------------------------------------");
-            //Debug.WriteLine("");
-            //foreach (var directory in directories)
-            //{
-            //    // Each directory stores values in tags
-            //    foreach (var tag in directory.Tags)
-            //        Debug.WriteLine(tag);
-
-            //    // Each directory may also contain error messages
-            //    foreach (var error in directory.Errors)
-            //        Debug.WriteLine("ERROR: " + error);
-            //}
-            //Debug.WriteLine("");
-            //Debug.WriteLine("-------------------------------------------------");
-            // ----------------------------------------------------------------------------------
-
             image.Metadata.TakenDate = GetImageDateTaken(directories);
 
             var iso = GetImageIso(directories);
