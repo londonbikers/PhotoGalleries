@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.8.3" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.6.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0-beta.2" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.8.0-beta.2" />
     <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.8-rc62" />
     <PackageReference Include="Imageflow.Net" Version="0.7.24" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.18.0" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.20.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
