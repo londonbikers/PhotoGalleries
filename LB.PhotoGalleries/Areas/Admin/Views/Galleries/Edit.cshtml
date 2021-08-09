@@ -45,6 +45,10 @@
     </div>
 }
 
+<div id="updated-gallery-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
+    Updated the gallery!
+</div>
+
 <div class="row">
     <div class="col">
 
@@ -91,53 +95,69 @@
     <div class="col">
 
         <dl class="row">
-            <dt class="col-sm-10">
+            <dt class="col-sm-12">
                 @Html.DisplayNameFor(model => model.Created)
             </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.Created)
+            <dd class="col-sm-12">
+                
+                <div id="created-label-div" data-bind="visible: !EditingCreated()">
+                    <span data-bind="text: CreatedFormatted"></span>
+                    @if (isAuthorisedToEdit)
+                    {
+                        <text>- </text><a href="#" data-bind="click: ShowCreatedEditForm" title="You can edit the created date to fit in historic galleries...">Edit</a>
+                    }
+                </div>
+
+                <form class="form-inline" id="edit-label-form" data-bind="submit: UpdateCreated, visible: EditingCreated" style="display: none;">
+                    <div class="form-group mr-sm-3 mb-2 mt-1">
+                        <input class="form-control" data-bind="value: Gallery.Created" />
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary mb-2 mr-2">Update</button>
+                    <button class="btn btn-outline-secondary mb-2" data-bind="click: CancelCreatedEditForm">Cancel</button>
+                </form>
+
             </dd>
 
             @if (createdByUser != null)
             {
-                <dt class="col-sm-10">
+                <dt class="col-sm-12">
                     @Html.DisplayNameFor(model => model.CreatedByUserId)
                 </dt>
-                <dd class="col-sm-10">
+                <dd class="col-sm-12">
                     @Html.ActionLink(createdByUser.Name, "Details", "Users", new { id = Model.CreatedByUserId })
                 </dd>
             }
 
-            <dt class="col-sm-10">
+            <dt class="col-sm-12">
                 @Html.DisplayNameFor(model => model.Comments)
             </dt>
-            <dd class="col-sm-10">
+            <dd class="col-sm-12">
                 @Model.Comments.Count
             </dd>
 
-            <dt class="col-sm-10">
+            <dt class="col-sm-12">
                 Images
             </dt>
-            <dd class="col-sm-10">
+            <dd class="col-sm-12">
                 @images.Count
             </dd>
 
             @if (Model.LegacyNumId > 0)
             {
-                <dt class="col-sm-10">
+                <dt class="col-sm-12">
                     @Html.DisplayNameFor(model => model.LegacyNumId)
                 </dt>
-                <dd class="col-sm-10">
+                <dd class="col-sm-12">
                     @Html.DisplayFor(model => model.LegacyNumId)
                 </dd>
             }
 
             @if (Model.LegacyGuidId.HasValue && Model.LegacyGuidId != Guid.Empty)
             {
-                <dt class="col-sm-10">
+                <dt class="col-sm-12">
                     @Html.DisplayNameFor(model => model.LegacyGuidId)
                 </dt>
-                <dd class="col-sm-10">
+                <dd class="col-sm-12">
                     @Html.DisplayFor(model => model.LegacyGuidId)
                 </dd>
             }
@@ -292,13 +312,15 @@
     <script src="~/lib/knockout-sortable/dist/knockout-sortable.js"></script>
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
     <script src="~/js/image.js"></script>
+    <script src="~/js/models/gallery.js"></script>
 
     <script type="text/javascript">
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
 
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.TagsCsv})));
+        var galleryPayload = @Html.Raw(JsonConvert.SerializeObject(Model));
+        var imagesPayload = @Html.Raw(JsonConvert.SerializeObject(Utilities.OrderImages(images).Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.TagsCsv})));
         var galleryId = '@Model.Id';
 
         function OnImageMoved(evt) {
@@ -328,8 +350,14 @@
             var vm = this;
 
             // convert the json payload into an observable array so we can track changes
+            vm.Gallery = new GalleryModel(galleryPayload);
             vm.Images = ko.observableArray();
-            payload.forEach(i => this.Images.push(new ImageModel(i)));
+            imagesPayload.forEach(i => this.Images.push(new ImageModel(i)));
+
+            vm.EditingCreated = ko.observable(false);
+            vm.CreatedFormatted = ko.computed(function() {
+                return window.moment(vm.Gallery.Created()).format(window._longDateFormat);
+            }, vm);
 
             // dynamically calculate the distinct tags in use across the gallery images
             vm.AllTags = ko.pureComputed(function() {
@@ -495,6 +523,34 @@
                     $("#remove-tags-div").show();
                 }
                 return false;
+            }
+            
+            vm.ShowCreatedEditForm = function () {
+                vm.EditingCreated(true);
+            }
+
+            vm.UpdateCreated = function() {
+                console.log("updating created...");
+                var ticks = window.DateToTicks(vm.Gallery.Created());
+
+                // put to server
+                $.ajax({
+                    url: `/api/galleries/update-created?categoryId=@Model.CategoryId&galleryId=@Model.Id&created=${ticks}`,
+                    type: 'PUT'
+                }).done(function (response) {
+                    var banner = $("#updated-gallery-banner");
+                    banner.show();
+                    setTimeout(function () { banner.fadeOut('slow'); }, 5000);
+                }).fail(function(response) {
+                    console.log(`something went wrong when updating server with new created: ${ticks}:`);
+                    console.log(response);
+                });
+
+                vm.EditingCreated(false);
+            }
+
+            vm.CancelCreatedEditForm = function() {
+                vm.EditingCreated(false);
             }
 
             // allow the user to search by text or tag

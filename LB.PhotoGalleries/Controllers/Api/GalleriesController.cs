@@ -124,5 +124,26 @@ namespace LB.PhotoGalleries.Controllers.Api
             await Server.Instance.Galleries.OrderImagesAsync(gallery, orderBy);
             return Ok();
         }
+
+        [Authorize(Roles = "Administrator,Photographer")]
+        [HttpPut("/api/galleries/update-created")]
+        public async Task<ActionResult> UpdateCreated(string categoryId, string galleryId, long created)
+        {
+            if (!categoryId.HasValue())
+                return BadRequest("categoryId is empty!");
+            if (!galleryId.HasValue())
+                return BadRequest("galleryId is empty!");
+            if (created <= 0)
+                return BadRequest("created is empty!");
+
+            var createdDate = new DateTime(created);
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+                return BadRequest("Apologies, you're not authorised to do that.");
+
+            gallery.Created = createdDate;
+            await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+            return Ok();
+        }
     }
 }

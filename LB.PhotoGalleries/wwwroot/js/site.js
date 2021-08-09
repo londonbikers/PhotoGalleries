@@ -1,6 +1,12 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
+// --[ GLOBAL VARIABLES ]----------------------------------------------------------------------------------
+
+var _longDateFormat = "Do MMMM YYYY, hh:mm";
+
+// -- [ FUNCTIONS ]----------------------------------------------------------------------------------------
+
 function DoesBrowserSupportWebP() {
     //console.log("DoesBrowserSupportWebP()");
     var webpTested = false;
@@ -174,4 +180,10 @@ function RemoveTagFromCsv(tags, tag) {
 function TagsCsvContains(tags, tag) {
     const array = tags.split(",");
     return array.includes(tag);
+}
+
+// converts a date to ticks, making it easier to transfer dates (as just numbers) to the API, avoiding any querystring encoding issues with normal datetime characters.
+function DateToTicks(date) {
+    const dateObj = new Date(date);
+    return ((dateObj.getTime() * 10000) + 621355968000000000);
 }
