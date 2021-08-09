@@ -110,6 +110,12 @@ namespace LB.PhotoGalleries.Models
 
             return true;
         }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
         #endregion
     }
 
