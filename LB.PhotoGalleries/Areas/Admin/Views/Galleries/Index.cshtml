@@ -17,40 +17,37 @@
     }
 </div>
 
-    <table class="table">
-        <thead class="thead-dark">
-            <tr>
-                <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
-                <th scope="col">Category</th>
-                <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
-                <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
-                <th scope="col"></th>
-            </tr>
-        </thead>
-        <tbody>
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
+            <th scope="col">Category</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
+            <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
 
-            @if (Model == null || !Model.Any())
+        @if (Model == null || !Model.Any())
+        {
+            <tr>
+                <td colspan="6" class="text-center">No galleries to show. Create the first using the link above!</td>
+            </tr>
+        }
+        else
+        {
+            foreach (var item in Model)
             {
                 <tr>
-                    <td colspan="6" class="text-center">No galleries to show. Create the first using the link above!</td>
+                    <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
+                    <td>@Html.DisplayFor(modelItem => Server.Instance.Categories.Categories.First(c => c.Id == item.CategoryId).Name)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Active)</td>
+                    <td>@item.Created.ToShortDateString()</td>
+                    <td>@Html.ActionLink("Edit", "Edit", new { pk = item.CategoryId, id = item.Id }, new {@class="btn btn-sm btn-primary"})</td>
                 </tr>
             }
-            else
-            {
-                foreach (var item in Model)
-                {
-                    <tr>
-                        <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
-                        <td>@Html.DisplayFor(modelItem => Server.Instance.Categories.Categories.First(c => c.Id == item.CategoryId).Name)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Active)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Created)</td>
-                        <td>
-                            @Html.ActionLink("Edit", "Edit", new { pk = item.CategoryId, id = item.Id }) |
-                            @Html.ActionLink("Delete", "Delete", new { pk = item.CategoryId, id = item.Id })
-                        </td>
-                    </tr>
-                }
-            }
+        }
 
-        </tbody>
-    </table>
+    </tbody>
+</table>
