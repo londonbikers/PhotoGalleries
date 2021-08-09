@@ -1,10 +1,12 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +20,43 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         public async Task<ActionResult> Index()
         {
             ViewData.Model = await Server.Instance.Galleries.GetLatestGalleriesAsync(50);
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Index(string query, string categoryId, string status)
+        {
+            if (!query.HasValue() && !status.HasValue() && !categoryId.HasValue())
+            {
+                ViewData.Model = await Server.Instance.Galleries.GetLatestGalleriesAsync(50);
+            }
+            else
+            {
+                if (categoryId == "Choose category...")
+                    categoryId = null;
+                var searchStatus = Enum.Parse<SearchStatus>(status, true);
+                var result = await Server.Instance.Galleries.SearchForGalleriesAsync(query, categoryId, searchStatus, 1, 50, 50);
+
+                if (result != null)
+                {
+                    // convert the galleries to stubs
+                    var stubs = result.Results.Select(gallery => new GalleryAdminStub
+                    {
+                        Id = gallery.Id,
+                        Active = gallery.Active,
+                        CategoryId = gallery.CategoryId,
+                        Created = gallery.Created,
+                        Name = gallery.Name
+                    }).ToList();
+                    ViewData.Model = stubs;
+                }
+
+                ViewData["query"] = query;
+                ViewData["categoryId"] = categoryId;
+                ViewData["status"] = status;
+            }
+
             return View();
         }
 

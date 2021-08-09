@@ -17,6 +17,30 @@
     }
 </div>
 
+<div class="mt-5 mb-2">
+    <form asp-controller="Galleries" asp-action="Index" method="post" class="form-inline">
+        <div class="form-group mr-sm-3">
+            <input name="query" class="form-control" placeholder="Search" value="@ViewData["query"]" />
+        </div>
+        
+        <select name="categoryId" class="custom-select my-1 mr-sm-2">
+            <option selected>Choose category...</option>
+            @foreach (var category in Server.Instance.Categories.Categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+        
+        <select name="status" class="custom-select my-1 mr-sm-2">
+            <option value="NotSpecified" selected>Choose status...</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+    </form>
+</div>
+
 <table class="table">
     <thead class="thead-dark">
         <tr>

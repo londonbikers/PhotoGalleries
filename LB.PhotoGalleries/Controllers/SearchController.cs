@@ -45,9 +45,9 @@ namespace LB.PhotoGalleries.Controllers
                 if (t == SearchResultsType.Galleries)
                 {
                     // search for just galleries
-                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, p, pageSize, maxResults);
+                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults);
                 } 
-                else if (t== SearchResultsType.Images)
+                else if (t == SearchResultsType.Images)
                 {
                     // search for just images
                     imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries: true);
@@ -60,7 +60,7 @@ namespace LB.PhotoGalleries.Controllers
                         Task.Run(async () =>
                         {
                             // search for galleries
-                            galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, p, pageSize, maxResults);
+                            galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults);
                         }),
                         Task.Run(async () =>
                         {

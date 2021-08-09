@@ -147,14 +147,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// Returns a page of galleries that match a search term.
         /// </summary>
         /// <param name="term">The search term to use to search for galleries.</param>
+        /// <param name="searchStatus">Choose whether or not to specify status for refining searches.</param>
         /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
-        /// <param name="includeInactiveGalleries">Indicates whether or not inactive (not active) galleries should be returned. False by default.</param>
-        public async Task<PagedResultSet<Gallery>> SearchForGalleriesAsync(string term, int page = 1, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
+        /// <param name="categoryId">Optionally specify a categoryId to limit results to a specific category.</param>
+        public async Task<PagedResultSet<Gallery>> SearchForGalleriesAsync(string term, string categoryId = null, SearchStatus searchStatus = SearchStatus.NotSpecified, int page = 1, int pageSize = 20, int maxResults = 500)
         {
-            if (string.IsNullOrEmpty(term))
-                throw new ArgumentNullException(nameof(term));
+            if (!term.HasValue() && !categoryId.HasValue() && searchStatus == SearchStatus.NotSpecified)
+                throw new ArgumentException("Supply a term, categoryId or searchStatus");
 
             if (pageSize < 1)
                 throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
@@ -170,11 +171,35 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
-            // get the complete list of ids
-            var queryText = includeInactiveGalleries
-                ? "SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) ORDER BY g.Created DESC"
-                : "SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE CONTAINS(g.Name, @term, true) AND g.Active = true ORDER BY g.Created DESC";
+            var nameClause = string.Empty;
+            if (term.HasValue())
+                nameClause = "CONTAINS(g.Name, @term, true)";
 
+            var statusClause = string.Empty;
+            if (searchStatus == SearchStatus.Active)
+            {
+                if (nameClause.HasValue())
+                    statusClause = "AND ";
+                statusClause += "g.Active = true";
+            }
+            else if (searchStatus == SearchStatus.Inactive)
+            {
+                if (nameClause.HasValue())
+                    statusClause = "AND ";
+                statusClause += "g.Active = false";
+            }
+
+            var categoryClause = string.Empty;
+            if (categoryId.HasValue())
+            {
+                if (nameClause.HasValue() || statusClause.HasValue())
+                    categoryClause = "AND ";
+                categoryClause += $"g.CategoryId = '{categoryId}'";
+            }
+
+            var queryText = $"SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE {nameClause} {statusClause} {categoryClause} ORDER BY g.Created DESC";
+
+            // get the complete list of ids
             var queryDefinition = new QueryDefinition(queryText)
                 .WithParameter("@maxResults", maxResults)
                 .WithParameter("@term", term);
