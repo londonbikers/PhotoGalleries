@@ -599,28 +599,59 @@
                         forceLowerCase: true
                     });
 
-                    $(element).on('itemAdded',
-                        function(event) {
-                            var tag = event.item;
-                            for (let x = 0; x < vm.Images().length; x++) {
-                                const i = vm.Images()[x];
-                                if (i.Id === event.target.id.substring(4)) {
-                                    i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
-                                    console.log(`added tag '${tag}' to ${i.Id}`);
+                    $(element).on('itemAdded', function (event)
+                    {
+                        var tag = event.item;
+                        for (let x = 0; x < vm.Images().length; x++) {
+                            const i = vm.Images()[x];
+                            if (i.Id === event.target.id.substring(4)) {
+                                i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
+                                console.log(`added tag '${tag}' to ${i.Id}`);
 
-                                    // push change to server
-                                    $.post(`/api/images/add-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`)
-                                        .done(function() {
-                                            console.log(`pushed new tag '${tag}' to server`);
-                                        })
-                                        .fail(function() {
-                                            console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
-                                        });
+                                // push change to server
+                                $.post(`/api/images/add-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`)
+                                    .done(function() {
+                                        console.log(`pushed new tag '${tag}' to server`);
+                                    })
+                                    .fail(function() {
+                                        console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
+                                    });
 
-                                    return;
-                                }
+                                return;
                             }
-                        });
+                        }
+                    });
+
+                    $(element).on('itemsAdded', function (event)
+                    {
+                        const tags = event.item;
+                        const tagsCsv = tags.join(",");
+
+                        // find the image the tags are being applied to
+                        for (let x = 0; x < vm.Images().length; x++)
+                        {
+                            const i = vm.Images()[x];
+                            if (i.Id === event.target.id.substring(4))
+                            {
+                                for (let y = 0; y < tags.length; y++) {
+                                    const tag = tags[y];
+                                    i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
+                                    console.log(`itemsAdded(): added tag '${tag}' to ${i.Id}`);
+                                }
+
+                                // push changes to server
+                                $.post(`/api/images/add-tags?galleryId=${i.GalleryId}&imageId=${i.Id}&tags=${tagsCsv}`)
+                                    .done(function() {
+                                        console.log(`itemsAdded(): pushed new tags '${tagsCsv}' to server`);
+                                    })
+                                    .fail(function() {
+                                        console.log(`itemsAdded(): oh no, something went wrong with pushing the '${tagsCsv}' tags to the server!`);
+                                    });
+
+                                return;
+                            }
+                        }
+                    });
 
                     $(element).on('itemRemoved',
                         function(event) {

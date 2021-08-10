@@ -228,7 +228,30 @@ namespace LB.PhotoGalleries.Controllers.Api
             image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, tag);
             await Server.Instance.Images.UpdateImageAsync(image);
             return Ok();
+        }
 
+        [HttpPost("/api/images/add-tags")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        public async Task<ActionResult> AddTags(string galleryId, string imageId, string tags)
+        {
+            if (!tags.HasValue())
+                return BadRequest("tags is empty");
+
+            if (!tags.Contains(','))
+                return BadRequest("tags does not contain multiple items");
+
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            foreach (var tag in tags.Split(','))
+            {
+                var processedTag = tag.Trim().ToLower();
+                if (image.TagsCsv.TagsContain(processedTag))
+                    return BadRequest($"Tag already exists on image: {processedTag}");
+
+                image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, processedTag);
+            }
+            
+            await Server.Instance.Images.UpdateImageAsync(image);
+            return Ok();
         }
 
         [HttpDelete("/api/images/remove-tag")]
@@ -242,7 +265,6 @@ namespace LB.PhotoGalleries.Controllers.Api
             image.TagsCsv = Utilities.RemoveTagFromCsv(image.TagsCsv, tag);
             await Server.Instance.Images.UpdateImageAsync(image);
             return Ok();
-
         }
     }
 }
