@@ -21,7 +21,7 @@
 <table class="table">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">@Html.DisplayNameFor(model => model.Picture)</th>
+            <th scope="col">Picture</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
             <th scope="col">@Html.DisplayNameFor(model => model.Email)</th>
             <th scope="col"></th>
@@ -40,8 +40,8 @@
                 </td>
                 <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.ActionLink("Details", "Details", new {item.Id})</td>
-                <td>@Html.ActionLink("Delete", "Delete", new {item.Id})</td>
+                <td>@Html.ActionLink("Details", "Details", new {item.Id}, new {@class = "btn btn-sm btn-outline-secondary"})</td>
+                <td>@Html.ActionLink("Delete", "Delete", new {item.Id}, new { @class = "btn btn-sm btn-outline-danger" })</td>
             </tr>
         }
     </tbody>

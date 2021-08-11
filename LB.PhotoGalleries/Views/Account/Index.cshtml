@@ -1,10 +1,23 @@
-﻿@model User
+﻿@using LB.PhotoGalleries.Shared
+@model User
 @{
     ViewData["Title"] = "Profile";
     ViewData.AddActivePage(ManageNavPages.Index);
 }
 
 <h4>Profile</h4>
+
+@if (Model.PictureHostedUrl.HasValue())
+{
+    <div class="mb-2">
+        Profile Picture
+    </div>
+    <div>
+        <img src="@Model.PictureHostedUrl" width="50" title="@Model.Name" class="comment-user-pic rounded" alt="User photo" />
+    </div>
+    <div class="float-clear mb-2"></div>
+}
+
 
 <div class="form-group">
     <label asp-for="Name"></label>
@@ -16,7 +29,7 @@
     <input asp-for="Email" class="form-control" disabled />
 </div>
 
-<div class="alert alert-info" role="alert">
-    These details are managed by our <a href="https://accounts.londonbikers.com/manage">Accounts</a> website. 
+<div class="alert alert-info mt-3" role="alert">
+    These details are managed by our <a href="https://accounts.londonbikers.com/manage">Accounts</a> website.
     Please head there if you wish to change any details.
 </div>
