@@ -10,9 +10,9 @@ namespace LB.PhotoGalleries
 {
     public static class UserManagement
     {
-        public static async Task UpdateUserFromClaimsAsync(TicketReceivedContext ctx)
+        public static async Task UpdateUserFromClaimsAsync(TicketReceivedContext context)
         {
-            var userId = ctx.Principal.FindFirstValue("sub");
+            var userId = context.Principal.FindFirstValue("sub");
             var user = await Server.Instance.Users.GetUserAsync(userId);
             var updateNeeded = false;
 
@@ -21,11 +21,11 @@ namespace LB.PhotoGalleries
                 // the user is new, create them
                 user = new User
                 {
-                    Id = ctx.Principal.FindFirstValue("sub"),
-                    Name = ctx.Principal.FindFirstValue("name"),
-                    Email = ctx.Principal.FindFirstValue("email"),
-                    Picture = ctx.Principal.FindFirstValue("picture"),
-                    LegacyApolloId = ctx.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
+                    Id = context.Principal.FindFirstValue("sub"),
+                    Name = context.Principal.FindFirstValue("name"),
+                    Email = context.Principal.FindFirstValue("email"),
+                    Picture = context.Principal.FindFirstValue("picture"),
+                    LegacyApolloId = context.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
                 };
 
                 // set any defaults
@@ -36,19 +36,19 @@ namespace LB.PhotoGalleries
             else
             {
                 // we already have an existing user for them, update their attributes if necessary
-                if (!user.Name.Equals(ctx.Principal.FindFirstValue("name"), StringComparison.CurrentCultureIgnoreCase))
+                if (!user.Name.Equals(context.Principal.FindFirstValue("name"), StringComparison.CurrentCultureIgnoreCase))
                 {
-                    user.Name = ctx.Principal.FindFirstValue("name");
+                    user.Name = context.Principal.FindFirstValue("name");
                     updateNeeded = true;
                 }
 
-                if (!user.Email.Equals(ctx.Principal.FindFirstValue("email"), StringComparison.CurrentCultureIgnoreCase))
+                if (!user.Email.Equals(context.Principal.FindFirstValue("email"), StringComparison.CurrentCultureIgnoreCase))
                 {
-                    user.Email = ctx.Principal.FindFirstValue("email");
+                    user.Email = context.Principal.FindFirstValue("email");
                     updateNeeded = true;
                 }
 
-                var pictureClaimValue = ctx.Principal.FindFirstValue("picture");
+                var pictureClaimValue = context.Principal.FindFirstValue("picture");
                 if (pictureClaimValue.HasValue())
                 {
                     // only update the picture if we have an inbound claim
