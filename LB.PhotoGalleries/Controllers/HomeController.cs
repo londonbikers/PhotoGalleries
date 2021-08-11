@@ -59,18 +59,10 @@ namespace LB.PhotoGalleries.Controllers
         /// Signs the user out. If the user access another page that requires authorisation then they'll be asked to authenticate again.
         /// </summary>
         [Authorize]
-        public async Task<IActionResult> SignOut()
+        public async Task SignOut()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction(nameof(SignedOut));
-        }
-
-        /// <summary>
-        /// Displays a message to the user to let them know they've been signed-out.
-        /// </summary>
-        public IActionResult SignedOut()
-        {
-            return View();
+            await HttpContext.SignOutAsync("oidc");
         }
 
         /// <summary>
