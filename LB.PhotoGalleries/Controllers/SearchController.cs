@@ -3,6 +3,7 @@ using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -72,7 +73,7 @@ namespace LB.PhotoGalleries.Controllers
                     var stopwatch = Stopwatch.StartNew();
                     await Task.WhenAll(tasks);
                     stopwatch.Stop();
-                    Debug.WriteLine($"SearchController.Index: Search took {stopwatch.ElapsedMilliseconds} ms");
+                    Log.Information($"Web:SearchController.Index(): Search took {stopwatch.ElapsedMilliseconds} ms");
                 }
             }
 

@@ -2,7 +2,7 @@
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Serilog;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -196,7 +196,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (removed)
                 await Server.Instance.Images.UpdateImageAsync(image);
             else
-                Debug.WriteLine($"ImageController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, imageId={imageId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
+                Log.Debug($"ImageController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, imageId={imageId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
 
             return NoContent();
         }
