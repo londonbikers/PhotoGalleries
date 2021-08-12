@@ -51,12 +51,13 @@ namespace LB.PhotoGalleries
 
             // download their IDP-provided profile picture they're new or it's been updated
             var pictureClaimValue = context.Principal.FindFirstValue("picture");
+
+            // only update the picture if we have an inbound claim
             if (pictureClaimValue.HasValue())
             {
-                // only update the picture if we have an inbound claim
-                if (!user.Picture.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
+                // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
+                if (!user.Picture.HasValue() || !user.PictureHostedUrl.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
                     await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
                     updateNeeded = true;
                 }
