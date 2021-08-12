@@ -11,6 +11,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using Serilog;
 
 namespace LB.PhotoGalleries
 {
@@ -19,13 +20,13 @@ namespace LB.PhotoGalleries
         public static void InitialiseImageFlowDiskCache(IConfiguration configuration)
         {
             var path = configuration["ImageFlow:DiskCachePath"];
-            Debug.WriteLine("InitialiseImageFlowDiskCache: path: " + path);
+            Log.Debug("InitialiseImageFlowDiskCache: path: " + path);
             if (Directory.Exists(path))
                 return;
 
-            Debug.WriteLine("InitialiseImageFlowDiskCache: creating new path");
+            Log.Debug("InitialiseImageFlowDiskCache: creating new path");
             Directory.CreateDirectory(path);
-            Debug.WriteLine("InitialiseImageFlowDiskCache: created new path");
+            Log.Debug("InitialiseImageFlowDiskCache: created new path");
         }
 
         public static void AddImageFlowBlobService(IConfiguration configuration, IServiceCollection services, FileSpec fileSpec, string path)

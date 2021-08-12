@@ -3,8 +3,8 @@ using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,7 +26,6 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             // subscribe the user to comment notifications if they've asked to be
             bool.TryParse(Request.Form["receiveNotifications"], out var receiveNotifications);
-
             await Server.Instance.Galleries.CreateCommentAsync(comment, userId, receiveNotifications, categoryId, galleryId);
             return Accepted();
         }
@@ -51,7 +50,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (removed)
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             else
-                Debug.WriteLine($"Api:GalleriesController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
+                Log.Debug($"Api:GalleriesController.DeleteComment(): Oops, no comment removed. galleryId={galleryId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
 
             return NoContent();
         }

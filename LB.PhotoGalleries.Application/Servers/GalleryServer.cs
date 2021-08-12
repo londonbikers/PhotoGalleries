@@ -3,9 +3,9 @@ using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,7 +24,7 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var response = await container.ReadItemAsync<Gallery>(galleryId, new PartitionKey(categoryId));
-            Debug.WriteLine($"GalleryServer:GetGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
+            Log.Debug($"GalleryServer:GetGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
             return response.Resource;
         }
 
@@ -89,8 +89,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 elapsedTime += results.Diagnostics.GetClientElapsedTime();
             }
 
-            Debug.WriteLine($"GalleryServer.GetGalleriesAsync(Category): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"GalleryServer.GetGalleriesAsync(Category): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.GetGalleriesAsync(Category): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
+            Log.Debug($"GalleryServer.GetGalleriesAsync(Category): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             // now with all the ids we know how many total results there are and so can populate paging info
             var pagedResultSet = new PagedResultSet<Gallery> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
@@ -268,7 +268,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var partitionKey = new PartitionKey(gallery.CategoryId);
             var response = await container.ReplaceItemAsync(gallery, gallery.Id, partitionKey);
-            Debug.WriteLine($"GalleryServer.CreateOrUpdateGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.CreateOrUpdateGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
         }
 
         public async Task CreateGalleryAsync(Gallery gallery)
@@ -282,7 +282,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var partitionKey = new PartitionKey(gallery.CategoryId);
             var response = await container.CreateItemAsync(gallery, partitionKey);
-            Debug.WriteLine($"GalleryServer.CreateOrUpdateGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.CreateOrUpdateGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
         }
 
         /// <summary>
@@ -299,7 +299,7 @@ namespace LB.PhotoGalleries.Application.Servers
             // delete the gallery doc
             var container = Server.Instance.Database.GetContainer(Constants.GalleriesContainerName);
             var response = await container.DeleteItemAsync<Gallery>(gallery.Id, new PartitionKey(gallery.CategoryId));
-            Debug.WriteLine($"GalleryServer.DeleteGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.DeleteGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
         }
 
         public async Task ChangeGalleryCategoryAsync(string currentCategoryId, string galleryId, string newCategoryId)
@@ -401,7 +401,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     var image = orderedImages[x];
                     image.Position = x;
                     await Server.Instance.Images.UpdateImageAsync(image);
-                    Debug.WriteLine($"OrderImagesAsync(): Updated image {image.Id} with position {image.Position}");
+                    Log.Debug($"OrderImagesAsync(): Updated image {image.Id} with position {image.Position}");
                 }
             }
             else
@@ -414,7 +414,7 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 gallery.ThumbnailFiles = orderedImages[0].Files;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                Debug.WriteLine("OrderImagesAsync(): Updating gallery thumbnail");
+                Log.Debug("OrderImagesAsync(): Updating gallery thumbnail");
             }
         }
         #endregion
@@ -450,8 +450,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 return 0;
 
             var resultSet = await result.ReadNextAsync();
-            Debug.WriteLine("GalleryServer.GetGalleriesScalarByQueryAsync: Query: " + queryDefinition.QueryText);
-            Debug.WriteLine($"GalleryServer.GetGalleriesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug("GalleryServer.GetGalleriesScalarByQueryAsync: Query: " + queryDefinition.QueryText);
+            Log.Debug($"GalleryServer.GetGalleriesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             return Convert.ToInt32(resultSet.Resource.First());
         }
@@ -472,8 +472,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 elapsedTime += results.Diagnostics.GetClientElapsedTime();
             }
 
-            Debug.WriteLine($"GalleryServer.GetGalleryStubsByQueryAsync: Found {galleryStubs.Count} gallery stubs using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"GalleryServer.GetGalleryStubsByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.GetGalleryStubsByQueryAsync: Found {galleryStubs.Count} gallery stubs using query: {queryDefinition.QueryText}");
+            Log.Debug($"GalleryServer.GetGalleryStubsByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return galleryStubs;
         }
@@ -494,8 +494,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 elapsedTime += results.Diagnostics.GetClientElapsedTime();
             }
 
-            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Found {galleries.Count} galleries using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"GalleryServer.GetGalleriesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"GalleryServer.GetGalleriesByQueryAsync: Found {galleries.Count} galleries using query: {queryDefinition.QueryText}");
+            Log.Debug($"GalleryServer.GetGalleriesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return galleries;
         }
@@ -512,8 +512,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 var resultSet = await queryResult.ReadNextAsync();
                 foreach (var gallery in resultSet)
                 {
-                    Debug.WriteLine("GalleryServer.GetGalleryAsync: Found a gallery using query: " + queryDefinition.QueryText);
-                    Debug.WriteLine($"$GalleryServer.GetGalleryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+                    Log.Debug("GalleryServer.GetGalleryAsync: Found a gallery using query: " + queryDefinition.QueryText);
+                    Log.Debug($"$GalleryServer.GetGalleryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                     return gallery;
                 }
             }
@@ -543,12 +543,12 @@ namespace LB.PhotoGalleries.Application.Servers
             while (queryResult.HasMoreResults)
             {
                 var queryResponse = await queryResult.ReadNextAsync();
-                Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
+                Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
 
                 foreach (var item in queryResponse.Resource)
                 {
                     imageFiles = item.Files;
-                    Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gallery.Id}");
+                    Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gallery.Id}");
                     break;
                 }
             }
@@ -563,12 +563,12 @@ namespace LB.PhotoGalleries.Application.Servers
                 while (queryResult.HasMoreResults)
                 {
                     var queryResponse = await queryResult.ReadNextAsync();
-                    Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Date query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
+                    Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - Date query charge: {queryResponse.RequestCharge}. GalleryId: {gallery.Id}");
 
                     foreach (var item in queryResponse.Resource)
                     {
                         imageFiles = item.Files;
-                        Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via date query. GalleryId: {gallery.Id}");
+                        Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - Got thumbnail image via date query. GalleryId: {gallery.Id}");
                         break;
                     }
                 }
@@ -576,13 +576,13 @@ namespace LB.PhotoGalleries.Application.Servers
 
             if (imageFiles == null)
             {
-                Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - No thumbnail candidate, yet. GalleryId: {gallery.Id}");
+                Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - No thumbnail candidate, yet. GalleryId: {gallery.Id}");
                 return;
             }
 
             gallery.ThumbnailFiles = imageFiles;
             await UpdateGalleryAsync(gallery);
-            Debug.WriteLine($"GalleryServer.AssignMissingThumbnailAsync() - Gallery updated. GalleryId: {gallery.Id}");
+            Log.Debug($"GalleryServer.AssignMissingThumbnailAsync() - Gallery updated. GalleryId: {gallery.Id}");
         }
         #endregion
     }

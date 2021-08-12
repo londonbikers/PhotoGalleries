@@ -2,6 +2,7 @@
 using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers
@@ -34,12 +35,15 @@ namespace LB.PhotoGalleries.Controllers
             user.CommunicationPreferences.ReceiveCommentNotifications = emailPreferencesModel.ReceiveCommentNotifications;
             await Server.Instance.Users.CreateOrUpdateUserAsync(user);
             emailPreferencesModel.EmailPreferencesUpdated = true;
+            
+            Log.Information($"Web:AccountController.EmailPreferences(): User updated their email preferences: {user.Name}");
             return View(emailPreferencesModel);
         }
 
         [AllowAnonymous]
         public ActionResult AccessDenied()
         {
+            Log.Information("AccessDenied()");
             return View();
         }
     }

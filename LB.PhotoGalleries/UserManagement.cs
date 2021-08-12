@@ -2,8 +2,8 @@
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
+using Serilog;
 using System;
-using System.Diagnostics;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -13,7 +13,7 @@ namespace LB.PhotoGalleries
     {
         public static async Task UpdateUserFromClaimsAsync(TicketReceivedContext context)
         {
-            Debug.WriteLine("UpdateUserFromClaimsAsync()");
+            Log.Debug("UpdateUserFromClaimsAsync()");
             var userId = context.Principal.FindFirstValue("sub");
             var user = await Server.Instance.Users.GetUserAsync(userId);
             var updateNeeded = false;
@@ -32,7 +32,6 @@ namespace LB.PhotoGalleries
 
                 // set any defaults
                 user.CommunicationPreferences.ReceiveCommentNotifications = true;
-
                 updateNeeded = true;
             }
             else
@@ -57,18 +56,18 @@ namespace LB.PhotoGalleries
             // only update the picture if we have an inbound claim
             if (pictureClaimValue.HasValue())
             {
-                Debug.WriteLine("UpdateUserFromClaimsAsync(): We have a picture claim");
-                Debug.WriteLine($"UpdateUserFromClaimsAsync(): user.Picture.HasValue(): {user.Picture.HasValue()}");
-                Debug.WriteLine($"UpdateUserFromClaimsAsync(): user.PictureHostedUrl.HasValue(): {user.PictureHostedUrl.HasValue()}");
-                Debug.WriteLine($"UpdateUserFromClaimsAsync(): user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase): {user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase)}");
+                Log.Debug("UpdateUserFromClaimsAsync(): We have a picture claim");
+                Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture.HasValue(): {user.Picture.HasValue()}");
+                Log.Debug($"UpdateUserFromClaimsAsync(): user.PictureHostedUrl.HasValue(): {user.PictureHostedUrl.HasValue()}");
+                Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase): {user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase)}");
 
                 // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
                 if (!user.Picture.HasValue() || !user.PictureHostedUrl.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    Debug.WriteLine("UpdateUserFromClaimsAsync(): About to download picture");
+                    Log.Debug("UpdateUserFromClaimsAsync(): About to download picture");
                     await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
                     updateNeeded = true;
-                    Debug.WriteLine("UpdateUserFromClaimsAsync(): Downloaded picture");
+                    Log.Debug("UpdateUserFromClaimsAsync(): Downloaded picture");
                 }
             }
 
@@ -77,7 +76,7 @@ namespace LB.PhotoGalleries
                 // we'll either create them or update them, which is useful if their
                 // profile picture has changed from their source identity provider, i.e. Facebook
                 await Server.Instance.Users.CreateOrUpdateUserAsync(user);
-                Debug.WriteLine("UpdateUserFromClaimsAsync(): Updated user");
+                Log.Debug("UpdateUserFromClaimsAsync(): Updated user");
             }
         }
     }
