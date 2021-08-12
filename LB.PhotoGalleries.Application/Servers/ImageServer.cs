@@ -8,18 +8,18 @@ using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
 using MetadataExtractor.Formats.Iptc;
+using MetadataExtractor.Formats.Xmp;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using MetadataExtractor.Formats.Xmp;
 using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Models.Image;
 
@@ -95,7 +95,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 // create the database record
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.CreateItemAsync(image, new PartitionKey(image.GalleryId));
-                Debug.WriteLine($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+                Log.Debug($"ImageServer.CreateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
                 // have the pre-gen images created by a background process
                 await PostProcessImagesAsync(image);
@@ -120,7 +120,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var response = await container.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer.UpdateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.UpdateImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
         }
 
         public async Task<List<Image>> GetGalleryImagesAsync(string galleryId)
@@ -143,8 +143,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 charge += results.RequestCharge;
             }
 
-            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Found {images.Count} gallery images");
-            Debug.WriteLine($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.GetGalleryImagesAsync: Found {images.Count} gallery images");
+            Log.Debug($"ImageServer.GetGalleryImagesAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return images;
         }
@@ -153,7 +153,7 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             if (string.IsNullOrEmpty(galleryId) || string.IsNullOrEmpty(imageId))
             {
-                Debug.WriteLine("ImageServer:GetImageAsync: some args were null, returning null");
+                Log.Debug("ImageServer:GetImageAsync: some args were null, returning null");
                 return null;
             }
 
@@ -161,14 +161,14 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
                 var response = await container.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
-                Debug.WriteLine($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+                Log.Debug($"ImageServer:GetImageAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 return response.Resource;
             }
             catch (CosmosException e)
             {
                 if (e.StatusCode == HttpStatusCode.NotFound)
                 {
-                    Debug.WriteLine($"Image not found in db. GalleryId {galleryId}, ImageId {imageId}");
+                    Log.Debug($"Image not found in db. GalleryId {galleryId}, ImageId {imageId}");
                     return null;
                 }
 
@@ -221,8 +221,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 elapsedTime += results.Diagnostics.GetClientElapsedTime();
             }
 
-            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.GetImagesAsync(tag): Found {ids.Count} ids using query: {queryDefinition.QueryText}");
+            Log.Debug($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             // now with all the ids we know how many total results there are and so can populate paging info
             var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
@@ -360,14 +360,14 @@ namespace LB.PhotoGalleries.Application.Servers
             // finally, delete the database record
             var imagesContainer = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var deleteResponse = await imagesContainer.DeleteItemAsync<Image>(image.Id, new PartitionKey(image.GalleryId));
-            Debug.WriteLine($"ImageServer:DeleteImageAsync: Request charge: {deleteResponse.RequestCharge}. Elapsed time: {deleteResponse.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"ImageServer:DeleteImageAsync: Request charge: {deleteResponse.RequestCharge}. Elapsed time: {deleteResponse.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             // if necessary, re-order photos down-position from where the deleted photo used to be
             if (!isGalleryBeingDeleted)
             {
                 if (position.HasValue)
                 {
-                    Debug.WriteLine("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
+                    Log.Debug("ImageServer:DeleteImageAsync: Image had an order, re-ordering subsequent images...");
 
                     // get the ids of images that have a position down from where our deleted image used to be
                     var queryDefinition = new QueryDefinition("SELECT c.id AS Id, c.GalleryId AS PartitionKey FROM c WHERE c.GalleryId = @galleryId AND c.Position > @position ORDER BY c.Position")
@@ -401,12 +401,12 @@ namespace LB.PhotoGalleries.Application.Servers
                     {
                         var orderedImages = Utilities.OrderImages(images);
                         gallery.ThumbnailFiles = orderedImages.First().Files;
-                        Debug.WriteLine($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailFiles.Spec800Id}");
+                        Log.Debug($"ImageServer.DeleteImageAsync: New gallery thumbnail was needed. Set to {gallery.ThumbnailFiles.Spec800Id}");
                     }
                     else
                     {
                         gallery.ThumbnailFiles = null;
-                        Debug.WriteLine("ImageServer.DeleteImageAsync: New gallery thumbnail was needed but no images to choose from.");
+                        Log.Debug("ImageServer.DeleteImageAsync: New gallery thumbnail was needed but no images to choose from.");
                     }
 
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
@@ -460,7 +460,7 @@ namespace LB.PhotoGalleries.Application.Servers
 
             if (position == 0)
             {
-                Debug.WriteLine("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
+                Log.Debug("ImageServer.UpdateImagePositionAsync: New position is 0, need to update gallery thumbnail...");
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(imageBeingOrdered.GalleryCategoryId, imageBeingOrdered.GalleryId);
                 gallery.ThumbnailFiles = imageBeingOrdered.Files;
                 await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
@@ -607,8 +607,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 return count;
 
             var resultSet = await result.ReadNextAsync();
-            Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.GetImagesScalarByQueryAsync: Query: {queryDefinition.QueryText}");
+            Log.Debug($"ImageServer.GetImagesScalarByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             if (resultSet.Resource == null || !resultSet.Resource.Any())
                 return -1;
@@ -651,8 +651,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 users.AddRange(resultSet);
             }
 
-            Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.GetImagesByQueryAsync: Query: {queryDefinition.QueryText}");
+            Log.Debug($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return users;
         }
@@ -673,8 +673,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 return null;
 
             var resultSet = await result.ReadNextAsync();
-            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Query: {queryDefinition.QueryText}");
-            Debug.WriteLine($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"ImageServer.GetImageIdByQueryAsync: Query: {queryDefinition.QueryText}");
+            Log.Debug($"ImageServer.GetImageIdByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
 
             return (string)resultSet.Resource.FirstOrDefault();
         }
@@ -702,11 +702,11 @@ namespace LB.PhotoGalleries.Application.Servers
             {
                 var container = Server.Instance.BlobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
                 var response = await container.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
-                Debug.WriteLine("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
+                Log.Debug("ImageServer.DeleteImageFileAsync: response status: " + response.Value);
                 return;
             }
 
-            Debug.WriteLine("ImageServer.DeleteImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
+            Log.Debug("ImageServer.DeleteImageFileAsync: storage id is null. FileSpec: " + imageFileSpec.FileSpec);
         }
 
         /// <summary>
@@ -975,7 +975,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     if (validIso)
                         return iso;
 
-                    Debug.WriteLine($"ImageServer.GetImageIso: ExifSubIfdDirectory iso tag value wasn't an int: '{isoTag.Description}'");
+                    Log.Debug($"ImageServer.GetImageIso: ExifSubIfdDirectory iso tag value wasn't an int: '{isoTag.Description}'");
                 }
             }
 
@@ -996,7 +996,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (validIso)
                     return iso;
 
-                Debug.WriteLine($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
+                Log.Debug($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
             }
 
             return null;

@@ -1,9 +1,9 @@
 ﻿using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -36,8 +36,8 @@ namespace LB.PhotoGalleries.Application.Servers
             var partitionKey = new PartitionKey(user.PartitionKey);
             var response = await container.UpsertItemAsync(user, partitionKey);
             var createdItem = response.StatusCode == HttpStatusCode.Created;
-            Debug.WriteLine("UserServer.CreateOrUpdateUserAsync: Created user? " + createdItem);
-            Debug.WriteLine($"UserServer.CreateOrUpdateUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
+            Log.Debug("UserServer.CreateOrUpdateUserAsync: Created user? " + createdItem);
+            Log.Debug($"UserServer.CreateOrUpdateUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
         }
 
         /// <summary>
@@ -82,8 +82,8 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var result = await container.DeleteItemAsync<User>(user.Id, new PartitionKey(user.PartitionKey));
 
-            Debug.WriteLine("UserServer:DeleteUserAsync: Status code: " + result.StatusCode);
-            Debug.WriteLine("UserServer:DeleteUserAsync: Request charge: " + result.RequestCharge);
+            Log.Debug("UserServer:DeleteUserAsync: Status code: " + result.StatusCode);
+            Log.Debug("UserServer:DeleteUserAsync: Request charge: " + result.RequestCharge);
         }
 
         public async Task<User> GetUserAsync(string userId)
@@ -96,7 +96,7 @@ namespace LB.PhotoGalleries.Application.Servers
             try
             {
                 var response = await container.ReadItemAsync<User>(userId, new PartitionKey(GetUserPartitionKeyFromId(userId)));
-                Debug.WriteLine($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+                Log.Debug($"UserServer:GetUserAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
                 return response.Resource;
             }
             catch (CosmosException cex)
@@ -117,7 +117,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
             var queryResult = container.GetItemQueryIterator<User>(queryDefinition);
             var response = await queryResult.ReadNextAsync();
-            Debug.WriteLine($"UserServer:GetUserByLegacyIdAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+            Log.Debug($"UserServer:GetUserByLegacyIdAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
             return response.FirstOrDefault();
         }
 
@@ -216,7 +216,7 @@ namespace LB.PhotoGalleries.Application.Servers
             }
             catch (Exception e)
             {
-                Debug.WriteLine($"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading: {e.Message}");
+                Log.Debug($"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading: {e.Message}");
             }
         }
         #endregion
@@ -238,8 +238,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
             }
 
-            Debug.WriteLine("UserServer.GetUsersByQueryAsync: Query: " + queryDefinition.QueryText);
-            Debug.WriteLine($"UserServer.GetUsersByQueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
+            Log.Debug("UserServer.GetUsersByQueryAsync: Query: " + queryDefinition.QueryText);
+            Log.Debug($"UserServer.GetUsersByQueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
 
             return users;
         }
