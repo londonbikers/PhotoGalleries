@@ -132,7 +132,7 @@ body {
     .info-box .badge {
         font-size: 80%;
         padding: 7px;
-        margin: 1px;
+        margin: 3px 1px;
         background-color: #d7d7d7;
         color: #666;
     }
