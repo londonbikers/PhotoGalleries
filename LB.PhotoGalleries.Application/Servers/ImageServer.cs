@@ -85,6 +85,12 @@ namespace LB.PhotoGalleries.Application.Servers
 
                 ParseAndAssignImageMetadata(image, imageStream, filename, performImageDimensionsCheck);
 
+                // if possible, keep the image created date in-step with when the photo was taken.
+                // this makes it easier to publish historic galleries when all we need to do is change a gallery created date and all images
+                // automatically show in the correct chronological order when returned in search results.
+                if (image.Metadata.TakenDate.HasValue)
+                    image.Created = image.Metadata.TakenDate.Value;
+
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
 
