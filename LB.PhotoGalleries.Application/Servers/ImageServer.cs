@@ -92,7 +92,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     image.Created = image.Metadata.TakenDate.Value;
 
                 if (!image.IsValid())
-                    throw new InvalidOperationException("Image would be invalid. PLease check all required properties are set.");
+                    throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
 
                 // upload the original file to storage
                 var originalContainerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
