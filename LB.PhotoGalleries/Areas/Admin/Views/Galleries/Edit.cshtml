@@ -324,10 +324,9 @@
         var galleryId = '@Model.Id';
 
         function OnImageMoved(evt) {
-            console.log("an image was re-ordered!");
-
             const imageBeingMovedId = evt.item.id.substring(3);
             const imageBeingMovedNewPosition = evt.newIndex;
+            console.log(`OnImageMoved() ${imageBeingMovedId} moved to position: ${imageBeingMovedNewPosition}`);
 
             // send new position to api...
             $.post(`/api/images/set-position?galleryId=${galleryId}&imageId=${imageBeingMovedId}&position=${imageBeingMovedNewPosition}`)

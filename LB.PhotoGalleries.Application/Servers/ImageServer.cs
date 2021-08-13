@@ -425,44 +425,33 @@ namespace LB.PhotoGalleries.Application.Servers
         /// </summary>
         public async Task UpdateImagePositionAsync(string galleryId, string imageId, int position)
         {
-            var images = await GetGalleryImagesAsync(galleryId);
+            var images = Utilities.OrderImages(await GetGalleryImagesAsync(galleryId)).ToList();
 
-            // migrated galleries and galleries that have been ordered before will have position values set on images.
-            // but galleries that have just been uploaded normally will not have position values set on images.
-            // in this scenario we need to set a position on the images first as they are retrieved from the database and then re-order.
-            
-            var hadToPerformInitialOrdering = false;
-            if (images.Any(i => i.Position.HasValue == false))
+            // remove the image being moved
+            var imageBeingOrdered = images.SingleOrDefault(i => i.Id.Equals(imageId));
+            if (imageBeingOrdered == null)
+                throw new ArgumentException($"image '{imageId}' could not be found in the gallery '{galleryId}'.");
+
+            images.Remove(imageBeingOrdered);
+            images.Insert(position, imageBeingOrdered);
+
+            // now re-position all images and update if the values are different
+            var index = 0;
+            foreach (var image in images)
             {
-                // perform initial ordering of images
-                for (var i = 0; i < images.Count; i++)
-                    images[i].Position = i;
-
-                hadToPerformInitialOrdering = true;
+                if (index != image.Position)
+                {
+                    image.Position = index;
+                    await UpdateImageAsync(image);
+                    Log.Debug($"UpdateImagePositionAsync(): Updated image: {image.Id} with position {image.Position}");
+                }
+                else
+                {
+                    Log.Debug($"UpdateImagePositionAsync(): Image position didn't need updating: {image.Id} with position {image.Position}");
+                }
+                
+                index++;
             }
-
-            // now we can re-order the images
-            // cut out the image being moved first then bump up a position each image from where our image will go
-            var imageBeingOrdered = images.Single(i => i.Id == imageId);
-            images.RemoveAll(i => i.Id == imageId);
-
-            var newPosition = position + 1;
-            foreach (var image in images.Where(image => image.Position >= position))
-            {
-                image.Position = newPosition;
-                newPosition += 1;
-            }
-
-            // now set the desired image with the desired position and add it back in to the list
-            imageBeingOrdered.Position = position;
-            images.Add(imageBeingOrdered);
-
-            // now write the new positions back to the database
-            // we have an opportunity to introduce some efficiency, i.e. if we are moving an image from the back to the middle then
-            // we don't need to re-order images at the start. this will save on db interactions.
-            var imagesToUpdate = hadToPerformInitialOrdering ? images : images.Where(i => i.Position >= position);
-            foreach (var image in imagesToUpdate)
-                await UpdateImageAsync(image);
 
             if (position == 0)
             {
