@@ -204,7 +204,7 @@ namespace LB.PhotoGalleries.Worker
             // is zero then we want to make sure we update the gallery thumbnail to use the new image files.
             if (image.Position == 0)
             {
-                _log.Debug("B.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Image position = 0, need to update gallery thumbnail...");
+                _log.Debug("LB.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Image position = 0, need to update gallery thumbnail...");
                 var gallery = await GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
                 await UpdateGalleryThumbnailAsync(gallery, image.Files);
             }
