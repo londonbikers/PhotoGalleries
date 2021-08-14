@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Orphaned Galleries";
+    var success = (string)ViewData["success"];
+}
+
+<h1>Orphaned Galleries</h1>
+<div>
+    <a asp-action="Index">Back to galleries</a>
+</div>
+<hr />
+
+<p>There are @ViewData["count"] galleries without a created-by-user.</p>
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success" role="alert">
+        @success
+    </div>
+}
+
+<form asp-action="OrphanedGalleries">
+    <button type="submit" class="btn btn-primary">Assign me as created-by-user</button>
+</form>

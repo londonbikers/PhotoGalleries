@@ -435,6 +435,29 @@ namespace LB.PhotoGalleries.Application.Servers
             foreach (var gallery in galleries)
                 await AssignMissingThumbnailAsync(gallery);
         }
+
+        public async Task<int> GetOrphanedGalleriesCountAsync()
+        {
+            var query = new QueryDefinition("SELECT VALUE COUNT(0) FROM g WHERE IS_NULL(g.CreatedByUserId)");
+            return await GetGalleriesScalarByQueryAsync(query);
+        }
+
+        public async Task<int> AssignUserToOrphanedGalleriesAsync(string userId)
+        {
+            // get ids of galleries with missing thumbs
+            // assign userId to CreatedByUserId and update galleries
+            var query = new QueryDefinition("SELECT * FROM g WHERE IS_NULL(g.CreatedByUserId)");
+            var galleries = await GetGalleriesByQueryAsync(query);
+            var galleriesUpdated = 0;
+            foreach (var gallery in galleries)
+            {
+                gallery.CreatedByUserId = userId;
+                await UpdateGalleryAsync(gallery);
+                galleriesUpdated++;
+            }
+
+            return galleriesUpdated;
+        }
         #endregion
 
         #region internal methods

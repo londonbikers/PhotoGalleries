@@ -11,10 +11,7 @@
 
 <div class="text-center mb-3">
     <a asp-area="Admin" asp-controller="Galleries" asp-action="Create" class="btn btn-outline-primary">Create a New Gallery</a>
-    @if (User.IsInRole(Roles.Administrator.ToString()))
-    {
-        <a asp-area="Admin" asp-controller="Galleries" asp-action="MissingThumbnails" class="btn btn-outline-secondary">Missing Thumbnails</a>
-    }
+
 </div>
 
 <div class="mt-5 mb-2">
@@ -43,35 +40,44 @@
 
 <table class="table">
     <thead class="thead-dark">
-        <tr>
-            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
-            <th scope="col">Category</th>
-            <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
-            <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
-            <th scope="col"></th>
-        </tr>
+    <tr>
+        <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
+        <th scope="col">Category</th>
+        <th scope="col">@Html.DisplayNameFor(model => model.Active)</th>
+        <th scope="col">@Html.DisplayNameFor(model => model.Created)</th>
+        <th scope="col"></th>
+    </tr>
     </thead>
     <tbody>
 
-        @if (Model == null || !Model.Any())
+    @if (Model == null || !Model.Any())
+    {
+        <tr>
+            <td colspan="6" class="text-center">No galleries to show. Create the first using the link above!</td>
+        </tr>
+    }
+    else
+    {
+        foreach (var item in Model)
         {
             <tr>
-                <td colspan="6" class="text-center">No galleries to show. Create the first using the link above!</td>
+                <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
+                <td>@Html.DisplayFor(modelItem => Server.Instance.Categories.Categories.First(c => c.Id == item.CategoryId).Name)</td>
+                <td>@Html.DisplayFor(modelItem => item.Active)</td>
+                <td>@item.Created.ToShortDateString()</td>
+                <td>@Html.ActionLink("Edit", "Edit", new { pk = item.CategoryId, id = item.Id }, new {@class="btn btn-sm btn-primary"})</td>
             </tr>
         }
-        else
-        {
-            foreach (var item in Model)
-            {
-                <tr>
-                    <th scope="row">@Html.DisplayFor(modelItem => item.Name)</th>
-                    <td>@Html.DisplayFor(modelItem => Server.Instance.Categories.Categories.First(c => c.Id == item.CategoryId).Name)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Active)</td>
-                    <td>@item.Created.ToShortDateString()</td>
-                    <td>@Html.ActionLink("Edit", "Edit", new { pk = item.CategoryId, id = item.Id }, new {@class="btn btn-sm btn-primary"})</td>
-                </tr>
-            }
-        }
+    }
 
     </tbody>
 </table>
+
+@if (User.IsInRole(Roles.Administrator.ToString()))
+{
+    <hr />
+    <div class="text-center">
+        <a asp-area="Admin" asp-controller="Galleries" asp-action="MissingThumbnails" class="btn btn-sm btn-outline-secondary">Missing Thumbnails</a>
+        <a asp-area="Admin" asp-controller="Galleries" asp-action="OrphanedGalleries" class="btn btn-sm btn-outline-secondary">Orphaned Galleries</a>
+    </div>
+}

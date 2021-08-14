@@ -247,7 +247,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
-        // GET: /admin/galleries/missingthumbnails
+        // POST: /admin/galleries/missingthumbnails
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
@@ -256,6 +256,26 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             await Server.Instance.Galleries.AssignMissingThumbnailsAsync();
             ViewData["success"] = "Thumbnails assigned!";
             ViewData["count"] = await Server.Instance.Galleries.GetMissingThumbnailGalleriesCountAsync();
+            return View();
+        }
+
+        // GET: /admin/galleries/orphanedgalleries
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> OrphanedGalleries()
+        {
+            ViewData["count"] = await Server.Instance.Galleries.GetOrphanedGalleriesCountAsync();
+            return View();
+        }
+
+        // POST: /admin/galleries/orphanedgalleries
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<ActionResult> OrphanedGalleries(IFormCollection collection)
+        {
+            var galleriesUpdated = await Server.Instance.Galleries.AssignUserToOrphanedGalleriesAsync(Helpers.GetUserId(User));
+            ViewData["success"] = $"{galleriesUpdated} galleries updated with a created-by-user!";
+            ViewData["count"] = await Server.Instance.Galleries.GetOrphanedGalleriesCountAsync();
             return View();
         }
         #endregion
