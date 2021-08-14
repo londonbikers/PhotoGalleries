@@ -1,4 +1,6 @@
-﻿using Imageflow.Fluent;
+﻿using System;
+using System.IO;
+using Imageflow.Fluent;
 using LB.PhotoGalleries.Models.Enums;
 
 namespace LB.PhotoGalleries.Models
@@ -84,10 +86,19 @@ namespace LB.PhotoGalleries.Models
 
         public string GetStorageId(Image image)
         {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+
+            if (string.IsNullOrEmpty(image.Files.OriginalId))
+                throw new ArgumentException("image.Files.OriginalId is empty!");
+
+            // take the id from the original image, as when we allow image-replacements, the the original image id will change
+            // and so all new generated images need to change name as well to break client caches.
+            var id = Path.GetFileNameWithoutExtension(image.Files.OriginalId);
             if (FileSpecFormat == FileSpecFormat.Jpeg)
-                return image.Id + ".jpg";
+                return id + ".jpg";
             
-            return image.Id + ".webp";
+            return id + ".webp";
         }
 
         public override string ToString()
