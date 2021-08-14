@@ -30,7 +30,16 @@ namespace LB.PhotoGalleries.Application.Servers
         #region constructors
         internal ImageServer()
         {
+            AcceptedContentTypes = new List<string>
+            {
+                "image/png",
+                "image/jpeg"
+            };
         }
+        #endregion
+
+        #region accessors
+        public List<string> AcceptedContentTypes { get; }
         #endregion
 
         #region public methods
@@ -55,8 +64,6 @@ namespace LB.PhotoGalleries.Application.Servers
 
                 if (string.IsNullOrEmpty(filename))
                     throw new ArgumentNullException(nameof(filename));
-
-                // TODO: make sure metadata titles/names take priority over our filename-derived name
 
                 if (image == null)
                 {
@@ -85,14 +92,14 @@ namespace LB.PhotoGalleries.Application.Servers
 
                 ParseAndAssignImageMetadata(image, imageStream, filename, performImageDimensionsCheck);
 
+                if (!image.IsValid())
+                    throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
+
                 // if possible, keep the image created date in-step with when the photo was taken.
                 // this makes it easier to publish historic galleries when all we need to do is change a gallery created date and all images
                 // automatically show in the correct chronological order when returned in search results.
                 if (image.Metadata.TakenDate.HasValue)
                     image.Created = image.Metadata.TakenDate.Value;
-
-                if (!image.IsValid())
-                    throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
 
                 // upload the original file to storage
                 var originalContainerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
@@ -111,6 +118,66 @@ namespace LB.PhotoGalleries.Application.Servers
                 // make sure we release valuable server resources in the event of a problem creating the image
                 imageStream?.Close();
             }
+        }
+
+        /// <summary>
+        /// Replaces the image file for an existing image, allowing for mistake corrections, remastering, etc.
+        /// </summary>
+        /// <param name="galleryCategoryId">The id for the category the image gallery resides in.</param>
+        /// <param name="galleryId">The gallery this image is going to be contained within.</param>
+        /// <param name="imageId">The id for the image we're updating the file for.</param>
+        /// <param name="imageStream">The stream for the uploaded image file.</param>
+        /// <param name="filename">The original filename provided by the client.</param>
+        /// <returns></returns>
+        public async Task ReplaceImageAsync(string galleryCategoryId, string galleryId, string imageId, Stream imageStream, string filename)
+        {
+            if (string.IsNullOrEmpty(galleryCategoryId))
+                throw new ArgumentNullException(nameof(galleryCategoryId));
+
+            if (string.IsNullOrEmpty(galleryId))
+                throw new ArgumentNullException(nameof(galleryId));
+
+            if (string.IsNullOrEmpty(imageId))
+                throw new ArgumentNullException(nameof(imageId));
+
+            if (imageStream == null)
+                throw new ArgumentNullException(nameof(imageStream));
+
+            if (string.IsNullOrEmpty(filename))
+                throw new ArgumentNullException(nameof(filename));
+
+            var image = await GetImageAsync(galleryId, imageId);
+            if (image == null)
+                throw new InvalidOperationException("Sorry, that image doesn't exit.");
+
+            ParseAndAssignImageMetadata(image, imageStream, filename, true);
+
+            if (!image.IsValid())
+                throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
+
+            // if possible, keep the image created date in-step with when the photo was taken.
+            // this makes it easier to publish historic galleries when all we need to do is change a gallery created date and all images
+            // automatically show in the correct chronological order when returned in search results.
+            if (image.Metadata.TakenDate.HasValue)
+                image.Created = image.Metadata.TakenDate.Value;
+
+            // delete the old files from blob storage first and any references to them in the Image.
+            await DeleteImageFilesAsync(image, true);
+
+            // create a new id for the new original image file. it's okay for this to be different to the Image id.
+            var newid = Utilities.GenerateId();
+            image.Files.OriginalId = newid + Path.GetExtension(filename).ToLower();
+
+            // upload the new original file to storage
+            var originalContainerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            await originalContainerClient.UploadBlobAsync(image.Files.OriginalId, imageStream);
+
+            // now save the changes to the Image
+            await UpdateImageAsync(image);
+
+            // have the pre-gen images created by a background process
+            // it will handle updating the thumbnail as well if necessary.
+            await PostProcessImagesAsync(image);
         }
 
         /// <summary>
@@ -347,17 +414,7 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="isGalleryBeingDeleted">Will disable all re-ordering and gallery thumbnail tasks if the gallery is being deleted.</param>
         public async Task DeleteImageAsync(Image image, bool isGalleryBeingDeleted = false)
         {
-            // delete all image files
-            var deleteTasks = new List<Task>
-            {
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal)),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840)),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560)),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920)),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800)),
-                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes))
-            };
-            await Task.WhenAll(deleteTasks);
+            await DeleteImageFilesAsync(image);
 
             // make note of the image position and gallery id as we might have to re-order photos
             var position = image.Position;
@@ -613,6 +670,34 @@ namespace LB.PhotoGalleries.Application.Servers
         #endregion
 
         #region private methods
+        /// <summary>
+        /// Deletes the original image and any generated images for an Image.
+        /// </summary>
+        private static async Task DeleteImageFilesAsync(Image image, bool clearImageFileReferences = false)
+        {
+            // delete all image files
+            var deleteTasks = new List<Task>
+            {
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecOriginal)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec2560)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec1920)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec800)),
+                DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.SpecLowRes))
+            };
+            await Task.WhenAll(deleteTasks);
+
+            if (clearImageFileReferences)
+            {
+                image.Files.OriginalId = null;
+                image.Files.Spec3840Id = null;
+                image.Files.Spec2560Id = null;
+                image.Files.Spec1920Id = null;
+                image.Files.Spec800Id = null;
+                image.Files.SpecLowResId = null;
+            }
+        }
+
         private async Task HandleDeletePreGenImagesAsync(Image image)
         {
             await DeleteImageFileAsync(image, ImageFileSpecs.GetImageFileSpec(FileSpec.Spec3840));

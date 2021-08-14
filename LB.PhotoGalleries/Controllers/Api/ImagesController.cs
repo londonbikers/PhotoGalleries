@@ -1,4 +1,5 @@
 ﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Models.Exceptions;
 using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -264,6 +265,56 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             image.TagsCsv = Utilities.RemoveTagFromCsv(image.TagsCsv, tag);
             await Server.Instance.Images.UpdateImageAsync(image);
+            return Ok();
+        }
+
+        [HttpPost("/api/images/replace-image")]
+        [Authorize(Roles = "Administrator,Photographer")]
+        [RequestSizeLimit(104857600)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
+        public async Task<ActionResult> ReplaceImage(string galleryCategoryId, string galleryId, string imageId)
+        {
+            if (string.IsNullOrEmpty(galleryCategoryId))
+                return BadRequest("galleryCategoryId value missing");
+
+            if (string.IsNullOrEmpty(galleryId))
+                return BadRequest("galleryId value missing");
+
+            if (string.IsNullOrEmpty(imageId))
+                return BadRequest("imageId value missing");
+
+            // is the user authorised to edit this image?
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCategoryId, galleryId);
+            if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+                return Unauthorized("You are not authorised to replace that image.");
+
+            // RequestSizeLimit: 104857600 = 100MB
+            // store the file in cloud storage and post-process
+            // follow secure uploads advice from: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-3.1
+
+            if (Request.Form.Files.Count == 0)
+                return NoContent();
+
+            var file = Request.Form.Files[0];
+            if (!Server.Instance.Images.AcceptedContentTypes.Contains(file.ContentType))
+                return BadRequest($"Sorry, content type of {file.ContentType} is not accepted.");
+
+            var stream = file.OpenReadStream();
+
+            try
+            {
+                await Server.Instance.Images.ReplaceImageAsync(galleryCategoryId, galleryId, imageId, stream, file.FileName);
+            }
+            catch (ImageTooSmallException e)
+            {
+                return BadRequest(e.Message);
+            }
+            finally
+            {
+                if (stream != null)
+                    await stream.DisposeAsync();
+            }
+
             return Ok();
         }
     }

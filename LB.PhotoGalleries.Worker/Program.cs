@@ -82,7 +82,6 @@ namespace LB.PhotoGalleries.Worker
             _log = loggerConfiguration.CreateLogger();
             _log.Information("Starting worker...");
 
-
             try
             {
                 // setup clients/references
@@ -199,6 +198,16 @@ namespace LB.PhotoGalleries.Worker
             });
 
             await UpdateModelsAsync(image);
+
+            // when uploading images, they don't have a position set, so if one is set when we process it here
+            // then it's likely it's an existing Image that's having it's image file replaced. If so and the position
+            // is zero then we want to make sure we update the gallery thumbnail to use the new image files.
+            if (image.Position == 0)
+            {
+                _log.Debug("B.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Image position = 0, need to update gallery thumbnail...");
+                var gallery = await GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
+                await UpdateGalleryThumbnailAsync(gallery, image.Files);
+            }
 
             stopwatch.Stop();
             _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Processed {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
@@ -377,18 +386,7 @@ namespace LB.PhotoGalleries.Worker
         /// </summary>
         private static async Task AssignGalleryThumbnailAsync()
         {
-            string gid;
-            string pk;
-
-            lock (_galleryId)
-            {
-                gid = _galleryId.Id;
-                pk = _galleryId.PartitionKey;
-            }
-
-            var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(gid, new PartitionKey(pk));
-            var g = readItemResponse.Resource;
-
+            var g = await GetGalleryAsync(_galleryId.PartitionKey, _galleryId.Id);
             if (g.ThumbnailFiles == null)
             {
                 // get the first image:
@@ -404,7 +402,7 @@ namespace LB.PhotoGalleries.Worker
                 while (queryResult.HasMoreResults)
                 {
                     var queryResponse = await queryResult.ReadNextAsync();
-                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {gid}");
+                    _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Position query charge: {queryResponse.RequestCharge}. GalleryId: {g.Id}");
 
                     foreach (var item in queryResponse.Resource)
                     {
@@ -412,12 +410,12 @@ namespace LB.PhotoGalleries.Worker
                         {
                             // this image should be the thumbnail, but it hasn't had it's image files processed yet, so exit for now
                             // and we'll pick it up in a subsequent message batch processing hopefully.
-                            _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Thumbnail image found, but it hasn't been processed yet, skipping for now. GalleryId: {gid}");
+                            _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Thumbnail image found, but it hasn't been processed yet, skipping for now. GalleryId: {g.Id}");
                             return;
                         }
 
                         imageFiles = item.Files;
-                        _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {gid}");
+                        _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via Position query. GalleryId: {g.Id}");
                         break;
                     }
                 }
@@ -432,12 +430,12 @@ namespace LB.PhotoGalleries.Worker
                     while (queryResult.HasMoreResults)
                     {
                         var queryResponse = await queryResult.ReadNextAsync();
-                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge} GalleryId: {gid}");
+                        _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Date query charge: {queryResponse.RequestCharge} GalleryId: {g.Id}");
 
                         foreach (var item in queryResponse.Resource)
                         {
                             imageFiles = item.Files;
-                            _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via date query. GalleryId: {gid}");
+                            _log.Verbose($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Got thumbnail image via date query. GalleryId: {g.Id}");
                             break;
                         }
                     }
@@ -449,14 +447,28 @@ namespace LB.PhotoGalleries.Worker
                     return;
                 }
 
-                g.ThumbnailFiles = imageFiles;
-                var replaceResponse = await _galleriesContainer.ReplaceItemAsync(g, g.Id, new PartitionKey(g.CategoryId));
-                _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Gallery updated. Charge: {replaceResponse.RequestCharge}");
+                await UpdateGalleryThumbnailAsync(g, imageFiles);
             }
             else
             {
                 _log.Information($"LB.PhotoGalleries.Worker.Program.AssignGalleryThumbnailAsync() - Gallery ThumbnailFiles already set on gallery {g.Id}");
             }
+        }
+
+        /// <summary>
+        /// Updates the Gallery object with the new imageFiles for the thumbnail.
+        /// </summary>
+        private static async Task UpdateGalleryThumbnailAsync(Gallery gallery, ImageFiles imageFiles)
+        {
+            gallery.ThumbnailFiles = imageFiles;
+            var replaceResponse = await _galleriesContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateGalleryThumbnailAsync() - Gallery thumbnail updated. Charge: {replaceResponse.RequestCharge}");
+        }
+
+        private static async Task<Gallery> GetGalleryAsync(string categoryId, string galleryId)
+        {
+            var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(categoryId));
+            return readItemResponse.Resource;
         }
         #endregion
     }

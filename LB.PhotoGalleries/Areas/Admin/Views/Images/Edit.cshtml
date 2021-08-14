@@ -43,6 +43,7 @@
 
 <div class="row">
     <div class="col">
+
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
@@ -78,6 +79,30 @@
             }
 
         </form>
+
+        @if (isAuthorisedToEdit)
+        {
+            <hr />
+            <form data-bind="submit: ReplaceImage">
+                <div class="form-group">
+                    <h3>Replace Image</h3>
+                    
+                    <div class="mb-3">
+                        You can replace the current image file here with a new one, i.e. to correct mistakes, or to re-master an image. This will retain all non-metadata information, i.e. name, caption, comments, views, etc. It will result in the metadata being replaced though.
+                    </div>
+                    
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="replacingImage" accept=".jpg,.jpeg,.png">
+                        <label class="custom-file-label" for="replacingImage">Choose image file</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="Replace Image" class="btn btn-secondary" data-bind="enable: !UploadingImage()" />
+                </div>
+
+            </form>
+        }
     </div>
     <div class="col">
 
@@ -233,8 +258,40 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
+    <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
     <script type="text/javascript">
+
+        function ViewModel() {
+            const vm = this;
+
+            vm.UploadingImage = ko.observable(false);
+
+            vm.ReplaceImage = function (event) {
+
+                vm.UploadingImage(true);
+                const file = $("#replacingImage")[0].files[0];
+                console.log(`Uploading ${file.name}...`);
+
+                const data = new FormData();
+                data.append('image', file);
+
+                $.ajax({
+                    url: "/api/images/replace-image?galleryCategoryId=@Model.GalleryCategoryId&galleryId=@Model.GalleryId&imageId=@Model.Id",
+                    type: 'post',
+                    data: data,
+                    processData: false,
+                    contentType: false
+                }).done(function () {
+                    location.reload();
+                })
+                .fail(function (response) {
+                    console.log(`something went wrong when uploading the new image: ${response.responseText}`);
+                });
+            }
+        }
+
         $(document).ready(function () {
 
             // payload
@@ -263,6 +320,13 @@
                 trimValue: true,
                 forceLowerCase: true
             });
+
+            // used by Bootstrap v4 for the file upload control
+            // https://www.npmjs.com/package/bs-custom-file-input
+            window.bsCustomFileInput.init();
+
+            // wire up the page with Knockout JS
+            ko.applyBindings(new ViewModel());
         });
 
     </script>
