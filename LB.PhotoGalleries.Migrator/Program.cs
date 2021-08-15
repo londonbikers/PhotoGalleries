@@ -49,13 +49,15 @@ namespace LB.PhotoGalleries.Migrator
                 await Server.Instance.SetConfigurationAsync(_configuration);
 
                 // create categories
-                await MigrateCategoriesAsync();
+                //await MigrateCategoriesAsync();
 
                 // create users who have commented
-                await MigrateUsersAsync();
+                //await MigrateUsersAsync();
 
                 // create galleries
-                await MigrateGalleriesAsync();
+                //await MigrateGalleriesAsync();
+
+                await MigrateImageViewsAsync();
             }
             catch (Exception exception)
             {
@@ -220,6 +222,35 @@ namespace LB.PhotoGalleries.Migrator
                 legacyGalleriesUpdateCommand.CommandText = $"update apollo_galleries set Photos{_configuration["EnvironmentName"]}ImagesDone = 1 where ID = {galleriesReader["ID"]}";
                 await legacyGalleriesUpdateCommand.ExecuteNonQueryAsync();
                 _log.Information("Fully migrated gallery with legacy id: " + gallery.LegacyNumId);
+            }
+        }
+
+        private static async Task MigrateImageViewsAsync()
+        {
+            // get legacy images
+            await using var imagesConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
+            await imagesConnection.OpenAsync();
+            var imagesQuery = $"SELECT ID, Views FROM [dbo].[GalleryImages] WHERE Views > 0 AND Photos{_configuration["EnvironmentName"]}Migrated = 1 AND Photos{_configuration["EnvironmentName"]}ViewsMigrated IS NULL";
+            await using var imagesCommand = new SqlCommand(imagesQuery, imagesConnection);
+            await using var imagesReader = await imagesCommand.ExecuteReaderAsync();
+
+            // prepare legacy image update SQL
+            await using var legacyImagesUpdateConnection = new SqlConnection(_configuration["Sql:ConnectionString"]);
+            await legacyImagesUpdateConnection.OpenAsync();
+            await using var legacyImagesUpdateCommand = new SqlCommand(string.Empty, legacyImagesUpdateConnection);
+
+            while (await imagesReader.ReadAsync())
+            {
+                var legacyId = (long) imagesReader["ID"];
+                var legacyViews = (long) imagesReader["Views"];
+                var image = await Server.Instance.Images.GetImageByLegacyIdAsync(legacyId);
+                image.Views = legacyViews;
+                await Server.Instance.Images.UpdateImageAsync(image);
+
+                // update legacy image as done
+                legacyImagesUpdateCommand.CommandText = $"update GalleryImages set Photos{_configuration["EnvironmentName"]}ViewsMigrated = 1 where ID = {legacyId}";
+                await legacyImagesUpdateCommand.ExecuteNonQueryAsync();
+                _log.Information($"Updated the Views to {legacyViews} on legacy image: {legacyId}");
             }
         }
 

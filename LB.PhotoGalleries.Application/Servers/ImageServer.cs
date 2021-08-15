@@ -250,6 +250,14 @@ namespace LB.PhotoGalleries.Application.Servers
             }
         }
 
+        public async Task<Image> GetImageByLegacyIdAsync(long legacyId)
+        {
+            const string query = "SELECT * FROM c WHERE c.LegacyNumId = @legacyId";
+            var queryDefinition = new QueryDefinition(query);
+            queryDefinition.WithParameter("@legacyId", legacyId);
+            return await GetImageByQueryAsync(queryDefinition);
+        }
+
         /// <summary>
         /// Returns a page of images with a specific tag
         /// </summary>
@@ -735,6 +743,25 @@ namespace LB.PhotoGalleries.Application.Servers
             Log.Debug($"ImageServer.GetImagesByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             return users;
+        }
+
+        private static async Task<Image> GetImageByQueryAsync(QueryDefinition queryDefinition)
+        {
+            var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
+            var queryResult = container.GetItemQueryIterator<Image>(queryDefinition);
+
+            if (queryResult.HasMoreResults)
+            {
+                var resultSet = await queryResult.ReadNextAsync();
+                foreach (var image in resultSet)
+                {
+                    Log.Debug("GetImageByQueryAsync: Found a gallery using query: " + queryDefinition.QueryText);
+                    Log.Debug($"GetImageByQueryAsync: Request charge: {resultSet.RequestCharge}. Elapsed time: {resultSet.Diagnostics.GetClientElapsedTime().TotalMilliseconds} ms");
+                    return image;
+                }
+            }
+
+            throw new InvalidOperationException($"No image found using query: {queryDefinition.QueryText}");
         }
 
         /// <summary>
