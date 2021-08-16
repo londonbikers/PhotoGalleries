@@ -224,7 +224,7 @@ namespace LB.PhotoGalleries.Controllers.Api
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
             if (image.TagsCsv.TagsContain(tag))
-                return BadRequest("Tag already exists on image");
+                return Ok();
 
             image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, tag);
             await Server.Instance.Images.UpdateImageAsync(image);
@@ -246,7 +246,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             {
                 var processedTag = tag.Trim().ToLower();
                 if (image.TagsCsv.TagsContain(processedTag))
-                    return BadRequest($"Tag already exists on image: {processedTag}");
+                    continue;
 
                 image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, processedTag);
             }
@@ -260,8 +260,8 @@ namespace LB.PhotoGalleries.Controllers.Api
         public async Task<ActionResult> RemoveTag(string galleryId, string imageId, string tag)
         {
             var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
-            if (!image.TagsCsv.TagsContain(tag)) 
-                return BadRequest("Tag does not exist on image");
+            if (!image.TagsCsv.TagsContain(tag))
+                return Ok();
 
             image.TagsCsv = Utilities.RemoveTagFromCsv(image.TagsCsv, tag);
             await Server.Instance.Images.UpdateImageAsync(image);

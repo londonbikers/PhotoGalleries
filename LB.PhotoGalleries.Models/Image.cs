@@ -191,7 +191,7 @@ namespace LB.PhotoGalleries.Models
             {
                 // location or city are required.
                 // state and country are too high-level to be of use on a map.
-                if (string.IsNullOrEmpty(Location) || string.IsNullOrEmpty(City))
+                if (string.IsNullOrEmpty(Location) && string.IsNullOrEmpty(City))
                     return null;
 
                 var components = new List<string>();
