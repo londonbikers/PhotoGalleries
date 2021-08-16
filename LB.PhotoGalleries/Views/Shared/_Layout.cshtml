@@ -19,11 +19,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>@if (ViewData["Title"] == null || (string)ViewData["Title"] == "Home"){<text>LB Photos</text>}else{@ViewData["Title"] <text> - LB Photos</text>}</title>
+    <title>@if (ViewData["Title"] == null || (string)ViewData["Title"] == "Home")
+    {<text>LB Photos</text>}
+    else
+    {@ViewData["Title"] <text> - LB Photos</text>}</title>
     @await Component.InvokeAsync("OpenGraph", new { openGraphModel })
     @await Html.PartialAsync("_Favicons")
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel="stylesheet" href="~/css/site.css" />
+    @Html.Raw(JavaScriptSnippet.FullScript)
 </head>
 <body>
 
