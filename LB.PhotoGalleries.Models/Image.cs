@@ -189,11 +189,22 @@ namespace LB.PhotoGalleries.Models
         {
             get
             {
-                if (string.IsNullOrEmpty(Location) && string.IsNullOrEmpty(City) && string.IsNullOrEmpty(State) && string.IsNullOrEmpty(Country))
+                // location or city are required.
+                // state and country are too high-level to be of use on a map.
+                if (string.IsNullOrEmpty(Location) || string.IsNullOrEmpty(City))
                     return null;
 
-                var components = new List<string> {Location, City, State, Country};
-                return string.Join(',', components);
+                var components = new List<string>();
+                if (!string.IsNullOrEmpty(Location))
+                    components.Add(Location);
+                if (!string.IsNullOrEmpty(City))
+                    components.Add(City);
+                if (!string.IsNullOrEmpty(State))
+                    components.Add(State);
+                if (!string.IsNullOrEmpty(Country))
+                    components.Add(Country);
+                var combinedLocation = string.Join(',', components);
+                return combinedLocation;
             }
         }
     }
