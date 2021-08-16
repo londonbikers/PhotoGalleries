@@ -239,18 +239,29 @@ namespace LB.PhotoGalleries.Migrator
             await legacyImagesUpdateConnection.OpenAsync();
             await using var legacyImagesUpdateCommand = new SqlCommand(string.Empty, legacyImagesUpdateConnection);
 
+            var imageStubs = new List<ImageStub>();
             while (await imagesReader.ReadAsync())
             {
-                var legacyId = (long) imagesReader["ID"];
-                var legacyViews = (long) imagesReader["Views"];
-                var image = await Server.Instance.Images.GetImageByLegacyIdAsync(legacyId);
-                image.Views = legacyViews;
+                imageStubs.Add(new ImageStub
+                {
+                    Id = (long)imagesReader["ID"] , 
+                    Views = (long)imagesReader["Views"]
+                });
+            }
+
+            foreach (var imageStub in imageStubs)
+            {
+                var image = await Server.Instance.Images.GetImageByLegacyIdAsync(imageStub.Id);
+                if (image == null)
+                    continue;
+
+                image.Views = imageStub.Views;
                 await Server.Instance.Images.UpdateImageAsync(image);
 
                 // update legacy image as done
-                legacyImagesUpdateCommand.CommandText = $"update GalleryImages set Photos{_configuration["EnvironmentName"]}ViewsMigrated = 1 where ID = {legacyId}";
+                legacyImagesUpdateCommand.CommandText = $"update GalleryImages set Photos{_configuration["EnvironmentName"]}ViewsMigrated = 1 where ID = {imageStub.Id}";
                 await legacyImagesUpdateCommand.ExecuteNonQueryAsync();
-                _log.Information($"Updated the Views to {legacyViews} on legacy image: {legacyId}");
+                _log.Information($"Updated the Views to {imageStub.Views} on legacy image: {imageStub.Id}");
             }
         }
 

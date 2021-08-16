@@ -761,7 +761,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 }
             }
 
-            throw new InvalidOperationException($"No image found using query: {queryDefinition.QueryText}");
+            return null;
         }
 
         /// <summary>
