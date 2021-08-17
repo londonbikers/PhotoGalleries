@@ -48,11 +48,14 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
                 return Unauthorized("You are not authorised to update these images.");
 
+            var name = Request.Form["bulkName"].FirstOrDefault();
+
             var credit = Request.Form["bulkCredit"].FirstOrDefault();
             bool.TryParse(Request.Form["bulkCreditOnlyAddWhenMissing"].FirstOrDefault(), out var creditOnlyAddWhenMissing);
+
             var tagsCsv = Request.Form["bulkTags"].FirstOrDefault();
-            if (string.IsNullOrEmpty(credit) && string.IsNullOrEmpty(tagsCsv))
-                return BadRequest("neither credit or tags supplied.");
+            if (!name.HasValue() && !credit.HasValue() && !tagsCsv.HasValue())
+                return BadRequest("neither name, credit or tags supplied.");
 
             string[] newTags = null;
             if (!string.IsNullOrEmpty(tagsCsv))
@@ -66,7 +69,14 @@ namespace LB.PhotoGalleries.Controllers.Api
             foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(galleryId))
             {
                 var updateRequired = false;
-                if (!string.IsNullOrEmpty(credit))
+
+                if (name.HasValue() && image.Name != name)
+                {
+                    updateRequired = true;
+                    image.Name = name;
+                }
+
+                if (credit.HasValue())
                 {
                     if (creditOnlyAddWhenMissing)
                     {
