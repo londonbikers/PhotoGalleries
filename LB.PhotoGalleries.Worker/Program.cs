@@ -341,9 +341,9 @@ namespace LB.PhotoGalleries.Worker
                     .EncodeToBytes(encoderPreset)
                     .Finish()
                     .SetSecurityOptions(new SecurityOptions()
-                        .SetMaxDecodeSize(new FrameSizeLimit(12000, 12000, 100))
-                        .SetMaxFrameSize(new FrameSizeLimit(12000, 12000, 100))
-                        .SetMaxEncodeSize(new FrameSizeLimit(12000, 12000, 30)))
+                        .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 200))
+                        .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 200))
+                        .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 200)))
                     .InProcessAsync();
 
                 var newImageBytes = result.First.TryGetBytes();

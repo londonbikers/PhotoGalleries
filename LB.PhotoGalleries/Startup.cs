@@ -153,9 +153,9 @@ namespace LB.PhotoGalleries
             // ImageFlow doesn't seem to be able to watermark images without width/height arguments, so use a RewriteHandler to ensure they're always set internally.
             app.UseImageflow(new ImageflowMiddlewareOptions()
                 .SetJobSecurityOptions(new SecurityOptions()
-                    .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 100))
-                    .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 100))
-                    .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 100)))
+                    .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 200))
+                    .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 200))
+                    .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 200)))
                 .SetAllowDiskCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddRewriteHandler("/dio/", ImageResizing.EnsureOriginalImageDimensionsAreLimited)
