@@ -20,8 +20,8 @@ namespace LB.PhotoGalleries.Shared
             if (!str.HasValue())
                 return false;
 
-            var list = str.Split(',');
-            return list.Contains(tag);
+            var list = str.ToLower().Split(',');
+            return list.Contains(tag.ToLower().Trim());
         }
     }
 }

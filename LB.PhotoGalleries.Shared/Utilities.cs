@@ -97,7 +97,7 @@ namespace LB.PhotoGalleries.Shared
             if (list == null || list.Count == 0)
                 return null;
 
-            list.RemoveAll(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase));
+            list.RemoveAll(t => t.Trim().Equals(tag.Trim(), StringComparison.CurrentCultureIgnoreCase));
             return ListToCsv(list);
         }
     }

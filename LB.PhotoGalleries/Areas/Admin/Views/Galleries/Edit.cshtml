@@ -354,7 +354,7 @@
             // convert the json payload into an observable array so we can track changes
             vm.Gallery = new GalleryModel(galleryPayload);
             vm.Images = ko.observableArray();
-            imagesPayload.forEach(i => this.Images.push(new ImageModel(i)));
+            imagesPayload.forEach(i => vm.Images.push(new ImageModel(i)));
 
             vm.EditingCreated = ko.observable(false);
             vm.CreatedFormatted = ko.computed(function() {
