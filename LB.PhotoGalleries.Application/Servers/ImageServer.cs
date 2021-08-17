@@ -981,7 +981,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)
                     foreach (var keyword in keywords.Where(k => k.HasValue()))
-                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword);
+                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword.ToLower().Trim());
 
                 if (!image.Metadata.Location.HasValue())
                 {
