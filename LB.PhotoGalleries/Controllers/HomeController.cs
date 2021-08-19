@@ -4,7 +4,9 @@ using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -27,6 +29,11 @@ namespace LB.PhotoGalleries.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
+            // access the unhandled exception and log it
+            var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            if (exceptionHandlerPathFeature != null && exceptionHandlerPathFeature.Error != null)
+                Log.Error(exceptionHandlerPathFeature.Error, "Unhandled exception!");
+
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
@@ -72,6 +79,15 @@ namespace LB.PhotoGalleries.Controllers
         public IActionResult Claims()
         {
             return View();
+        }
+
+        /// <summary>
+        /// Used to test error handling.
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult ErrorTest()
+        {
+            throw new Exception("Something bad happened, maybe.");
         }
     }
 }
