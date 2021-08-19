@@ -47,43 +47,8 @@ namespace LB.PhotoGalleries.Worker
                 return;
             }
 
-            // setup configuration
-            _configuration = new ConfigurationBuilder()
-                .AddJsonFile(args[0], optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .AddCommandLine(args)
-                .Build();
-
-            // setup logging
-            var loggerConfiguration = new LoggerConfiguration();
-            var loggingMinimumLevel = _configuration["Logging:MinimumLevel"];
-            switch (loggingMinimumLevel)
-            {
-                case "Verbose":
-                    loggerConfiguration.MinimumLevel.Verbose();
-                    break;
-                case "Debug":
-                    loggerConfiguration.MinimumLevel.Debug();
-                    break;
-                case "Information":
-                    loggerConfiguration.MinimumLevel.Information();
-                    break;
-                case "Warning":
-                    loggerConfiguration.MinimumLevel.Warning();
-                    break;
-                case "Error":
-                    loggerConfiguration.MinimumLevel.Error();
-                    break;
-                case "Fatal":
-                    loggerConfiguration.MinimumLevel.Fatal();
-                    break;
-            }
-
-            loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
-            loggerConfiguration.WriteTo.Console();
-            loggerConfiguration.WriteTo.ApplicationInsights(new TelemetryConfiguration(_configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces);
-            _log = loggerConfiguration.CreateLogger();
-            _log.Information("Starting worker...");
+            InitialiseConfiguration(args);
+            InitialiseLogging();
 
             try
             {
@@ -153,7 +118,51 @@ namespace LB.PhotoGalleries.Worker
             }
         }
 
-        #region private methods
+        #region initialisation methods
+        private static void InitialiseConfiguration(string[] args)
+        {
+            _configuration = new ConfigurationBuilder()
+                .AddJsonFile(args[0], optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+                .Build();
+        }
+
+        private static void InitialiseLogging()
+        {
+            var loggerConfiguration = new LoggerConfiguration();
+            var loggingMinimumLevel = _configuration["Logging:MinimumLevel"];
+            switch (loggingMinimumLevel)
+            {
+                case "Verbose":
+                    loggerConfiguration.MinimumLevel.Verbose();
+                    break;
+                case "Debug":
+                    loggerConfiguration.MinimumLevel.Debug();
+                    break;
+                case "Information":
+                    loggerConfiguration.MinimumLevel.Information();
+                    break;
+                case "Warning":
+                    loggerConfiguration.MinimumLevel.Warning();
+                    break;
+                case "Error":
+                    loggerConfiguration.MinimumLevel.Error();
+                    break;
+                case "Fatal":
+                    loggerConfiguration.MinimumLevel.Fatal();
+                    break;
+            }
+
+            loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
+            loggerConfiguration.WriteTo.Console();
+            loggerConfiguration.WriteTo.ApplicationInsights(new TelemetryConfiguration(_configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces);
+            _log = loggerConfiguration.CreateLogger();
+            _log.Information("Starting worker...");
+        }
+        #endregion
+
+        #region image processing methods
         private static async Task HandleMessageAsync(QueueMessage message)
         {
             await ProcessImageProcessingMessageAsync(message.MessageText);
