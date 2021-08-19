@@ -7,6 +7,7 @@ using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -77,8 +78,10 @@ namespace LB.PhotoGalleries.Worker
                     loggerConfiguration.MinimumLevel.Fatal();
                     break;
             }
+
             loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
             loggerConfiguration.WriteTo.Console();
+            loggerConfiguration.WriteTo.ApplicationInsights(new TelemetryConfiguration(_configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces);
             _log = loggerConfiguration.CreateLogger();
             _log.Information("Starting worker...");
 
