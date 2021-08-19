@@ -121,19 +121,19 @@ namespace LB.PhotoGalleries.Application
             // create containers for all our top level objects we want to persist
             var createdCategoriesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.CategoriesContainerName, "/PartitionKey");
             var createdCategoriesContainer = createdCategoriesContainerResponse.StatusCode == HttpStatusCode.Created;
-            Log.Debug("Server.InitialiseDatabaseAsync: Created categories container? " + createdCategoriesContainer);
+            Log.Information("Server.InitialiseDatabaseAsync: Created categories container? " + createdCategoriesContainer);
 
             var createdGalleriesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.GalleriesContainerName, "/CategoryId");
             var createdGalleriesContainer = createdGalleriesContainerResponse.StatusCode == HttpStatusCode.Created;
-            Log.Debug("Server.InitialiseDatabaseAsync: Created galleries container? " + createdGalleriesContainer);
+            Log.Information("Server.InitialiseDatabaseAsync: Created galleries container? " + createdGalleriesContainer);
 
             var createdImagesContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.ImagesContainerName, "/GalleryId");
             var createdImagesContainer = createdImagesContainerResponse.StatusCode == HttpStatusCode.Created;
-            Log.Debug("Server.InitialiseDatabaseAsync: Created images container? " + createdImagesContainer);
+            Log.Information("Server.InitialiseDatabaseAsync: Created images container? " + createdImagesContainer);
 
             var createdUsersContainerResponse = await Database.CreateContainerIfNotExistsAsync(Constants.UsersContainerName, "/PartitionKey");
             var createdUsersContainer = createdUsersContainerResponse.StatusCode == HttpStatusCode.Created;
-            Log.Debug("Server.InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
+            Log.Information("Server.InitialiseDatabaseAsync: Created users container? " + createdUsersContainer);
         }
 
         /// <summary>
@@ -147,12 +147,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(Constants.StorageOriginalContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageOriginalContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageOriginalContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageOriginalContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageOriginalContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -162,12 +162,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(spec3840.ContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec3840.ContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec3840.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {spec3840.ContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {spec3840.ContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -177,12 +177,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(spec1440.ContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1440.ContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1440.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {spec1440.ContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {spec1440.ContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -192,12 +192,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(spec1080.ContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1080.ContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec1080.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {spec1080.ContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {spec1080.ContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -207,12 +207,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(spec800.ContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec800.ContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {spec800.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {spec800.ContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {spec800.ContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -222,12 +222,12 @@ namespace LB.PhotoGalleries.Application
             try
             {
                 await BlobServiceClient.CreateBlobContainerAsync(specLowRes.ContainerName);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowRes.ContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {specLowRes.ContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {specLowRes.ContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {specLowRes.ContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -237,12 +237,12 @@ namespace LB.PhotoGalleries.Application
             {
                 // these pictures can be served straight from their container
                 await BlobServiceClient.CreateBlobContainerAsync(Constants.StorageUserPicturesContainerName, PublicAccessType.Blob);
-                Log.Debug($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageUserPicturesContainerName}");
+                Log.Information($"Server.InitialiseStorageAsync: Created Azure blob storage container: {Constants.StorageUserPicturesContainerName}");
             }
             catch (RequestFailedException e)
             {
                 if (e.ErrorCode == "ContainerAlreadyExists")
-                    Log.Debug($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageUserPicturesContainerName}");
+                    Log.Information($"Server.InitialiseStorageAsync: Container already exists: {Constants.StorageUserPicturesContainerName}");
                 else
                     // something bad happened
                     throw;
@@ -259,12 +259,12 @@ namespace LB.PhotoGalleries.Application
 
             // create the queues
             var imageProcessingQueueResponse = await ImageProcessingQueueClient.CreateIfNotExistsAsync();
-            Log.Debug(imageProcessingQueueResponse != null
+            Log.Information(imageProcessingQueueResponse != null
                 ? $"Server.InitialiseQueuesAsync: Created {ImageProcessingQueueClient.Name} queue? {imageProcessingQueueResponse.ReasonPhrase}"
                 : $"Server.InitialiseQueuesAsync: {ImageProcessingQueueClient.Name} already exists.");
 
             var notificationsQueueResponse = await NotificationProcessingQueueClient.CreateIfNotExistsAsync();
-            Log.Debug(notificationsQueueResponse != null
+            Log.Information(notificationsQueueResponse != null
                 ? $"Server.InitialiseQueuesAsync: Created {NotificationProcessingQueueClient.Name} queue? {notificationsQueueResponse.ReasonPhrase}"
                 : $"Server.InitialiseQueuesAsync: {NotificationProcessingQueueClient.Name} already exists.");
         }
