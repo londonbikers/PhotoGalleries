@@ -511,7 +511,7 @@ namespace LB.PhotoGalleries.Worker
                 getImageTries++;
             }
 
-            // this shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
+            // this can happen if the user deletes the photo before the message is processed. Raise a specific exception so we can handle it gracefully.
             throw new ImageNotFoundException($"Didn't find image {imageId} in the database.") {ImageId = imageId, GalleryId = galleryId};
         }
 
