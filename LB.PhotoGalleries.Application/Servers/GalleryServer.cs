@@ -458,6 +458,17 @@ namespace LB.PhotoGalleries.Application.Servers
 
             return galleriesUpdated;
         }
+
+        public async Task ReprocessGalleryMetadataAsync(string galleryId)
+        {
+            if (!galleryId.HasValue())
+                throw new ArgumentNullException(nameof(galleryId));
+
+            foreach (var image in await Server.Instance.Images.GetGalleryImagesAsync(galleryId))
+                await Server.Instance.Images.ReprocessImageMetadataAsync(image);
+
+            Log.Information($"LB.PhotoGalleries.Application.Servers.GalleryServer.ReprocessGalleryMetadataAsync() - Gallery processed: {galleryId}");
+        }
         #endregion
 
         #region internal methods

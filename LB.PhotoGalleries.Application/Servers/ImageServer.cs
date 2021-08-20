@@ -4,23 +4,15 @@ using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Exceptions;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
-using MetadataExtractor;
-using MetadataExtractor.Formats.Exif;
-using MetadataExtractor.Formats.Exif.Makernotes;
-using MetadataExtractor.Formats.Iptc;
-using MetadataExtractor.Formats.Xmp;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Directory = MetadataExtractor.Directory;
 using Image = LB.PhotoGalleries.Models.Image;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -65,6 +57,8 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (string.IsNullOrEmpty(filename))
                     throw new ArgumentNullException(nameof(filename));
 
+                CheckImageDimensions(imageStream);
+
                 if (image == null)
                 {
                     // create the Image object anew
@@ -90,16 +84,16 @@ namespace LB.PhotoGalleries.Application.Servers
                         image.Files.OriginalId = image.Id + Path.GetExtension(filename).ToLower();
                 }
 
-                ParseAndAssignImageMetadata(image, imageStream, filename, performImageDimensionsCheck);
+                // this should be done in the worker when parsing the metadata.
+                // we're just not doing it there as that means some work to sanitise and serialise the filename for insertion into the worker message.
+                // lazy, I know. I'll come back to this.
+                image.Metadata.OriginalFilename = filename;
 
+                if (!image.Name.HasValue())
+                    image.Name = Utilities.TidyImageName(Path.GetFileNameWithoutExtension(filename));
+                
                 if (!image.IsValid())
                     throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
-
-                // if possible, keep the image created date in-step with when the photo was taken.
-                // this makes it easier to publish historic galleries when all we need to do is change a gallery created date and all images
-                // automatically show in the correct chronological order when returned in search results.
-                if (image.Metadata.TakenDate.HasValue)
-                    image.Created = image.Metadata.TakenDate.Value;
 
                 // upload the original file to storage
                 var originalContainerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
@@ -150,16 +144,13 @@ namespace LB.PhotoGalleries.Application.Servers
             if (image == null)
                 throw new InvalidOperationException("Sorry, that image doesn't exit.");
 
-            ParseAndAssignImageMetadata(image, imageStream, filename, true);
+            // this should be done in the worker when parsing the metadata.
+            // we're just not doing it there as that means some work to sanitise and serialise the filename for insertion into the worker message.
+            // lazy, I know. I'll come back to this.
+            image.Metadata.OriginalFilename = filename;
 
             if (!image.IsValid())
                 throw new InvalidOperationException("Image would be invalid. Please check all required properties are set.");
-
-            // if possible, keep the image created date in-step with when the photo was taken.
-            // this makes it easier to publish historic galleries when all we need to do is change a gallery created date and all images
-            // automatically show in the correct chronological order when returned in search results.
-            if (image.Metadata.TakenDate.HasValue)
-                image.Created = image.Metadata.TakenDate.Value;
 
             // delete the old files from blob storage first and any references to them in the Image.
             await DeleteImageFilesAsync(image, true);
@@ -644,6 +635,18 @@ namespace LB.PhotoGalleries.Application.Servers
             gallery.ThumbnailFiles = null;
             await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
         }
+
+        /// <summary>
+        /// Causes the metadata on an image to be re-inspected and then any relevant properties on the Image updated.
+        /// </summary>
+        public async Task ReprocessImageMetadataAsync(Image image)
+        {
+            // create the message and send to the Azure Storage queue
+            // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
+            var ids = $"{WorkerOperation.ReprocessMetadata}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
+            var messageText = Utilities.Base64Encode(ids);
+            await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
+        }
         #endregion
 
         #region internal methods
@@ -822,328 +825,32 @@ namespace LB.PhotoGalleries.Application.Servers
         private static async Task PostProcessImagesAsync(Image image)
         {
             // create the message and send to the Azure Storage queue
-            var ids = $"{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}";
+            // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
+            var ids = $"{WorkerOperation.Process}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
 
-        private static string TidyImageName(string name)
-        {
-            name = name.Replace("_", " ");
-            name = Regex.Replace(name, " {2,}", " ", RegexOptions.Compiled);
-            return name;
-        }
-        #endregion
-
-        #region metadata parsing methods
         /// <summary>
-        /// Images contain metadata that describes the photo to varying degrees. This method extracts the metadata
-        /// and parses out the most interesting pieces we're interested in and assigns it to the image object so we can
-        /// present the information to the user and use it to help with searches.
+        /// Checks if an uploaded image meets the minimum dimensions. Will throw a ImageTooSmallException if not.
         /// </summary>
-        /// <param name="image">The Image object to assign the metadata to.</param>
-        /// <param name="imageStream">The stream containing the recently-uploaded image file to inspect for metadata.</param>
-        /// <param name="originalFilename">The name of the originally-uploaded image file.</param>
-        /// <param name="performImageDimensionsCheck">Ordinarily images must be bigger than 800x800 in size but for migration purposes we might want to override this.</param>
-        private static void ParseAndAssignImageMetadata(Image image, Stream imageStream, string originalFilename, bool performImageDimensionsCheck)
+        private static void CheckImageDimensions(Stream imageStream)
         {
-            // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
-            using var bm = new Bitmap(imageStream);
-            image.Metadata.Width = bm.Width;
-            image.Metadata.Height = bm.Height;
-            image.Metadata.OriginalFilename = originalFilename;
-
-            var orientation = image.Metadata.Width.Value >= image.Metadata.Height.Value
+            var image = System.Drawing.Image.FromStream(imageStream);
+            var orientation = image.Width >= image.Height
                 ? ImageOrientation.Landscape
                 : ImageOrientation.Portrait;
 
-            var imageTooSmallErrorMessage = $"Image must be equal or bigger than 800px on the longest side. Detected size {image.Metadata.Width}x{image.Metadata.Height}";
-            if (performImageDimensionsCheck)
+            var imageTooSmallErrorMessage = $"Image must be equal or bigger than 800px on the longest side. Detected size {image.Width}x{image.Height}";
+            switch (orientation)
             {
-                switch (orientation)
-                {
-                    case ImageOrientation.Landscape when image.Metadata.Width < 800:
-                        throw new ImageTooSmallException(imageTooSmallErrorMessage);
-                    case ImageOrientation.Portrait when image.Metadata.Height < 800:
-                        throw new ImageTooSmallException(imageTooSmallErrorMessage);
-                }
+                case ImageOrientation.Landscape when image.Width < 800:
+                    throw new ImageTooSmallException(imageTooSmallErrorMessage);
+                case ImageOrientation.Portrait when image.Height < 800:
+                    throw new ImageTooSmallException(imageTooSmallErrorMessage);
             }
 
-            if (imageStream.CanSeek && imageStream.Position != 0)
-                imageStream.Position = 0;
-
-            var directories = ImageMetadataReader.ReadMetadata(imageStream);
-
-            image.Metadata.TakenDate = GetImageDateTaken(directories);
-
-            var iso = GetImageIso(directories);
-            if (iso.HasValue)
-                image.Metadata.Iso = iso.Value;
-
-            if (!image.Credit.HasValue())
-            {
-                var credit = GetImageCredit(directories);
-                if (credit.HasValue())
-                    image.Credit = credit;
-            }
-
-            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
-            if (exifIfd0Directory != null)
-            {
-                var make = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMake);
-                if (make != null && make.Description.HasValue())
-                    image.Metadata.CameraMake = make.Description;
-
-                var model = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagModel);
-                if (model != null && model.Description.HasValue())
-                    image.Metadata.CameraModel = model.Description;
-
-                if (!image.Caption.HasValue())
-                {
-                    var imageDescription = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagImageDescription);
-                    if (imageDescription != null && imageDescription.Description.HasValue())
-                        image.Caption = imageDescription.Description;
-                }
-            }
-
-            var exifSubIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (exifSubIfdDirectory != null)
-            {
-                var exposureTime = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureTime);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (exposureTime != null && exposureTime.Description.HasValue())
-                    image.Metadata.ExposureTime = exposureTime.Description;
-
-                var aperture = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagAperture);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (aperture != null && aperture.Description.HasValue())
-                    image.Metadata.Aperture = aperture.Description;
-
-                var exposureBias = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagExposureBias);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (exposureBias != null && exposureBias.Description.HasValue())
-                    image.Metadata.ExposureBias = exposureBias.Description;
-
-                var meteringMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagMeteringMode);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (meteringMode != null && meteringMode.Description.HasValue())
-                    image.Metadata.MeteringMode = meteringMode.Description;
-
-                var flash = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFlash);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (flash != null && flash.Description.HasValue())
-                    image.Metadata.Flash = flash.Description;
-
-                var focalLength = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagFocalLength);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (focalLength != null && focalLength.Description.HasValue())
-                    image.Metadata.FocalLength = focalLength.Description;
-
-                var lensMake = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensMake);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (lensMake != null && lensMake.Description.HasValue())
-                    image.Metadata.LensMake = lensMake.Description;
-
-                var lensModel = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagLensModel);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (lensModel != null && lensModel.Description.HasValue())
-                    image.Metadata.LensModel = lensModel.Description;
-
-                var whiteBalance = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalance);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (whiteBalance != null && whiteBalance.Description.HasValue())
-                    image.Metadata.WhiteBalance = whiteBalance.Description;
-
-                var whiteBalanceMode = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagWhiteBalanceMode);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (whiteBalanceMode != null && whiteBalanceMode.Description.HasValue())
-                    image.Metadata.WhiteBalanceMode = whiteBalanceMode.Description;
-            }
-
-            var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
-            var location = gpsDirectory?.GetGeoLocation();
-            if (location != null)
-            {
-                image.Metadata.LocationLatitude = location.Latitude;
-                image.Metadata.LocationLongitude = location.Longitude;
-            }
-
-            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
-            if (iptcDirectory != null)
-            {
-                if (!image.Name.HasValue())
-                {
-                    var objectName = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagObjectName);
-                    if (objectName != null && objectName.Description.HasValue())
-                        image.Name = TidyImageName(objectName.Description);
-                }
-
-                var keywords = iptcDirectory.GetKeywords();
-                if (keywords != null)
-                    foreach (var keyword in keywords.Where(k => k.HasValue()))
-                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword.ToLower().Trim());
-
-                if (!image.Metadata.Location.HasValue())
-                {
-                    var objectLocation = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagSubLocation);
-                    if (objectLocation != null && objectLocation.Description.HasValue())
-                        image.Metadata.Location = objectLocation.Description;
-                }
-
-                if (!image.Metadata.City.HasValue())
-                {
-                    var objectCity = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCity);
-                    if (objectCity != null && objectCity.Description.HasValue())
-                        image.Metadata.City = objectCity.Description;
-                }
-
-                if (!image.Metadata.State.HasValue())
-                {
-                    var objectState = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagProvinceOrState);
-                    if (objectState != null && objectState.Description.HasValue())
-                        image.Metadata.State = objectState.Description;
-                }
-
-                if (!image.Metadata.Country.HasValue())
-                {
-                    var objectCountry = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCountryOrPrimaryLocationName);
-                    if (objectCountry != null && objectCountry.Description.HasValue())
-                        image.Metadata.Country = objectCountry.Description;
-                }
-            }
-
-            var xmpDirectory = directories.OfType<XmpDirectory>().FirstOrDefault();
-            if (xmpDirectory != null)
-            {
-                // see if there's any tags (subjects in xmp)
-                var subjects = xmpDirectory.XmpMeta.Properties.Where(q => q.Path != null && q.Path.StartsWith("dc:subject") && !string.IsNullOrEmpty(q.Value));
-                foreach (var subject in subjects)
-                    image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, subject.Value);
-
-                // sometimes we have no camera in, but some can be inferred from lens profile info
-                var lensProfileFilename = xmpDirectory.XmpMeta.GetPropertyString("http://ns.adobe.com/camera-raw-settings/1.0/", "crs:LensProfileFilename");
-                if (!string.IsNullOrEmpty(lensProfileFilename) && string.IsNullOrEmpty(image.Metadata.CameraModel))
-                {
-                    var camera = lensProfileFilename.Substring(0, lensProfileFilename.IndexOf(" (", StringComparison.Ordinal));
-                    image.Metadata.CameraModel = camera;
-                }
-                
-                var lensProfileName = xmpDirectory.XmpMeta.GetPropertyString("http://ns.adobe.com/camera-raw-settings/1.0/", "crs:LensProfileName");
-                if (!string.IsNullOrEmpty(lensProfileName) && string.IsNullOrEmpty(image.Metadata.LensModel))
-                {
-                    var lens = Regex.Match(lensProfileName, @"\((.*?)\)", RegexOptions.Compiled);
-                    if (lens.Success && lens.Value.Contains("(") && lens.Value.Contains(")"))
-                        image.Metadata.LensModel = lens.Value.TrimStart('(').TrimEnd(')');
-                }
-            }
-
-            // use the original filename as a fall-back for there being no name in the metadata
-            if (string.IsNullOrEmpty(image.Name))
-                image.Name = TidyImageName(Path.GetFileNameWithoutExtension(originalFilename));
-
-            // wind the stream back to allow other code to work with the stream
             imageStream.Position = 0;
-        }
-
-        /// <summary>
-        /// Attempts to extract and parse image date capture information from image metadata.
-        /// </summary>
-        /// <param name="directories">Metadata directories extracted from the image stream.</param>
-        private static DateTime? GetImageDateTaken(IEnumerable<Directory> directories)
-        {
-            // obtain the Exif SubIFD directory
-            var directory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (directory == null)
-                return null;
-
-            // query the tag's value
-            if (directory.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out var dateTime))
-                return dateTime;
-
-            return null;
-        }
-
-        /// <summary>
-        /// Attempts to extract image iso information from image metadata.
-        /// </summary>
-        /// <param name="directories">Metadata directories extracted from the image stream.</param>
-        public static int? GetImageIso(IEnumerable<Directory> directories)
-        {
-            int iso;
-            var enumerable = directories as Directory[] ?? directories.ToArray();
-            var exifSubIfdDirectory = enumerable.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (exifSubIfdDirectory != null)
-            {
-                var isoTag = exifSubIfdDirectory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagIsoEquivalent);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (isoTag != null && isoTag.Description.HasValue())
-                {
-                    var validIso = int.TryParse(isoTag.Description, out iso);
-                    if (validIso)
-                        return iso;
-
-                    Log.Debug($"ImageServer.GetImageIso: ExifSubIfdDirectory iso tag value wasn't an int: '{isoTag.Description}'");
-                }
-            }
-
-            var nikonDirectory = enumerable.OfType<NikonType2MakernoteDirectory>().FirstOrDefault();
-            // ReSharper disable once InvertIf
-            if (nikonDirectory != null)
-            {
-                var isoTag = nikonDirectory.Tags.SingleOrDefault(t => t.Type == NikonType2MakernoteDirectory.TagIso1);
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse -- wrong, can return null
-                if (isoTag == null || !isoTag.Description.HasValue())
-                    return null;
-
-                if (isoTag.Description == null || !isoTag.Description.StartsWith("ISO ")) 
-                    return null;
-
-                var isoTagProcessed = isoTag.Description.Split(' ')[1];
-                var validIso = int.TryParse(isoTagProcessed, out iso);
-                if (validIso)
-                    return iso;
-
-                Log.Debug($"ImageServer.GetImageIso: NikonType2MakernoteDirectory iso tag value wasn't an int: '{isoTag.Description}'");
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Attempts to extract image credit information from image metadata.
-        /// </summary>
-        /// <param name="directories">Metadata directories extracted from the image stream.</param>
-        public static string GetImageCredit(IReadOnlyList<Directory> directories)
-        {
-            var exifIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
-            if (exifIfd0Directory != null)
-            {
-                var creditTag = exifIfd0Directory.Tags.SingleOrDefault(t => t.Type == ExifDirectoryBase.TagCopyright);
-                if (creditTag != null && creditTag.Description.HasValue())
-                    return creditTag.Description;
-            }
-
-            var iptcDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
-            if (iptcDirectory != null)
-            {
-                var creditTag = iptcDirectory.Tags.SingleOrDefault(t => t.Type == IptcDirectory.TagCredit);
-                if (creditTag != null && creditTag.Description.HasValue())
-                    return creditTag.Description;
-            }
-
-            var xmpDirectory = directories.OfType<XmpDirectory>().FirstOrDefault();
-            if (xmpDirectory?.XmpMeta != null)
-            {
-                var creator = xmpDirectory.XmpMeta.Properties.SingleOrDefault(q => q.Path != null && q.Path.Equals("dc:creator[1]", StringComparison.CurrentCultureIgnoreCase) && !string.IsNullOrEmpty(q.Value));
-                if (creator != null)
-                    return creator.Value;
-
-                var rights = xmpDirectory.XmpMeta.Properties.SingleOrDefault(q => q.Path != null && q.Path.Equals("dc:rights[1]", StringComparison.CurrentCultureIgnoreCase) && !string.IsNullOrEmpty(q.Value));
-                if (rights != null)
-                    return rights.Value;
-            }
-
-            return null;
         }
         #endregion
     }

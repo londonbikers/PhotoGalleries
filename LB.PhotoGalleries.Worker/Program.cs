@@ -16,7 +16,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using LB.PhotoGalleries.Models.Exceptions;
 
 namespace LB.PhotoGalleries.Worker
 {
@@ -87,6 +89,10 @@ namespace LB.PhotoGalleries.Worker
 
                     if (messages.Value.Length > 0)
                     {
+
+
+
+
                         // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
                         Parallel.ForEach(messages.Value, message => {
                             HandleMessageAsync(message).GetAwaiter().GetResult();
@@ -165,28 +171,44 @@ namespace LB.PhotoGalleries.Worker
         #region image processing methods
         private static async Task HandleMessageAsync(QueueMessage message)
         {
-            await ProcessImageProcessingMessageAsync(message.MessageText);
+            // decode the message
+            var components = Utilities.Base64Decode(message.MessageText).Split(':');
+            var imageMessage = new ImageMessage
+            {
+                Operation = Enum.Parse<WorkerOperation>(components[0], true),
+                ImageId = components[1],
+                GalleryId = components[2],
+                GalleryCategoryId = components[3],
+                OverwriteImageProperties = bool.Parse(components[4])
+            };
+
+            try
+            {
+                if (imageMessage.Operation == WorkerOperation.Process)
+                    await ProcessImageProcessingMessageAsync(imageMessage);
+                else
+                    await ReprocessImageMetadataAsync(imageMessage);
+            }
+            catch (ImageNotFoundException e)
+            {
+                _log.Error(e, "Image not found, deleting message.");
+            }
 
             // as the message was processed successfully, we can delete the message from the queue
             await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
         }
 
-        private static async Task ProcessImageProcessingMessageAsync(string message)
+        private static async Task ProcessImageProcessingMessageAsync(ImageMessage message)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var ids = Utilities.Base64Decode(message).Split(':');
-            var imageId = ids[0];
-            var galleryId = ids[1];
-            var categoryId = ids[2];
-
             // keep track of the gallery id so we can work on the gallery after the message batch is processed
             lock (_galleryId)
-                _galleryId = new DatabaseId(galleryId, categoryId);
+                _galleryId = new DatabaseId(message.GalleryId, message.GalleryCategoryId);
 
             // retrieve Image object and bytes
-            var image = await GetImageAsync(new DatabaseId(imageId, galleryId));
+            var image = await GetImageAsync(message.ImageId, message.GalleryId);
             var imageBytes = await GetImageBytesAsync(image);
 
             // create array of file specs to iterate over
@@ -209,7 +231,8 @@ namespace LB.PhotoGalleries.Worker
                 ProcessImageAsync(image, imageBytes, spec).GetAwaiter().GetResult();
             });
 
-            await UpdateModelsAsync(image);
+            MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties, _log);
+            await UpdateImageAsync(image);
 
             // when uploading images, they don't have a position set, so if one is set when we process it here
             // then it's likely it's an existing Image that's having it's image file replaced. If so and the position
@@ -223,44 +246,6 @@ namespace LB.PhotoGalleries.Worker
 
             stopwatch.Stop();
             _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageProcessingMessageAsync() - Processed {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
-        }
-
-        private static async Task<Image> GetImageAsync(DatabaseId databaseId)
-        {
-            // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
-            // sure the new record is fully available
-            var getImageTries = 0;
-            while (getImageTries < 500)
-            {
-                var response = await _imagesContainer.ReadItemAsync<Image>(databaseId.Id, new PartitionKey(databaseId.PartitionKey));
-                if (response.StatusCode == HttpStatusCode.OK)
-                    return response.Resource;
-
-                getImageTries += 1;
-            }
-
-            // shouldn't happen, the database should become consistent at some point, but gotta cover all the scenarios
-            _log.Error("ImageProcessing.GetImage() - Image could not be retrieved from CosmosDB. Returning null.");
-            return null;
-        }
-
-        private static async Task<byte[]> GetImageBytesAsync(Image image)
-        {
-            // download image bytes
-            var downloadTimer = new Stopwatch();
-            downloadTimer.Start();
-
-            var originalContainerClient = _blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
-            var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
-            var blob = await blobClient.DownloadAsync();
-
-            await using var originalImageStream = blob.Value.Content;
-            var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
-
-            downloadTimer.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image downloaded in: {downloadTimer.ElapsedMilliseconds}ms");
-
-            return imageBytes;
         }
 
         private static async Task ProcessImageAsync(Image image, byte[] imageBytes, FileSpec fileSpec)
@@ -281,21 +266,14 @@ namespace LB.PhotoGalleries.Worker
             var storageId = imageFileSpec.GetStorageId(image);
             await using (var imageFile = await GenerateImageAsync(image, imageBytes, imageFileSpec))
             {
-                // upload the new image file to storage (delete any old version first)
+                // upload the new image file to storage
                 var containerClient = _blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
-
-                // ensure this is repeatable, delete any previous blob that may have been generated
-                var deleteStopwatch = new Stopwatch();
-                deleteStopwatch.Start();
-                await containerClient.DeleteBlobIfExistsAsync(storageId, DeleteSnapshotsOption.IncludeSnapshots);
-                deleteStopwatch.Stop();
-
                 var uploadStopwatch = new Stopwatch();
                 uploadStopwatch.Start();
                 await containerClient.UploadBlobAsync(storageId, imageFile);
                 uploadStopwatch.Stop();
 
-                _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Delete blob elapsed time: {deleteStopwatch.ElapsedMilliseconds}ms. Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}ms");
+                _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}ms");
             }
 
             // update the Image object with the storage id of the newly-generated image file
@@ -375,29 +353,17 @@ namespace LB.PhotoGalleries.Worker
         }
 
         /// <summary>
-        /// After creating various smaller image files we need to update the database with the new filenames.
-        /// </summary>
-        private static async Task UpdateModelsAsync(Image image)
-        {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-
-            // update Image in the db with the new Files references we've created
-            var replaceResult = await _imagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
-            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
-
-            stopwatch.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateModelsAsync() - Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
-
-            // todo: in the future: expire Image cache item when we implement domain caching
-        }
-
-        /// <summary>
         /// Galleries need a copy of the first image's ImageFiles object so it can efficiently render high-resolution thumbnails without
         /// making sub-queries for this data. This method finds the first gallery image thumbnail data and updates the gallery with it.
         /// </summary>
         private static async Task AssignGalleryThumbnailAsync()
         {
+            if (_galleryId == null || !_galleryId.PartitionKey.HasValue() || !_galleryId.Id.HasValue())
+            {
+                _log.Information("AssignGalleryThumbnailAsync() - Exiting, no ids. Probably due to Reprocessing operations");
+                return;
+            }
+
             var g = await GetGalleryAsync(_galleryId.PartitionKey, _galleryId.Id);
             if (g.ThumbnailFiles == null)
             {
@@ -476,11 +442,103 @@ namespace LB.PhotoGalleries.Worker
             var replaceResponse = await _galleriesContainer.ReplaceItemAsync(gallery, gallery.Id, new PartitionKey(gallery.CategoryId));
             _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateGalleryThumbnailAsync() - Gallery thumbnail updated. Charge: {replaceResponse.RequestCharge}");
         }
+        #endregion
 
+        #region reprocessing methods
+        /// <summary>
+        /// Causes an image to have it's metadata re-examined and updates applied to the image.
+        /// Useful for when we make improvements to metadata parsing.
+        /// </summary>
+        private static async Task ReprocessImageMetadataAsync(ImageMessage message)
+        {
+            // retrieve the image
+            // download the bytes
+            // parse the metadata
+            // update the image properties
+            // persist image changes to db
+
+            _log.Verbose("LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync()");
+            
+            var image = await GetImageAsync(message.ImageId, message.GalleryId);
+            var imageBytes = await GetImageBytesAsync(image);
+            MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties);
+            await UpdateImageAsync(image);
+            
+            _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id}");
+        }
+        #endregion
+
+        #region utility methods
         private static async Task<Gallery> GetGalleryAsync(string categoryId, string galleryId)
         {
             var readItemResponse = await _galleriesContainer.ReadItemAsync<Gallery>(galleryId, new PartitionKey(categoryId));
             return readItemResponse.Resource;
+        }
+
+        /// <summary>
+        /// After creating various smaller image files we need to update the database with the new filenames.
+        /// </summary>
+        private static async Task UpdateImageAsync(Image image)
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            // update Image in the db with the new Files references we've created
+            var replaceResult = await _imagesContainer.ReplaceItemAsync(image, image.Id, new PartitionKey(image.GalleryId));
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateImageAsync() - Replace Image response: {replaceResult.StatusCode}. Charge: {replaceResult.RequestCharge}");
+
+            stopwatch.Stop();
+            _log.Information($"LB.PhotoGalleries.Worker.Program.UpdateImageAsync() - Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
+
+            // todo: in the future: expire Image cache item when we implement domain caching
+        }
+
+        private static async Task<Image> GetImageAsync(string imageId, string galleryId)
+        {
+            // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
+            // sure the new record is fully available
+            var getImageTries = 0;
+            while (getImageTries < 5)
+            {
+                try
+                {
+                    var response = await _imagesContainer.ReadItemAsync<Image>(imageId, new PartitionKey(galleryId));
+                    if (response.StatusCode == HttpStatusCode.OK)
+                        return response.Resource;
+                }
+                catch (CosmosException e)
+                {
+                    if (e.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        _log.Warning($"LB.PhotoGalleries.Worker.Program.GetImage() - Image {imageId} could not be retrieved from CosmosDB. StatusCode: {e.StatusCode}");
+                        Thread.Sleep(TimeSpan.FromSeconds(1));
+                    }
+                }
+
+                getImageTries++;
+            }
+
+            // this can happen if the user deletes the photo before the message is processed. Raise a specific exception so we can handle it gracefully.
+            throw new ImageNotFoundException($"Didn't find image {imageId} in the database.") {ImageId = imageId, GalleryId = galleryId};
+        }
+
+        private static async Task<byte[]> GetImageBytesAsync(Image image)
+        {
+            // download image bytes
+            var downloadTimer = new Stopwatch();
+            downloadTimer.Start();
+
+            var originalContainerClient = _blobServiceClient.GetBlobContainerClient(Constants.StorageOriginalContainerName);
+            var blobClient = originalContainerClient.GetBlobClient(image.Files.OriginalId);
+            var blob = await blobClient.DownloadAsync();
+
+            await using var originalImageStream = blob.Value.Content;
+            var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
+
+            downloadTimer.Stop();
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image ({imageBytes.Length/1024}kb) downloaded in: {downloadTimer.ElapsedMilliseconds}ms");
+
+            return imageBytes;
         }
         #endregion
     }

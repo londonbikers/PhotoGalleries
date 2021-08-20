@@ -48,6 +48,9 @@
 <div id="updated-gallery-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
     Updated the gallery!
 </div>
+<div id="reprocessed-metadata-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
+    Gallery image metadata is now being reprocessed!
+</div>
 
 <div class="row">
     <div class="col">
@@ -99,7 +102,7 @@
                 @Html.DisplayNameFor(model => model.Created)
             </dt>
             <dd class="col-sm-12">
-                
+
                 <div id="created-label-div" data-bind="visible: !EditingCreated()">
                     <span data-bind="text: CreatedFormatted"></span>
                     @if (isAuthorisedToEdit)
@@ -161,19 +164,30 @@
                     @Html.DisplayFor(model => model.LegacyGuidId)
                 </dd>
             }
-
+            
+            @if (images.Any(i => i.Metadata.DateLastProcessed.HasValue))
+            {
+                <dt class="col-sm-12">
+                    Metadata Last Processed
+                </dt>
+                <dd class="col-sm-12">
+                    @(images.Min(i => i.Metadata.DateLastProcessed))
+                </dd>
+            }
+            
         </dl>
 
         @if (User.IsInRole(Roles.Administrator.ToString()))
         {
-            <button data-bind="click: function() { GenerateImageFiles(); }" class="btn btn-outline-secondary btn-sm">Generate images</button>
-            <button data-bind="click: function() { DeletePreGenImages(); }" class="btn btn-outline-secondary btn-sm">Delete pre-gen images</button>
+            <button data-bind="click: function() { GenerateImageFiles(); }" class="btn btn-outline-secondary btn-sm">Generate Images</button>
+            <button data-bind="click: function() { DeletePreGenImages(); }" class="btn btn-outline-secondary btn-sm">Delete Pre-gen Images</button>
+            <button data-bind="click: function() { ReprocessImageMetadata(); }" class="btn btn-outline-secondary btn-sm">Reprocess Metadata</button>
         }
 
     </div>
 </div>
 
-<div class="row">
+<div class="row mt-3">
     <div class="col pb-2">
         <div id="dropzone">
             <form asp-controller="Images" asp-action="Upload" asp-route-categoryId="@Model.CategoryId" asp-route-galleryId="@Model.Id" class="dropzone needsclick dz-clickable" id="uploader">
@@ -488,6 +502,21 @@
                     .fail(function() {
                         console.log("DeletePreGenImages(): something went wrong");
                     });
+            }
+
+            vm.ReprocessImageMetadata = function() {
+                console.log("ReprocessImageMetadata()");
+                $.ajax({
+                    url: '/api/galleries/reprocess-metadata?galleryId=@Model.Id',
+                    type: 'PUT'
+                }).done(function (responses) {
+                    console.log("ReprocessImageMetadata(): done");
+                    var banner = $("#reprocessed-metadata-banner");
+                    banner.show();
+                    setTimeout(function () { banner.fadeOut('slow'); }, 5000);
+                }).fail(function() {
+                    console.log("ReprocessImageMetadata(): something went wrong");
+                });
             }
 
             vm.ShowOrderingTab = function() {

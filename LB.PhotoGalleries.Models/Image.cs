@@ -125,6 +125,12 @@ namespace LB.PhotoGalleries.Models
     /// </summary>
     public class Metadata
     {
+        /// <summary>
+        /// The date the metadata was last processed for this image.
+        /// </summary>
+        [DisplayName("Date Last Processed")]
+        public DateTime? DateLastProcessed { get; set; }
+
         public int? Width { get; set; }
 
         public int? Height { get; set; }

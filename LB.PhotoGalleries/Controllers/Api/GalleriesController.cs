@@ -144,5 +144,16 @@ namespace LB.PhotoGalleries.Controllers.Api
             await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
             return Ok();
         }
+
+        [Authorize(Roles = "Administrator")]
+        [HttpPut("/api/galleries/reprocess-metadata")]
+        public async Task<ActionResult> ReprocessMetadata(string galleryId)
+        {
+            if (!galleryId.HasValue())
+                return BadRequest("galleryId is empty!");
+
+            await Server.Instance.Galleries.ReprocessGalleryMetadataAsync(galleryId);
+            return Ok();
+        }
     }
 }
