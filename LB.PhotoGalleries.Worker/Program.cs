@@ -491,7 +491,7 @@ namespace LB.PhotoGalleries.Worker
             // it's possible that we've picked this message up so quick after the Image was created that Cosmos DB replication hasn't had a chance to make
             // sure the new record is fully available
             var getImageTries = 0;
-            while (getImageTries < 10)
+            while (getImageTries < 5)
             {
                 try
                 {
