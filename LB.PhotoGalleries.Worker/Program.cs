@@ -448,16 +448,13 @@ namespace LB.PhotoGalleries.Worker
             // persist image changes to db
 
             _log.Verbose("LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync()");
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
             
             var image = await GetImageAsync(message.ImageId, message.GalleryId);
             var imageBytes = await GetImageBytesAsync(image);
             MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties);
             await UpdateImageAsync(image);
             
-            stopwatch.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id} ({imageBytes.Length/1024/1024})mb in {stopwatch.ElapsedMilliseconds}ms");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id}");
         }
         #endregion
 
