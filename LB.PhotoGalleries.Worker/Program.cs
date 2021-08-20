@@ -89,6 +89,10 @@ namespace LB.PhotoGalleries.Worker
 
                     if (messages.Value.Length > 0)
                     {
+
+
+
+
                         // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
                         Parallel.ForEach(messages.Value, message => {
                             HandleMessageAsync(message).GetAwaiter().GetResult();
@@ -354,6 +358,12 @@ namespace LB.PhotoGalleries.Worker
         /// </summary>
         private static async Task AssignGalleryThumbnailAsync()
         {
+            if (_galleryId == null || !_galleryId.PartitionKey.HasValue() || !_galleryId.Id.HasValue())
+            {
+                _log.Information("AssignGalleryThumbnailAsync() - Exiting, no ids. Probably due to Reprocessing operations");
+                return;
+            }
+
             var g = await GetGalleryAsync(_galleryId.PartitionKey, _galleryId.Id);
             if (g.ThumbnailFiles == null)
             {

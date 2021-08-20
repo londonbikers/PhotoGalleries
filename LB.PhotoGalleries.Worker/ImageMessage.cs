@@ -1,4 +1,6 @@
-﻿namespace LB.PhotoGalleries.Worker
+﻿using LB.PhotoGalleries.Models.Enums;
+
+namespace LB.PhotoGalleries.Worker
 {
     public class ImageMessage
     {
@@ -7,11 +9,5 @@
         public string GalleryId { get; set; }
         public string GalleryCategoryId { get; set; }
         public bool OverwriteImageProperties { get; set; }
-    }
-
-    public enum WorkerOperation
-    {
-        Process,
-        ReprocessMetadata
     }
 }

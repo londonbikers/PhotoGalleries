@@ -1,6 +1,7 @@
 ﻿using Azure.Storage.Blobs.Models;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Exceptions;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
@@ -12,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Models.Exceptions;
 using Image = LB.PhotoGalleries.Models.Image;
 
 namespace LB.PhotoGalleries.Application.Servers
@@ -635,6 +635,18 @@ namespace LB.PhotoGalleries.Application.Servers
             gallery.ThumbnailFiles = null;
             await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
         }
+
+        /// <summary>
+        /// Causes the metadata on an image to be re-inspected and then any relevant properties on the Image updated.
+        /// </summary>
+        public async Task ReprocessImageMetadataAsync(Image image)
+        {
+            // create the message and send to the Azure Storage queue
+            // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
+            var ids = $"{WorkerOperation.ReprocessMetadata}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
+            var messageText = Utilities.Base64Encode(ids);
+            await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
+        }
         #endregion
 
         #region internal methods
@@ -814,8 +826,7 @@ namespace LB.PhotoGalleries.Application.Servers
         {
             // create the message and send to the Azure Storage queue
             // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
-            //var ids = $"{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}";
-            var ids = $"process:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
+            var ids = $"{WorkerOperation.Process}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }

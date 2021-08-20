@@ -155,6 +155,10 @@
         <h3>Metadata</h3>
 
         <ul>
+            @if (Model.Metadata.DateLastProcessed.HasValue)
+            {
+                <li><b>@Html.DisplayNameFor(model => model.Metadata.DateLastProcessed)</b>: @Html.DisplayFor(model => model.Metadata.DateLastProcessed.Value)</li>
+            }
             @if (!string.IsNullOrEmpty(Model.Metadata.OriginalFilename))
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.OriginalFilename)</b>: @Html.DisplayFor(model => model.Metadata.OriginalFilename)</li>

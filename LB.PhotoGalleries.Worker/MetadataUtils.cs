@@ -209,6 +209,7 @@ namespace LB.PhotoGalleries.Worker
                 }
             }
 
+            image.Metadata.DateLastProcessed = DateTime.Now;
             stopwatch.Stop();
             log?.Information($"LB.PhotoGalleries.Worker.MetadataUtils.ParseAndAssignImageMetadata() - Processed metadata for {image.Id} in {stopwatch.ElapsedMilliseconds}ms");
         }
