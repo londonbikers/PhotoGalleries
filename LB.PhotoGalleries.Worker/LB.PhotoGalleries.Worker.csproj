@@ -11,6 +11,7 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.8.0-beta.2" />
     <PackageReference Include="Imageflow.NativeRuntime.win-x86_64" Version="1.5.8-rc62" />
     <PackageReference Include="Imageflow.Net" Version="0.7.24" />
+    <PackageReference Include="MetadataExtractor" Version="2.7.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.20.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
@@ -21,6 +22,7 @@
     <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

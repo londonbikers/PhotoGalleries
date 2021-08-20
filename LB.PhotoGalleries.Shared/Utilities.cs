@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace LB.PhotoGalleries.Shared
 {
@@ -99,6 +100,13 @@ namespace LB.PhotoGalleries.Shared
 
             list.RemoveAll(t => t.Trim().Equals(tag.Trim(), StringComparison.CurrentCultureIgnoreCase));
             return ListToCsv(list);
+        }
+
+        public static string TidyImageName(string name)
+        {
+            name = name.Replace("_", " ");
+            name = Regex.Replace(name, " {2,}", " ", RegexOptions.Compiled);
+            return name;
         }
     }
 }
