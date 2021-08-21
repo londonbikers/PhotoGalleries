@@ -644,6 +644,8 @@ namespace LB.PhotoGalleries.Application.Servers
             // create the message and send to the Azure Storage queue
             // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
             var ids = $"{WorkerOperation.ReprocessMetadata}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
+            Log.Debug($"ReprocessImageMetadataAsync() - Sending message (pre-base64 encoding): {ids}");
+
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }
@@ -827,6 +829,8 @@ namespace LB.PhotoGalleries.Application.Servers
             // create the message and send to the Azure Storage queue
             // message format: {operation}:{image_id}:{gallery_id}:{gallery_category_id}:{overwrite_image_properties}
             var ids = $"{WorkerOperation.Process}:{image.Id}:{image.GalleryId}:{image.GalleryCategoryId}:true";
+            Log.Debug($"PostProcessImagesAsync() - Sending message (pre-base64 encoding): {ids}");
+
             var messageText = Utilities.Base64Encode(ids);
             await Server.Instance.ImageProcessingQueueClient.SendMessageAsync(messageText);
         }

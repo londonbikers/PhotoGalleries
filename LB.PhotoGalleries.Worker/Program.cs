@@ -1,10 +1,10 @@
 ﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Imageflow.Fluent;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Exceptions;
 using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -18,7 +18,6 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using LB.PhotoGalleries.Models.Exceptions;
 
 namespace LB.PhotoGalleries.Worker
 {
@@ -89,10 +88,6 @@ namespace LB.PhotoGalleries.Worker
 
                     if (messages.Value.Length > 0)
                     {
-
-
-
-
                         // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
                         Parallel.ForEach(messages.Value, message => {
                             HandleMessageAsync(message).GetAwaiter().GetResult();
@@ -173,21 +168,33 @@ namespace LB.PhotoGalleries.Worker
         {
             // decode the message
             var components = Utilities.Base64Decode(message.MessageText).Split(':');
-            var imageMessage = new ImageMessage
+            ImageMessage imageMessage = null;
+            try
             {
-                Operation = Enum.Parse<WorkerOperation>(components[0], true),
-                ImageId = components[1],
-                GalleryId = components[2],
-                GalleryCategoryId = components[3],
-                OverwriteImageProperties = bool.Parse(components[4])
-            };
+                imageMessage = new ImageMessage
+                {
+                    Operation = Enum.Parse<WorkerOperation>(components[0], true),
+                    ImageId = components[1],
+                    GalleryId = components[2],
+                    GalleryCategoryId = components[3],
+                    OverwriteImageProperties = bool.Parse(components[4])
+                };
+            }
+            catch (Exception e)
+            {
+                Log.Error($"LB.PhotoGalleries.Worker.Program.HandleMessageAsync() - Failed to decode message : '{message.MessageText}'", e);
+            }
 
             try
             {
-                if (imageMessage.Operation == WorkerOperation.Process)
-                    await ProcessImageProcessingMessageAsync(imageMessage);
-                else
-                    await ReprocessImageMetadataAsync(imageMessage);
+                if (imageMessage != null)
+                {
+                    if (imageMessage.Operation == WorkerOperation.Process)
+                        await ProcessImageProcessingMessageAsync(imageMessage);
+                    else
+                        await ReprocessImageMetadataAsync(imageMessage);
+                }
+                
             }
             catch (ImageNotFoundException e)
             {
