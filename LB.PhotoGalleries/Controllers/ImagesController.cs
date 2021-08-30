@@ -65,14 +65,14 @@ namespace LB.PhotoGalleries.Controllers
 
                 if (image.Metadata.Width > image.Metadata.Height)
                 {
-                    width = 1080;
-                    var dHeight = (decimal)image.Metadata.Height / ((decimal)image.Metadata.Width / (decimal)1080);
+                    width = 1200;
+                    var dHeight = (decimal)image.Metadata.Height / ((decimal)image.Metadata.Width / (decimal)1200);
                     height = (int)Math.Round(dHeight);
                 }
                 else
                 {
-                    height = 1080;
-                    var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)1080);
+                    height = 1200;
+                    var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)1200);
                     width = (int)Math.Round(dWidth);
                 }
 
