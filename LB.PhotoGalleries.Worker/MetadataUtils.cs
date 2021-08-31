@@ -37,8 +37,29 @@ namespace LB.PhotoGalleries.Worker
             
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             var bitmap = new Bitmap(imageStream);
-            image.Metadata.Width = bitmap.Width;
-            image.Metadata.Height = bitmap.Height;
+
+            // does this image have orientation information we need to use?
+            var property = bitmap.PropertyItems.FirstOrDefault(p => p.Id == 274);
+            if (property != null)
+            {
+                int orientation = property.Value[0];
+                if (orientation == 6 || orientation == 8)
+                {
+                    // image is portrait, flip the dims
+                    image.Metadata.Width = bitmap.Height;
+                    image.Metadata.Height = bitmap.Width;
+                }
+                else
+                {
+                    image.Metadata.Width = bitmap.Width;
+                    image.Metadata.Height = bitmap.Height;
+                }
+            }
+            else
+            {
+                image.Metadata.Width = bitmap.Width;
+                image.Metadata.Height = bitmap.Height;
+            }
 
             imageStream.Position = 0;
             var directories = ImageMetadataReader.ReadMetadata(imageStream);
