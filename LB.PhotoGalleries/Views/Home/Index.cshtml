@@ -61,7 +61,7 @@
                           g.Name, 
                           g.ThumbnailFiles,
                           g.ImageCount,
-                          CommentCount = g.Comments.Count,
+                          g.CommentCount,
                           CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name
                       })));
 
