@@ -64,6 +64,13 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             ViewData["gallery"] = gallery;
             ViewData["isAuthorisedToEdit"] = Helpers.CanUserEditObject(User, gallery.CreatedByUserId);
             ViewData["mapsKey"] = _configuration["Google:MapsApiKey"];
+
+            // work out the previous image in the gallery for navigation purposes
+            var previousImage = await Server.Instance.Images.GetPreviousImageInGalleryAsync(image);
+            var nextImage = await Server.Instance.Images.GetNextImageInGalleryAsync(image);
+            ViewData["previousImage"] = previousImage;
+            ViewData["nextImage"] = nextImage;
+
             return View();
         }
 

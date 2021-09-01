@@ -8,6 +8,8 @@
     var gallery = (Gallery)ViewData["gallery"];
     var isAuthorisedToEdit = (bool)ViewData["isAuthorisedToEdit"];
     var mapsKey = (string) ViewData["mapsKey"];
+    var previousImage = (Image)ViewData["previousImage"];
+    var nextImage = (Image)ViewData["nextImage"];
 }
 
 @section Styles {
@@ -20,12 +22,23 @@
     Image metadata is now being reprocessed!
 </div>
 
+
+
 <div class="row">
     <div class="col">
-        <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
+        @if (previousImage != null)
+        {
+            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@previousImage.GalleryCategoryId" asp-route-galleryId="@previousImage.GalleryId" asp-route-imageId="@previousImage.Id" class="btn btn-sm btn-outline-secondary">Previous Image</a>
+        }
+        <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id" class="btn btn-sm btn-outline-secondary">Back to Gallery</a>
     </div>
     <div class="col text-right">
-        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)">View public image</a>
+        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)" class="btn btn-sm btn-outline-secondary">View Public Image</a>
+        @if (nextImage != null)
+        {
+            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@nextImage.GalleryCategoryId" asp-route-galleryId="@nextImage.GalleryId" asp-route-imageId="@nextImage.Id" class="btn btn-sm btn-outline-secondary">Next Image</a>
+        }
+
     </div>
 </div>
 
