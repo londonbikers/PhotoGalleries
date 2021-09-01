@@ -38,27 +38,44 @@ namespace LB.PhotoGalleries.Worker
             // whilst image dimensions can be extracted from metadata in some cases, not in every case and this isn't acceptable
             var bitmap = new Bitmap(imageStream);
 
-            // does this image have orientation information we need to use?
-            var property = bitmap.PropertyItems.FirstOrDefault(p => p.Id == 274);
-            if (property != null)
+            try
             {
-                int orientation = property.Value[0];
-                if (orientation == 6 || orientation == 8)
+                // look for a property item for orientation, as if there's specific instructions then we need to reverse the dimensions. ref: https://nicholasarmstrong.com/2010/02/exif-quick-reference/
+                var property = bitmap.GetPropertyItem(274);
+                if (property != null && property.Value.Any(v => v > 0))
                 {
-                    // image is portrait, flip the dims
-                    image.Metadata.Width = bitmap.Height;
-                    image.Metadata.Height = bitmap.Width;
+                    int orientation = property.Value.Single(v => v > 0);
+                    if (orientation == 6 || orientation == 8)
+                    {
+                        // image is portrait, flip the dims
+                        image.Metadata.Width = bitmap.Height;
+                        image.Metadata.Height = bitmap.Width;
+                        log?.Debug($"LB.PhotoGalleries.Worker.MetadataUtils.ParseAndAssignImageMetadata() - orientation flag detected ({orientation}). Flipping dimensions.");
+                    }
+                    else
+                    {
+                        image.Metadata.Width = bitmap.Width;
+                        image.Metadata.Height = bitmap.Height;
+                        log?.Debug($"LB.PhotoGalleries.Worker.MetadataUtils.ParseAndAssignImageMetadata() - orientation flag detected ({orientation}). Using dimensions as-is.");
+                    }
                 }
                 else
                 {
                     image.Metadata.Width = bitmap.Width;
                     image.Metadata.Height = bitmap.Height;
+                    log?.Debug("LB.PhotoGalleries.Worker.MetadataUtils.ParseAndAssignImageMetadata() - no orientation flag detected. Using dimensions as-is.");
                 }
             }
-            else
+            catch (ArgumentException e)
             {
-                image.Metadata.Width = bitmap.Width;
-                image.Metadata.Height = bitmap.Height;
+                if (e.Message == "Property cannot be found.")
+                {
+                    // this is okay. bitmaps don't have to have this property.
+                }
+                else
+                {
+                    throw;
+                }
             }
 
             imageStream.Position = 0;
