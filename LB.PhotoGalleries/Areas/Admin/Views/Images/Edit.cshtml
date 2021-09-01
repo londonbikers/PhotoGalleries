@@ -28,15 +28,15 @@
     <div class="col">
         @if (previousImage != null)
         {
-            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@previousImage.GalleryCategoryId" asp-route-galleryId="@previousImage.GalleryId" asp-route-imageId="@previousImage.Id" class="btn btn-sm btn-outline-secondary">Previous Image</a>
+            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@previousImage.GalleryCategoryId" asp-route-galleryId="@previousImage.GalleryId" asp-route-imageId="@previousImage.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Previous Image</a>
         }
-        <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id" class="btn btn-sm btn-outline-secondary">Back to Gallery</a>
+        <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-images"></i> Back to Gallery</a>
     </div>
     <div class="col text-right">
-        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)" class="btn btn-sm btn-outline-secondary">View Public Image</a>
+        <a asp-area="" asp-controller="Images" asp-action="Details" asp-route-galleryId="@gallery.Id" asp-route-imageId="@Model.Id" asp-route-name="@Helpers.EncodeParamForUrl(Model.Name)" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View Public Image</a>
         @if (nextImage != null)
         {
-            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@nextImage.GalleryCategoryId" asp-route-galleryId="@nextImage.GalleryId" asp-route-imageId="@nextImage.Id" class="btn btn-sm btn-outline-secondary">Next Image</a>
+            <a asp-controller="Images" asp-action="Edit" asp-route-categoryId="@nextImage.GalleryCategoryId" asp-route-galleryId="@nextImage.GalleryId" asp-route-imageId="@nextImage.Id" class="btn btn-sm btn-outline-secondary">Next Image <i class="bi bi-arrow-right"></i></a>
         }
 
     </div>
