@@ -34,24 +34,24 @@
     <hr />
     <div class="row mb-3">
         <div class="col">
-            <small class="text-muted">
+            <span class="text-muted text-med-size">
                 Shown in <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a>
-                - Created @ViewData.Model.Created.ToShortDateString()
+                &#8729 Created @ViewData.Model.Created.ToShortDateString()
                 @if (galleryUser != null)
                 {
-                    <text>- by </text>@galleryUser.Name
+                    <text>&#8729 By </text>@galleryUser.Name
                 }
-                - @images.Count photos
+                &#8729 @images.Count Photos
+                &#8729
+                <span style="white-space: nowrap;">
+                    <a href="#comments">@commentCount<text> Comments</text></a>
+                </span>
                 @if (User.IsInRole(Roles.Administrator.ToString()) || User.IsInRole(Roles.Photographer.ToString()))
                 {
-                    <text>-</text>
-                    <a asp-area="Admin" asp-controller="Galleries" asp-action="Edit" asp-route-id="@Model.Id" asp-route-pk="@Model.CategoryId" title="Edit Gallery"><img src="/img/edit.svg" width="15" class="image-fade" /></a>
+                    <text>&#8729 </text>
+                    <a asp-area="Admin" asp-controller="Galleries" asp-action="Edit" asp-route-id="@Model.Id" asp-route-pk="@Model.CategoryId" title="Edit Gallery">Edit</a>
                 }
-                -
-                <span style="white-space: nowrap;">
-                    <img src="/img/comments.svg" width="15" alt="comments icon" /> <a href="#comments">@commentCount<text>comments</text></a>
-                </span>
-            </small>
+            </span>
         </div>
     </div>
 
@@ -68,7 +68,9 @@
 
     <div class="mt-3 pb-2">
         <a id="comments"></a>
-        <h6><img src="/img/comments.svg" width="25" alt="comments icon" /> Comments</h6>
+        <p class="lead">
+            <b>Comments</b>
+        </p>
 
         @if (User.Identity.IsAuthenticated)
         {
@@ -100,7 +102,7 @@
 
         @if (userIsSubscribedToCommentReplies)
         {
-            <div class="info-box mt-2">
+            <div class="info-box info-box-light mt-2">
                 You're subscribed to this gallery's comments. <a href="javascript:void(0)" data-bind="click:Unsubscribe">Unsubscribe</a>.
             </div>
         }
@@ -127,9 +129,9 @@
                         }
                         else
                         {
-                            <div class="rounded-circle comment-user-pic comment-user-initials">@commentUser.Name.Substring(0,1)</div>
+                            <div class="rounded-circle comment-user-pic comment-user-initials">@commentUser.Name.Substring(0, 1)</div>
                         }
-                        <div class="text-small pt-2">
+                        <div class="text-med-size pt-2">
                             <b>@commentUser.Name</b><br />
                             <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
                             @if (Helpers.CanUserEditComment(comment, Model, User))

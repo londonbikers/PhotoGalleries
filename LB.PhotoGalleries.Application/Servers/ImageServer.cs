@@ -574,7 +574,6 @@ namespace LB.PhotoGalleries.Application.Servers
             };
 
             image.Comments.Add(imageComment);
-            
 
             // subscribe the user to comment notifications if they've asked to be
             if (receiveNotifications)
@@ -602,6 +601,27 @@ namespace LB.PhotoGalleries.Application.Servers
             }
 
             await UpdateImageAsync(image);
+
+            // update the gallery total comment count too
+            var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
+            gallery.CommentCount++;
+            await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+        }
+
+        public async Task DeleteCommentAsync(Gallery gallery, Image image, Comment comment)
+        {
+            var removed = image.Comments.Remove(comment);
+            if (removed)
+            {
+                await Server.Instance.Images.UpdateImageAsync(image);
+
+                gallery.CommentCount--;
+                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+            }
+            else
+            {
+                Log.Information($"GalleryServer.DeleteCommentAsync(): No comment removed. imageId={image.Id}, commentCreatedTicks={comment.Created.Ticks}, commentCreatedByUserId={comment.CreatedByUserId}");
+            }
         }
         #endregion
 

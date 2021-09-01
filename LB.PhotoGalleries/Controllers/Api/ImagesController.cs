@@ -203,12 +203,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             if (!Helpers.CanUserEditComment(comment, gallery, User))
                 return BadRequest("Apologies, you're not authorised to do that.");
 
-            var removed = image.Comments.Remove(comment);
-            if (removed)
-                await Server.Instance.Images.UpdateImageAsync(image);
-            else
-                Log.Debug($"ImageController.DeleteComment: Oops, no comment removed. galleryId={galleryId}, imageId={imageId}, commentCreatedTicks={commentCreatedTicks}, commentCreatedByUserId={commentCreatedByUserId}");
-
+            await Server.Instance.Images.DeleteCommentAsync(gallery, image, comment);
             return NoContent();
         }
 

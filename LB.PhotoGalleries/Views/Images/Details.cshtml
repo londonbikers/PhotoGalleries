@@ -219,7 +219,7 @@
 
         @if (userIsSubscribedToCommentReplies)
         {
-            <div class="info-box mt-2">
+            <div class="info-box info-box-light mt-2">
                 You're subscribed to this image's comments. <a href="javascript:void(0)" data-bind="click:Unsubscribe">Unsubscribe</a>.
             </div>
         }
@@ -248,7 +248,7 @@
                         {
                             <div class="comment-user-initials rounded-circle comment-user-pic">@commentUser.Name.Substring(0,1)</div>
                         }
-                        <div class="text-small pt-2">
+                        <div class="text-med-size pt-2">
                             <b>@commentUser.Name</b><br />
                             <span class="text-muted">@comment.Created.ToShortDateString() @comment.Created.ToShortTimeString()</span>
                             @if (Helpers.CanUserEditComment(comment, gallery, User))

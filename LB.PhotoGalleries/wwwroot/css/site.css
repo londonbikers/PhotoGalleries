@@ -31,6 +31,10 @@ a {
     border-color: #ddd;
 }
 
+.text-med-size {
+    font-size: 85%;
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {
@@ -136,6 +140,10 @@ body {
         background-color: #d7d7d7;
         color: #666;
     }
+
+.info-box-light {
+    background-color: #f8f8f8;
+}
 
 .settings-box {
     background-color: #333;

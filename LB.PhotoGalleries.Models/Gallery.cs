@@ -78,6 +78,11 @@ namespace LB.PhotoGalleries.Models
         /// Contains the IDs of users who have subscribed to comment notifications for this gallery.
         /// </summary>
         public List<string> UserCommentSubscriptions { get; set; }
+
+        /// <summary>
+        /// The total number of comments made against the gallery and all images in the gallery.
+        /// </summary>
+        public int CommentCount { get; set; }
         #endregion
 
         #region constructors
