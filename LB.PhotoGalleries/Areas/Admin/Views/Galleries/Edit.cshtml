@@ -130,12 +130,12 @@
                     @Html.ActionLink(createdByUser.Name, "Details", "Users", new { id = Model.CreatedByUserId })
                 </dd>
             }
-
+            
             <dt class="col-sm-12">
-                @Html.DisplayNameFor(model => model.Comments)
+                Total Comments
             </dt>
             <dd class="col-sm-12">
-                @Model.Comments.Count
+                @Model.CommentCount
             </dd>
 
             <dt class="col-sm-12">
