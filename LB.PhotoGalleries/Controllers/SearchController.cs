@@ -114,6 +114,7 @@ namespace LB.PhotoGalleries.Controllers
                 g.Name,
                 g.ThumbnailFiles,
                 g.ImageCount,
+                g.CommentCount,
                 CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
             })) : null;
 
