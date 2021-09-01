@@ -327,5 +327,23 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             return Ok();
         }
+
+        [Authorize(Roles = "Administrator")]
+        [HttpPut("/api/images/reprocess-metadata")]
+        public async Task<ActionResult> ReprocessMetadata(string galleryId, string imageId)
+        {
+            if (!galleryId.HasValue())
+                return BadRequest("galleryId is empty!");
+
+            if (!imageId.HasValue())
+                return BadRequest("imageId is empty!");
+
+            var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+            if (image == null)
+                return BadRequest("Image not found");
+
+            await Server.Instance.Images.ReprocessImageMetadataAsync(image);
+            return Ok();
+        }
     }
 }

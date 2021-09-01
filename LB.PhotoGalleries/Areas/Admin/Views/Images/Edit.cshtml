@@ -16,6 +16,10 @@
 
 <h1>Edit Image</h1>
 
+<div id="reprocessed-metadata-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
+    Image metadata is now being reprocessed!
+</div>
+
 <div class="row">
     <div class="col">
         <a asp-controller="Galleries" asp-action="Edit" asp-route-pk="@gallery.CategoryId" asp-route-id="@gallery.Id">Back to Gallery</a>
@@ -153,8 +157,13 @@
         </dl>
 
         <h3>Metadata</h3>
+        
+        @if (User.IsInRole(Roles.Administrator.ToString()))
+        {
+            <button data-bind="click: function() { ReprocessImageMetadata(); }" class="btn btn-outline-secondary btn-sm">Reprocess Metadata</button>
+        }
 
-        <ul>
+        <ul class="mt-2">
             @if (Model.Metadata.DateLastProcessed.HasValue)
             {
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.DateLastProcessed)</b>: @Html.DisplayFor(model => model.Metadata.DateLastProcessed.Value)</li>
@@ -232,7 +241,7 @@
                 <li><b>@Html.DisplayNameFor(model => model.Metadata.Country)</b>: @Html.DisplayFor(model => model.Metadata.Country)</li>
             }
         </ul>
-        
+
         @if (Model.Metadata.LocationLatitude.HasValue)
         {
             <b>Where</b>
@@ -292,6 +301,21 @@
                 })
                 .fail(function (response) {
                     console.log(`something went wrong when uploading the new image: ${response.responseText}`);
+                });
+            }
+
+            vm.ReprocessImageMetadata = function() {
+                console.log("ReprocessImageMetadata()");
+                $.ajax({
+                    url: '/api/images/reprocess-metadata?galleryId=@Model.GalleryId&imageId=@Model.Id',
+                    type: 'PUT'
+                }).done(function (responses) {
+                    console.log("ReprocessImageMetadata(): done");
+                    var banner = $("#reprocessed-metadata-banner");
+                    banner.show();
+                    setTimeout(function () { banner.fadeOut('slow'); }, 5000);
+                }).fail(function() {
+                    console.log("ReprocessImageMetadata(): something went wrong");
                 });
             }
         }
