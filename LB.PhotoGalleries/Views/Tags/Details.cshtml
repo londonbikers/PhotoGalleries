@@ -24,7 +24,10 @@
             <div class="card mb-4 shadow-sm">
                 <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid"/></a>
                 <div class="card-body card-body-thin">
-                    <p class="card-text" data-bind="text: Name"></p>
+                    <span class="card-text" data-bind="text: Name"></span>
+                    <div data-bind="visible: Count > 0" class="text-med-size mt-1">
+                        <span data-bind="text: Count"></span> Comment<span data-bind="visible: Count > 1">s</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,7 +51,8 @@
                           i.Id,
                           i.GalleryId,
                           i.Name,
-                          i.Files
+                          i.Files,
+                          i.Comments.Count
                       })));
 
         // the view model that knockout uses to bind data to the html

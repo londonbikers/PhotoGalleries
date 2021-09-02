@@ -123,7 +123,8 @@ namespace LB.PhotoGalleries.Controllers
                 i.Id,
                 i.GalleryId,
                 i.Name,
-                i.Files
+                i.Files,
+                i.Comments.Count
             })) : null;
 
             return View();
