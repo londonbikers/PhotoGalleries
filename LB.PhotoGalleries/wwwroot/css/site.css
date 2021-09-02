@@ -345,6 +345,10 @@ img.image-fade, .image-fade img {
     padding-right: 1.25rem;
 }
 
+.card-body-bottom {
+    border-top: 1px solid #e5e5e5;
+}
+
 .boxed {
     border: 1px solid #ddd;
     padding: 20px 20px 10px 20px;

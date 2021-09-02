@@ -35,12 +35,14 @@
             <div class="col-md-4">
                 <div class="card mb-4 shadow-sm">
                     <a data-bind="attr: { href: GetGalleryUrl(CategoryName, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(ThumbnailFiles, $element) }" class="img-fluid" /></a>
-                    <div class="card-body-med">
+                    <div class="card-body-thin">
                         <p class="card-text text-center" data-bind="text: Name"></p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-med-size text-muted" data-bind="text:CategoryName"></span>
-                            <span data-bind="visible: CommentCount > 0"><span class="text-med-size font-weight-bold"><span data-bind="text: CommentCount"></span> Comments</span></span>
-                            <span class="text-med-size text-muted"><span data-bind="text: ImageCount"></span> Photos</span>
+                    </div>
+                    <div class="card-body-thin card-body-bottom">
+                        <div class="d-flex justify-content-between align-items-center text-med-size">
+                            <span class="text-muted" data-bind="text:CategoryName"></span>
+                            <span data-bind="visible: CommentCount > 0"><span data-bind="text: CommentCount"></span> Comments</span>
+                            <span class="text-muted"><span data-bind="text: ImageCount"></span> Photos</span>
                         </div>
                     </div>
                 </div>
