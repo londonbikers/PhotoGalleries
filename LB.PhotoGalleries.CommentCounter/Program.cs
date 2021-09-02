@@ -42,8 +42,27 @@ namespace LB.PhotoGalleries.CommentCounter
             _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
             _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
 
+            // wipe all gallery comment counts first so we end up re-creating the counts
+            const string resetQuery = "SELECT g.id, g.CategoryId FROM Galleries g WHERE g.CommentCount > 0";
+            var resetQueryDefinition = new QueryDefinition(resetQuery);
+            Console.WriteLine("Getting gallery stubs for reset...");
+            var resetQueryResult = _galleriesContainer.GetItemQueryIterator<GalleryCommentCountStub>(resetQueryDefinition);
+            Console.WriteLine("Got gallery stubs for reset. Enumerating...");
+
+            while (resetQueryResult.HasMoreResults)
+            {
+                var galleryCommentCountStubs = await resetQueryResult.ReadNextAsync();
+                foreach (var galleryCommentCountStub in galleryCommentCountStubs)
+                {
+                    var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCommentCountStub.CategoryId, galleryCommentCountStub.Id);
+                    gallery.CommentCount = 0;
+                    await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
+                    Console.WriteLine("Reset gallery comment count for gallery id: " + galleryCommentCountStub.Id);
+                }
+            }
+
             // query the database for galleries with comments, update count
-            const string galleryQuery = "SELECT g.id, g.CategoryId, ARRAY_LENGTH(g.Comments) AS CommentCount FROM Galleries g WHERE ARRAY_LENGTH(g.Comments) > 0 AND (IS_DEFINED(g.CommentCount) = false OR g.CommentCount = 0)";
+            const string galleryQuery = "SELECT g.id, g.CategoryId, ARRAY_LENGTH(g.Comments) AS CommentCount FROM Galleries g WHERE ARRAY_LENGTH(g.Comments) > 0";
             var galleryQueryDefinition = new QueryDefinition(galleryQuery);
             Console.WriteLine("Getting gallery stubs...");
             var galleryQueryResult = _galleriesContainer.GetItemQueryIterator<GalleryCommentCountStub>(galleryQueryDefinition);
@@ -63,7 +82,7 @@ namespace LB.PhotoGalleries.CommentCounter
 
             // query the database for images with comments, keep track of galleries and comment counts, then update gallery counts
             var galleryStubs = new List<GalleryCommentCountStub>();
-            const string imageQuery = "SELECT TOP 10 i.id, i.GalleryCategoryId, i.GalleryId, ARRAY_LENGTH(i.Comments) AS CommentCount FROM Images i WHERE ARRAY_LENGTH(i.Comments) > 0";
+            const string imageQuery = "SELECT i.id, i.GalleryCategoryId, i.GalleryId, ARRAY_LENGTH(i.Comments) AS CommentCount FROM Images i WHERE ARRAY_LENGTH(i.Comments) > 0";
             var imageQueryDefinition = new QueryDefinition(imageQuery);
             Console.WriteLine("Getting image stubs...");
             var imageQueryResult = _imagesContainer.GetItemQueryIterator<ImageCommentCountStub>(imageQueryDefinition);
