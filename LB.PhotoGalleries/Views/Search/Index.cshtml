@@ -75,7 +75,7 @@
     </div>
 </div>
 
-<div class="row mb-3" data-bind="visible: Images().length > 0, foreach: Images">
+<div class="row mb-3 text-center" data-bind="visible: Images().length > 0, foreach: Images">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
             <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
