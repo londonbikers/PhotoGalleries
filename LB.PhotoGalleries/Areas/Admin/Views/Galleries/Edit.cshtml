@@ -410,8 +410,6 @@
                         if (!window.TagsCsvContains(image.TagsCsv(), newTag)) {
                             image.TagsCsv(window.AddTagToCsv(image.TagsCsv(), newTag));
                             console.log(`UpdateAllImages: added tag '${newTag}' to image model ${image.Id}`);
-                        } else {
-                            //console.log(`UpdateAllImages: not adding '${newTag}' to image model ${image.Id}`);
                         }
                     });
                 });
