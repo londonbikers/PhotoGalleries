@@ -167,7 +167,7 @@ function RemoveTagFromCsv(tags, tag) {
 
     const array = tags.split(",");
     const newTags = array.filter(function(value, index, arr) {
-        return value === tag;
+        return value !== tag;
     });
     return newTags.join(",");
 }
