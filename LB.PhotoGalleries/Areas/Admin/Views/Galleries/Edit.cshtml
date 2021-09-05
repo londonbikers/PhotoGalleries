@@ -711,11 +711,12 @@
                             for (let x = 0; x < vm.Images().length; x++) {
                                 const i = vm.Images()[x];
                                 if (i.Id === event.target.id.substring(4)) {
+
                                     i.TagsCsv(RemoveTagFromCsv(i.TagsCsv(), tag));
 
-                                    console.log(`removed tag '${tag}' from ${i.Id}`);
+                                    console.log(`itemRemoved: removed tag '${tag}' from ${i.Id}`);
                                     if (event.options && event.options.preventPost) {
-                                        console.log("preventing tag removal post-back");
+                                        console.log("itemRemoved: preventing tag removal post-back");
                                         return;
                                     }
 
@@ -724,9 +725,9 @@
                                         url: `/api/images/remove-tag?galleryId=${i.GalleryId}&imageId=${i.Id}&tag=${tag}`,
                                         type: 'DELETE'
                                     }).done(function() {
-                                        console.log(`pushed tag '${tag}' removal to server`);
+                                        console.log(`itemRemoved: pushed tag '${tag}' removal to server`);
                                     }).fail(function() {
-                                        console.log(`oh no, something went wrong with pushing the '${tag}' tag to the server!`);
+                                        console.log(`itemRemoved: oh no, something went wrong with pushing the '${tag}' tag to the server!`);
                                     });
 
                                     return;
@@ -737,11 +738,12 @@
             };
 
             // initialise the remove-tags control
-            //var removeTags = $("#remove-tags");
-            //removeTags.tagsinput({ trimValue: true });
-            //vm.AllTags().forEach(function(t) {
-            //    removeTags.tagsinput('add', t);
-            //});
+            var removeTags = $("#remove-tags");
+            removeTags.tagsinput({ trimValue: true });
+            vm.AllTags().forEach(function (t) {
+                console.log(`init: tag found: '${t}'`);
+                removeTags.tagsinput('add', t);
+            });
 
             // todo: clearing out all items might be causing issues here. especially when tags are removed
             // can we find a way of atomically handling additions/removals?
@@ -753,24 +755,29 @@
             //});
 
             // handle tags being removed from the Remove Tags control:
-            @*$("#remove-tags").on('itemRemoved',
+            $("#remove-tags").on('itemRemoved',
                 function (event)
                 {
                     var tag = event.item;
                     console.log(`itemRemoved: ${tag}`);
 
+                    // todo: freeze the remove control until everything is complete to avoid concurrency issues
+
                     $.ajax({
                         url: `/api/galleries/remove-tag?categoryId=@Model.CategoryId&galleryId=@Model.Id&tag=${tag}`,
                         type: 'DELETE'
-                    }).done(function(response) {
-                        // tag deleted, show success banner
-                        console.log(response);
+                    }).done(function (response) {
 
-                        // remove tag from images
-                        vm.Images().forEach(function(i) {
-                            if (window.TagsCsvContains(i.TagsCsv(), tag)) {
-                                console.log(`removing tag ${tag} from #uit-${i.Id}`);
-                                $(`#uit-${i.Id}`).tagsinput('remove', tag, { preventPost: true });
+                        // tag deleted
+                        console.log(`server response: ${response}`);
+
+                        // remove tag from taginput controls
+                        vm.Images().forEach(function(image) {
+                            if (window.TagsCsvContains(image.TagsCsv(), tag))
+                            {
+                                // remove tag from control (this will also cause it to be removed from the Image model)
+                                console.log(`   removing tag ${tag} from #uit-${image.Id}`);
+                                $(`#uit-${image.Id}`).tagsinput('remove', tag, { preventPost: true });
                             }
                         });
 
@@ -778,13 +785,14 @@
                         $("#removed-tag").text(tag);
                         var banner = $("#remove-tags-banner");
                         banner.show();
-                        setTimeout(function() { banner.fadeOut('slow'); }, 5000);
+                        setTimeout(function () { banner.fadeOut('slow'); }, 5000);
+
                     }).fail(function(response) {
-                        console.log(`something went wrong when deleting the tag '${tag}':`);
+                        console.log(`   something went wrong when deleting the tag '${tag}':`);
                         console.log(response);
                     });
                 }
-            );*@
+            );
         }
 
         // configure the uploader
