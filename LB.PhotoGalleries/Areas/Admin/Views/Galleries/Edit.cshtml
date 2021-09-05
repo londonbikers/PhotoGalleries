@@ -429,6 +429,9 @@
 
                 });
 
+                // make sure the new tag shows up in the remove-tags control
+                vm.InitialiseRemoveTagsControl();
+
                 $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { bulkName: name, bulkCredit: credit, bulkCreditOnlyAddWhenMissing: creditJustFillInBlanks, bulkTags: tags })
                     .done(function() {
                         // images updated
@@ -643,6 +646,17 @@
                 }
             });
 
+            vm.InitialiseRemoveTagsControl = function() {
+                // initialise the remove-tags control
+                var removeTags = $("#remove-tags");
+                removeTags.tagsinput({ trimValue: true });
+                removeTags.tagsinput('removeAll');
+                vm.AllTags().forEach(function (t) {
+                    console.log(`InitialiseRemoveTagsControl: tag added: '${t}'`);
+                    removeTags.tagsinput('add', t);
+                });
+            }
+
             // wire up individual image tags input elements
             ko.bindingHandlers.tags = {
                 init: function(element) {
@@ -738,15 +752,9 @@
             };
 
             // initialise the remove-tags control
-            var removeTags = $("#remove-tags");
-            removeTags.tagsinput({ trimValue: true });
-            vm.AllTags().forEach(function (t) {
-                console.log(`init: tag found: '${t}'`);
-                removeTags.tagsinput('add', t);
-            });
+            vm.InitialiseRemoveTagsControl();
 
-            // todo: clearing out all items might be causing issues here. especially when tags are removed
-            // can we find a way of atomically handling additions/removals?
+            // when tags are removed singly from images, we need to remove the tag from the remote-tags control as well
             //vm.AllTags.subscribe(function(newArray) {
             //    $("#remove-tags").tagsinput('removeAll');
             //    newArray.forEach(function(t) {
@@ -762,6 +770,7 @@
                     console.log(`itemRemoved: ${tag}`);
 
                     // todo: freeze the remove control until everything is complete to avoid concurrency issues
+                    $("#remove-tags").tagsinput('destroy');
 
                     $.ajax({
                         url: `/api/galleries/remove-tag?categoryId=@Model.CategoryId&galleryId=@Model.Id&tag=${tag}`,
@@ -787,12 +796,16 @@
                         banner.show();
                         setTimeout(function () { banner.fadeOut('slow'); }, 5000);
 
+                        $("#remove-tags").tagsinput('build');
+
                     }).fail(function(response) {
                         console.log(`   something went wrong when deleting the tag '${tag}':`);
                         console.log(response);
                     });
                 }
             );
+
+
         }
 
         // configure the uploader
