@@ -35,6 +35,43 @@ a {
     font-size: 85%;
 }
 
+/* only show the first class on ipads, hide the others */
+@media only screen and (min-width: 768px) and (max-width: 768px) {
+    .show-768px-wide {
+        display: initial;
+    }
+    .hide-less-than-768-wide {
+        display: none;
+    }
+    .hide-more-than-768-wide {
+        display: none;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .show-768px-wide {
+        display: none;
+    }
+    .hide-less-than-768-wide {
+        display: initial;
+    }
+    .hide-more-than-768-wide {
+        display: initial;
+    }
+}
+
+@media only screen and (min-width: 769px) {
+    .show-768px-wide {
+        display: none;
+    }
+    .hide-less-than-768-wide {
+        display: initial;
+    }
+    .hide-more-than-768-wide {
+        display: initial;
+    }
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {
