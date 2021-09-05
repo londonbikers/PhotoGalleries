@@ -273,6 +273,7 @@
                     All images have been updated!
                 </div>
             </div>
+
             <div id="remove-tags-div" style="display: none;">
                 <div>
                     <div id="remove-tags-div" class="mt-1">
@@ -328,7 +329,7 @@
     <script src="~/lib/sortable/dist/Sortable.min.js"></script>
     <script src="~/lib/knockout-sortable/dist/knockout-sortable.js"></script>
     <script src="~/lib/bootstrap-tagsinput-master/dist/bootstrap-tagsinput.js"></script>
-    <script src="~/js/image.js"></script>
+    <script src="~/js/models/image.js"></script>
     <script src="~/js/models/gallery.js"></script>
 
     <script type="text/javascript">
@@ -379,7 +380,6 @@
             vm.AllTags = ko.pureComputed(function() {
                 var allTags = [];
                 vm.Images().forEach(function(image) {
-
                     if (image.TagsCsv() !== null) {
                         const tags = image.TagsCsv().split(',');
                         tags.forEach(function(tag) {
@@ -388,7 +388,6 @@
                             }
                         });
                     }
-
                 });
                 return allTags;
             });
@@ -404,22 +403,38 @@
                     return;
                 }
 
-                // update all Image models so the UI updates
-                var individualTags = tags.split(',');
-                vm.Images().forEach(function(i) {
-                    individualTags.forEach(function(tag) {
-                        i.TagsCsv(window.AddTagToCsv(i.TagsCsv(), tag));
+                // update all Image models
+                var individualNewTags = tags.split(',');
+                vm.Images().forEach(function(image) {
+                    individualNewTags.forEach(function (newTag) {
+                        if (!window.TagsCsvContains(image.TagsCsv(), newTag)) {
+                            image.TagsCsv(window.AddTagToCsv(image.TagsCsv(), newTag));
+                            console.log(`UpdateAllImages: added tag '${newTag}' to image model ${image.Id}`);
+                        } else {
+                            //console.log(`UpdateAllImages: not adding '${newTag}' to image model ${image.Id}`);
+                        }
                     });
                 });
 
-                // add the new tag to all taginputs
-                $("[id^=uit-").each(function() {
-                    individualTags.forEach(t => $(this).tagsinput('add', t));
+                // add the new tag to all taginputs that don't have it already
+                $("[id^=uit-").each(function () {
+                    for (let x = 0; x < individualNewTags.length; x++) {
+                        const newTag = individualNewTags[x];
+
+                        // only add the tag to the tags control if it's not in there already
+                        const controlTags = $(this).tagsinput('items');
+                        if (!controlTags.includes(newTag)) {
+                            $(this).tagsinput('add', individualNewTags[x], false, null, true);
+                            console.log(`UpdateAllImages: adding tag '${newTag}' to element ${$(this)[0].id}`);
+                        }
+                    }
+
                 });
 
                 $.post('/api/images/bulk-update?categoryId=@Model.CategoryId&galleryId=@Model.Id', { bulkName: name, bulkCredit: credit, bulkCreditOnlyAddWhenMissing: creditJustFillInBlanks, bulkTags: tags })
                     .done(function() {
                         // images updated
+                        console.log("UpdateAllImages: server update successful");
 
                         // if the name was updated, we need to refresh the page as the photo names won't auto update (should move them to a knockout view)
                         if (name !== '') {
@@ -724,22 +739,25 @@
             };
 
             // initialise the remove-tags control
-            var removeTags = $("#remove-tags");
-            removeTags.tagsinput({ trimValue: true });
-            vm.AllTags().forEach(function(t) {
-                removeTags.tagsinput('add', t);
-            });
+            //var removeTags = $("#remove-tags");
+            //removeTags.tagsinput({ trimValue: true });
+            //vm.AllTags().forEach(function(t) {
+            //    removeTags.tagsinput('add', t);
+            //});
 
-            vm.AllTags.subscribe(function(newArray) {
-                $("#remove-tags").tagsinput('removeAll');
-                newArray.forEach(function(t) {
-                    removeTags.tagsinput('add', t);
-                });
-            });
+            // todo: clearing out all items might be causing issues here. especially when tags are removed
+            // can we find a way of atomically handling additions/removals?
+            //vm.AllTags.subscribe(function(newArray) {
+            //    $("#remove-tags").tagsinput('removeAll');
+            //    newArray.forEach(function(t) {
+            //        removeTags.tagsinput('add', t);
+            //    });
+            //});
 
             // handle tags being removed from the Remove Tags control:
-            $("#remove-tags").on('itemRemoved',
-                function(event) {
+            @*$("#remove-tags").on('itemRemoved',
+                function (event)
+                {
                     var tag = event.item;
                     console.log(`itemRemoved: ${tag}`);
 
@@ -753,7 +771,7 @@
                         // remove tag from images
                         vm.Images().forEach(function(i) {
                             if (window.TagsCsvContains(i.TagsCsv(), tag)) {
-                                console.log(`removing tag ${tag} from  #uit-${i.Id}`);
+                                console.log(`removing tag ${tag} from #uit-${i.Id}`);
                                 $(`#uit-${i.Id}`).tagsinput('remove', tag, { preventPost: true });
                             }
                         });
@@ -767,8 +785,8 @@
                         console.log(`something went wrong when deleting the tag '${tag}':`);
                         console.log(response);
                     });
-
-                });
+                }
+            );*@
         }
 
         // configure the uploader

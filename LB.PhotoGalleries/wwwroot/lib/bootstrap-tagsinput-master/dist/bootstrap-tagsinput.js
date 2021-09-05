@@ -71,6 +71,7 @@
          * updating the elements val()
          */
         add: function (item, dontPushVal, options, surpressItemAdded) {
+
             var self = this;
 
             if (self.options.maxTags && self.itemsArray.length >= self.options.maxTags) {
@@ -132,8 +133,11 @@
                         self.pushVal(self.options.triggerChange);
                     }
 
-                    // emit itemsAdded...
-                    self.$element.trigger($.Event('itemsAdded', { item: acceptedTags, options: options }));
+                    if (!surpressItemAdded) {
+                        // emit itemsAdded...
+                        self.$element.trigger($.Event('itemsAdded', { item: acceptedTags, options: options }));
+                    }
+
                     return true;
                 }
             }
@@ -600,7 +604,7 @@
     /**
      * Register JQuery plugin
      */
-    $.fn.tagsinput = function (arg1, arg2, arg3) {
+    $.fn.tagsinput = function (arg1, arg2, arg3, arg4, arg5) {
         var results = [];
 
         this.each(function () {
@@ -622,15 +626,21 @@
                 // no function, trying to init
                 results.push(tagsinput);
             } else if (tagsinput[arg1] !== undefined) {
+
                 // Invoke function on existing tags input
                 if (tagsinput[arg1].length === 3 && arg3 !== undefined) {
                     var retVal = tagsinput[arg1](arg2, null, arg3);
+                } else if (tagsinput[arg1].length === 4) {
+                    // calls the add function with all possible args
+                    var retVal = tagsinput[arg1](arg2, arg3, arg4, arg5);
                 } else {
                     var retVal = tagsinput[arg1](arg2);
                 }
+
                 if (retVal !== undefined) {
                     results.push(retVal);
                 }
+
             }
         });
 
