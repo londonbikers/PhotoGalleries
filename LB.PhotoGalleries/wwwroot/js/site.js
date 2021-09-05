@@ -175,6 +175,9 @@ function RemoveTagFromCsv(tags, tag) {
 // determines if a tag csv contains a specific tag.
 // better than a string contains() check as it looks for exact matches, not partial.
 function TagsCsvContains(tags, tag) {
+    if (tags === undefined || tags === null || tags.length === 0)
+        return false;
+
     const array = tags.split(",");
     return array.includes(tag);
 }
