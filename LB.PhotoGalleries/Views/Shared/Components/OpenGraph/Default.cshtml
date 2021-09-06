@@ -5,15 +5,26 @@
 <meta property="og:locale" content="@Html.Raw(Model.Locale)" />
 <meta property="og:site_name" content="@Html.Raw(Model.SiteName)" />
 <meta property="og:url" content="@Html.Raw(Model.Url)" />
-<meta property="fb:app_id" content="@Html.Raw(Model.FbAppId)"/>
+<meta property="fb:app_id" content="@Html.Raw(Model.FbAppId)" />
 @foreach (var image in Model.Images)
 {
     <meta property="og:image" content="@Html.Raw(image.Url)" />
     <meta property="og:image:type" content="@Html.Raw(image.ContentType)" />
-    @if (image.Width.HasValue) {
+    @if (image.Width.HasValue)
+    {
         <meta property="og:image:width" content="@Html.Raw(image.Width.Value)" />
     }
-    @if (image.Height.HasValue) {
+    @if (image.Height.HasValue)
+    {
         <meta property="og:image:height" content="@Html.Raw(image.Height.Value)" />
     }
+}
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@@londonbikers">
+<meta name="twitter:title" content="@Html.Raw(Model.Title)">
+<meta name="twitter:description" content="@Html.Raw(Model.Description)">
+@foreach (var image in Model.Images)
+{
+    <meta name="twitter:image" content="@Html.Raw(image.Url)">
 }
