@@ -22,9 +22,3 @@
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@@londonbikers">
-<meta name="twitter:title" content="@Html.Raw(Model.Title)">
-<meta name="twitter:description" content="@Html.Raw(Model.Description)">
-@foreach (var image in Model.Images)
-{
-    <meta name="twitter:image" content="@Html.Raw(image.Url)">
-}
