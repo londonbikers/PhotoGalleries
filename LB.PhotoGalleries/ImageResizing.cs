@@ -7,11 +7,10 @@ using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using Serilog;
 
 namespace LB.PhotoGalleries
 {
