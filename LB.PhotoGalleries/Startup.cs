@@ -1,6 +1,6 @@
 using Imageflow.Fluent;
 using Imageflow.Server;
-using Imageflow.Server.DiskCache;
+using Imageflow.Server.HybridCache;
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Services;
@@ -115,7 +115,18 @@ namespace LB.PhotoGalleries
                 // store processed image files to local storage to use as a cache
                 // for development just create a local folder and reference that in configuration.
                 ImageResizing.InitialiseImageFlowDiskCache(Configuration);
-                services.AddImageflowDiskCache(new DiskCacheOptions(Configuration["ImageFlow:DiskCachePath"]));
+
+                var queueSizeLimitInBytes = long.Parse(Configuration["ImageFlow:QueueSizeLimitInBytes"]);
+                var cacheSizeLimitInBytes = long.Parse(Configuration["ImageFlow:CacheSizeLimitInBytes"]);
+
+                services.AddImageflowHybridCache(new HybridCacheOptions(Configuration["ImageFlow:DiskCachePath"])
+                {
+                    // How much RAM to use for the write queue before switching to synchronous writes
+                    QueueSizeLimitInBytes = queueSizeLimitInBytes,
+
+                    // The maximum size of the cache
+                    CacheSizeLimitInBytes = cacheSizeLimitInBytes,
+                });
             }
 
             services.AddHostedService<NotificationService>();
@@ -155,7 +166,8 @@ namespace LB.PhotoGalleries
                     .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 200))
                     .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 200))
                     .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 200)))
-                .SetAllowDiskCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
+                .SetAllowCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
+                .SetDefaultCacheControlString("public, max-age=2592000")
                 .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
                 .AddRewriteHandler("/dio/", ImageResizing.EnsureOriginalImageDimensionsAreLimited)
                 .AddRewriteHandler("/di3840/", ImageResizing.EnsureDi3840DimensionsAreSpecified)
