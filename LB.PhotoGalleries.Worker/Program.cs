@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,6 +38,7 @@ namespace LB.PhotoGalleries.Worker
         private static Container _galleriesContainer;
         private static ILogger _log;
         private static DatabaseId _galleryId;
+        private static HttpClient _httpClient;
         #endregion
 
         private static async Task Main(string[] args)
@@ -60,6 +62,7 @@ namespace LB.PhotoGalleries.Worker
                 _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
                 _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
                 _galleryId = new DatabaseId();
+                _httpClient = new HttpClient { BaseAddress = new Uri(_configuration["BaseUrl"]) };
 
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
@@ -89,7 +92,8 @@ namespace LB.PhotoGalleries.Worker
                     if (messages.Value.Length > 0)
                     {
                         // this is the fastest method of processing messages I have found so far. It's wrong I know to use async and block, but numbers don't lie.
-                        Parallel.ForEach(messages.Value, message => {
+                        Parallel.ForEach(messages.Value, message =>
+                        {
                             HandleMessageAsync(message).GetAwaiter().GetResult();
                         });
 
@@ -194,7 +198,7 @@ namespace LB.PhotoGalleries.Worker
                     else
                         await ReprocessImageMetadataAsync(imageMessage);
                 }
-                
+
             }
             catch (ImageNotFoundException e)
             {
@@ -240,6 +244,9 @@ namespace LB.PhotoGalleries.Worker
 
             MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties, _log);
             await UpdateImageAsync(image);
+
+            // pre-cache the image so it renders instantly for visitors
+            PreCacheImage(image);
 
             // when uploading images, they don't have a position set, so if one is set when we process it here
             // then it's likely it's an existing Image that's having it's image file replaced. If so and the position
@@ -465,12 +472,12 @@ namespace LB.PhotoGalleries.Worker
             // persist image changes to db
 
             _log.Verbose("LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync()");
-            
+
             var image = await GetImageAsync(message.ImageId, message.GalleryId);
             var imageBytes = await GetImageBytesAsync(image);
             MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties);
             await UpdateImageAsync(image);
-            
+
             _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id}");
         }
         #endregion
@@ -526,7 +533,7 @@ namespace LB.PhotoGalleries.Worker
             }
 
             // this can happen if the user deletes the photo before the message is processed. Raise a specific exception so we can handle it gracefully.
-            throw new ImageNotFoundException($"Didn't find image {imageId} in the database.") {ImageId = imageId, GalleryId = galleryId};
+            throw new ImageNotFoundException($"Didn't find image {imageId} in the database.") { ImageId = imageId, GalleryId = galleryId };
         }
 
         private static async Task<byte[]> GetImageBytesAsync(Image image)
@@ -543,9 +550,58 @@ namespace LB.PhotoGalleries.Worker
             var imageBytes = Utilities.ConvertStreamToBytes(originalImageStream);
 
             downloadTimer.Stop();
-            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image ({imageBytes.Length/1024}kb) downloaded in: {downloadTimer.ElapsedMilliseconds}ms");
+            _log.Information($"LB.PhotoGalleries.Worker.Program.GetImageBytesAsync() - Image ({imageBytes.Length / 1024}kb) downloaded in: {downloadTimer.ElapsedMilliseconds}ms");
 
             return imageBytes;
+        }
+
+        /// <summary>
+        /// Causes all consumed versions (i.e. not the original version) of an image to be requested, causing it to be cached ahead of any user requests, aka pre-caching.
+        /// </summary>
+        /// <remarks>
+        /// In practice this does speed up the experience for desktop user significantly, but not for mobile as the querystring is a part of the cache signature and
+        /// we supply a lot of dimension querystring params for mobile users and it's not feasible to predict all the mobile dimension parameters we'd have to accomodate.
+        /// </remarks>
+        private static void PreCacheImage(Image image)
+        {
+            var outerStopWatch = new Stopwatch();
+            outerStopWatch.Start();
+
+            Task.Run(async () =>
+            {
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+
+                var querystring = "?o=";
+                if (image.Metadata.Width >= image.Metadata.Height)
+                    querystring += "l";
+                else
+                    querystring += "p";
+
+                using var dilrResponse = await _httpClient.GetAsync($"dilr/{image.Files.SpecLowResId}");
+                _log.Verbose($"PreCacheImage: {image.Id} dilr success? {dilrResponse.IsSuccessStatusCode}. ContentLength: {dilrResponse.Content.Headers.ContentLength}");
+
+                using var diogResponse = await _httpClient.GetAsync($"diog/{image.Files.OriginalId}?w=2048&h=2048");
+                _log.Verbose($"PreCacheImage: {image.Id} diog success? {diogResponse.IsSuccessStatusCode}. ContentLength: {diogResponse.Content.Headers.ContentLength}");
+
+                using var di800Response = await _httpClient.GetAsync($"di800/{image.Files.Spec800Id}{querystring}");
+                _log.Verbose($"PreCacheImage: {image.Id} di800 success? {di800Response.IsSuccessStatusCode}. ContentLength: {di800Response.Content.Headers.ContentLength}");
+
+                using var di1920Response = await _httpClient.GetAsync($"di1920/{image.Files.Spec1920Id}{querystring}&w=1920&h=1920");
+                _log.Verbose($"PreCacheImage: {image.Id} di1920 success? {di1920Response.IsSuccessStatusCode}. ContentLength: {di1920Response.Content.Headers.ContentLength}");
+
+                using var di2560Response = await _httpClient.GetAsync($"di2560/{image.Files.Spec2560Id}{querystring}&w=2560&h=2560");
+                _log.Verbose($"PreCacheImage: {image.Id} di2560 success? {di2560Response.IsSuccessStatusCode}. ContentLength: {di2560Response.Content.Headers.ContentLength}");
+
+                using var di3840Response = await _httpClient.GetAsync($"di3840/{image.Files.Spec3840Id}{querystring}&w=3840&h=3840");
+                _log.Verbose($"PreCacheImage: {image.Id} di3840 success? {di3840Response.IsSuccessStatusCode}. ContentLength: {di3840Response.Content.Headers.ContentLength}");
+
+                stopWatch.Stop();
+                _log.Debug($"PreCacheImage: {image.Id} INNER timer complete in {stopWatch.ElapsedMilliseconds} ms");
+            });
+
+            outerStopWatch.Stop();
+            _log.Debug($"PreCacheImage: {image.Id} OUTER timer complete in {outerStopWatch.ElapsedMilliseconds} ms");
         }
         #endregion
     }
