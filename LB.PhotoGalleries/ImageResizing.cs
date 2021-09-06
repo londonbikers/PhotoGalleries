@@ -135,8 +135,8 @@ namespace LB.PhotoGalleries
 
         public static void OpenGraphImageHandler(UrlEventArgs args)
         {
-            args.Query["w"] = 1200.ToString();
-            args.Query["h"] = 1200.ToString();
+            args.Query["w"] = 2048.ToString();
+            args.Query["h"] = 2048.ToString();
             args.Query["mode"] = "max";
         }
     }
