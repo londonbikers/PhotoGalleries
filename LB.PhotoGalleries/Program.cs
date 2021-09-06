@@ -37,6 +37,7 @@ namespace LB.PhotoGalleries
                     .ReadFrom.Services(services)
                     .Enrich.FromLogContext()
                     .WriteTo.Console()
+                    .WriteTo.Debug()
                     .WriteTo.ApplicationInsights(new TelemetryConfiguration(context.Configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

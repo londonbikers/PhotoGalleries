@@ -454,8 +454,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 
                 // do we need to update the gallery thumbnail after we delete this image?
                 var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, image.GalleryId);
-                var newThumbnailNeeded = gallery.ThumbnailFiles.OriginalId == image.Files.OriginalId;
-
+                var newThumbnailNeeded = gallery.ThumbnailFiles == null || gallery.ThumbnailFiles.OriginalId == image.Files.OriginalId;
                 if (newThumbnailNeeded)
                 {
                     var images = await GetGalleryImagesAsync(gallery.Id);
