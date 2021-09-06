@@ -71,6 +71,9 @@ namespace LB.PhotoGalleries.Worker
                 if (e.Message == "Property cannot be found.")
                 {
                     // this is okay. bitmaps don't have to have this property.
+                    image.Metadata.Width = bitmap.Width;
+                    image.Metadata.Height = bitmap.Height;
+                    log?.Debug("LB.PhotoGalleries.Worker.MetadataUtils.ParseAndAssignImageMetadata() - no  orientation flag detected. Using dimensions as-is. exception clause.");
                 }
                 else
                 {
