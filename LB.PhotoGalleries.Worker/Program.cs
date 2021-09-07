@@ -581,7 +581,7 @@ namespace LB.PhotoGalleries.Worker
                 using var dilrResponse = await _httpClient.GetAsync($"dilr/{image.Files.SpecLowResId}");
                 _log.Verbose($"PreCacheImage: {image.Id} dilr success? {dilrResponse.IsSuccessStatusCode}. ContentLength: {dilrResponse.Content.Headers.ContentLength}");
 
-                using var diogResponse = await _httpClient.GetAsync($"diog/{image.Files.OriginalId}?w=2048&h=2048");
+                using var diogResponse = await _httpClient.GetAsync($"diog/{image.Files.OriginalId}?w=2048&h=2048mode=max");
                 _log.Verbose($"PreCacheImage: {image.Id} diog success? {diogResponse.IsSuccessStatusCode}. ContentLength: {diogResponse.Content.Headers.ContentLength}");
 
                 using var di800Response = await _httpClient.GetAsync($"di800/{image.Files.Spec800Id}{querystring}");
