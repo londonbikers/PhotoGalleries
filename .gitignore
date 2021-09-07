@@ -405,4 +405,4 @@ ASALocalRun/
 .localhistory/
 
 # debug args etc
-launchSettings.json
+**/Properties/launchSettings.json
