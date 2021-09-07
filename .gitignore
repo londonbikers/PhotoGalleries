@@ -405,4 +405,4 @@ ASALocalRun/
 .localhistory/
 
 # debug args etc
-**/Properties/launchSettings.json
+LB.PhotoGalleries.Worker/Properties/launchSettings.json
