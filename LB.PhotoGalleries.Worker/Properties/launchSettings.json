@@ -1,7 +1,0 @@
-{
-  "profiles": {
-    "LB.PhotoGalleries.Worker": {
-      "commandName": "Project"
-    }
-  }
-}
