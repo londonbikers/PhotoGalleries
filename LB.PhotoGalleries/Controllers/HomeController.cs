@@ -81,6 +81,11 @@ namespace LB.PhotoGalleries.Controllers
             return View();
         }
 
+        public IActionResult About()
+        {
+            return View();
+        }
+
         /// <summary>
         /// Used to test error handling.
         /// </summary>
