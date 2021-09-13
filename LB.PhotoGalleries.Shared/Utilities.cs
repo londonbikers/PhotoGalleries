@@ -76,15 +76,14 @@ namespace LB.PhotoGalleries.Shared
         /// </summary>
         public static string AddTagToCsv(string tags, string tag)
         {
-            var list = CsvToList(tags);
-
             // if this is the first tag just return it!
+            var list = CsvToList(tags);
             if (list == null)
                 return tag;
 
             // make sure we're not adding duplicates
-            if (!list.Any(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase)))
-                list.Add(tag.ToLower());
+            if (!list.Any(t => t.Trim().Equals(tag.Trim(), StringComparison.CurrentCultureIgnoreCase)))
+                list.Add(tag.Trim().ToLower());
 
             return ListToCsv(list);
         }

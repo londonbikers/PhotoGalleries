@@ -192,7 +192,7 @@ namespace LB.PhotoGalleries.Worker
                 var keywords = iptcDirectory.GetKeywords();
                 if (keywords != null)
                     foreach (var keyword in keywords.Where(k => k.HasValue()))
-                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword.ToLower().Trim());
+                        image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, keyword);
 
                 if (!image.Metadata.Location.HasValue() || overwriteImageProperties)
                 {
