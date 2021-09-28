@@ -395,6 +395,13 @@ img.image-fade, .image-fade img {
     margin-bottom: 5px;
 }
 
+.card img {
+    transition: 0.15s;
+}
+    .card img:hover {
+        filter: opacity(85%);
+    }
+
 .card-body-thin {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
