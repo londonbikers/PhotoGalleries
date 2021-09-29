@@ -45,6 +45,7 @@ namespace LB.PhotoGalleries.Models
         public static class OpenGraphImageContentTypes
         {
             public static string Jpeg => "image/jpeg";
+            public static string Jpg => "image/jpg";
             public static string Png => "image/png";
         }
 
