@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Controllers
@@ -17,7 +18,13 @@ namespace LB.PhotoGalleries.Controllers
     {
         public async Task<IActionResult> Index()
         {
-            ViewData["galleries"] = await Server.Instance.Galleries.GetLatestActiveGalleriesAsync(12);
+            var racingCategory = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals("racing", StringComparison.CurrentCultureIgnoreCase));
+            if (racingCategory != null)
+                ViewData["FeaturedGalleries"] = await Server.Instance.Galleries.GetGalleriesAsync(racingCategory, 1, 3, 3);
+            else
+                ViewData["FeaturedGalleries"] = new PagedResultSet<Gallery>();
+            
+            ViewData["LatestGalleries"] = await Server.Instance.Galleries.GetLatestActiveGalleriesAsync(12);
             return View();
         }
 
@@ -31,7 +38,7 @@ namespace LB.PhotoGalleries.Controllers
         {
             // access the unhandled exception and log it
             var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-            if (exceptionHandlerPathFeature != null && exceptionHandlerPathFeature.Error != null)
+            if (exceptionHandlerPathFeature?.Error != null)
                 Log.Error(exceptionHandlerPathFeature.Error, "Unhandled exception!");
 
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
@@ -51,7 +58,7 @@ namespace LB.PhotoGalleries.Controllers
                 // if the user is on the sign-out page, redirect them home instead as otherwise
                 // they sign-in and are told they're signed out, which isn't very helpful.
 
-                if (returnUrl.Equals("/home/signedout", StringComparison.CurrentCultureIgnoreCase))
+                if (returnUrl != null && returnUrl.Equals("/home/signedout", StringComparison.CurrentCultureIgnoreCase))
                     return RedirectToAction(nameof(Index));
 
                 // otherwise take them back to where they wanted to be, as long as it was on our site
