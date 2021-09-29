@@ -65,7 +65,7 @@ namespace LB.PhotoGalleries
             args.AppliedWatermarks.Add(
                 new NamedWatermark("lb-corner-logo", "/local-images/lbp-watermark.png",
                     new WatermarkOptions()
-                        .SetOpacity(.3f)
+                        .SetOpacity(.4f)
                         .SetFitBoxLayout(
                             new WatermarkFitBox(WatermarkAlign.Canvas, 1, 10, watermarkSizeAsPercent, 99), 
                                 WatermarkConstraintMode.Within, 
