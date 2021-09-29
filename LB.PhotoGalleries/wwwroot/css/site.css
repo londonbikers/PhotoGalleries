@@ -1,8 +1,33 @@
 ﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
+#logo {
+    transform: rotate(-7deg);
+    filter: drop-shadow(3px 3px 4px rgba(0,0,0,0.5));
+    height: 80px;
+    transition: .15s;
+}
 
-nav {
-    height: 65px;
+#logo:hover {
+    filter: drop-shadow(3px 3px 4px rgba(0,0,0,0.5)) brightness(130%);
+}
+
+@media only screen and (max-width: 575px) {
+    header .navbar {
+        padding-top: 0;
+    }
+    nav {
+        height: 65px;
+    }
+    #logo {
+        height: 55px;
+        /*margin-top: -10px;*/
+    }
+}
+
+@media only screen and (min-width: 576px) {
+    nav {
+        height: 65px;
+    }
 }
 
 a.navbar-brand {
@@ -10,16 +35,6 @@ a.navbar-brand {
   text-align: center;
   word-break: break-all;
 }
-
-#logo {
-    transform: rotate(-7deg);
-    filter: drop-shadow(3px 3px 4px rgba(0,0,0,0.5));
-    height: 80px;
-    transition: .15s;
-}
-    #logo:hover {
-        filter: drop-shadow(3px 3px 4px rgba(0,0,0,0.5)) brightness(130%);
-    }
 
 /* Provide sufficient contrast against white background */
 a {
