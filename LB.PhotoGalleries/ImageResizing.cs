@@ -58,14 +58,18 @@ namespace LB.PhotoGalleries
                 return;
 
             // the watermark needs to be a bit bigger when displayed on portrait format images
-            var watermarkSizeAsPercent = 13;
+            var watermarkSizeAsPercent = 10;
             if ((args.Query.ContainsKey("o") && args.Query["o"] == "p") || size.Height > size.Width)
-                watermarkSizeAsPercent = 25;
+                watermarkSizeAsPercent = 18;
 
             args.AppliedWatermarks.Add(
-                new NamedWatermark("lb-corner-logo", "/local-images/lb-white-stroked-10.png",
-                new WatermarkOptions()
-                    .SetFitBoxLayout(new WatermarkFitBox(WatermarkAlign.Image, 1, 10, watermarkSizeAsPercent, 99), WatermarkConstraintMode.Within, new ConstraintGravity(0, 100))));
+                new NamedWatermark("lb-corner-logo", "/local-images/lbp-watermark.png",
+                    new WatermarkOptions()
+                        .SetOpacity(.3f)
+                        .SetFitBoxLayout(
+                            new WatermarkFitBox(WatermarkAlign.Canvas, 1, 10, watermarkSizeAsPercent, 99), 
+                                WatermarkConstraintMode.Within, 
+                                new ConstraintGravity(100, 100))));
         }
 
         /// <summary>
