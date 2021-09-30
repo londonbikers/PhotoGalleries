@@ -8,11 +8,10 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>
+    <div class="pt-3 mb-3">
         Welcome to over @(DateTime.Now.Year - 2004) years of <a href="https://londonbikers.com/" rel="noopener">londonbikers.com</a> photos.
         Here you can find tens of thousands of our community, motorcycle and racing photos from MotoGP, World Superbikes, British Superbikes and Motorcross with coveted paddock, pitlane and grid access since that we've been publishing since very start of LB.
-    </p>
+    </div>
 
     <h5>Categories</h5>
     <div class="row mb-3">
@@ -24,8 +23,9 @@
         </div>
     </div>
 </div>
-
-<h5 class="text-center">Featured Galleries</h5>
+<div class="text-center">
+    <h5>Featured Galleries</h5>
+</div>
 <div class="row" data-bind="foreach: FeaturedGalleries">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
@@ -58,7 +58,9 @@
     </div>
 </div>
 
-<h5 class="text-center">Latest Galleries</h5>
+<div class="text-center">
+    <h5>Latest Galleries</h5>
+</div>
 <div class="row" data-bind="foreach: LatestGalleries">
     <div class="col-md-4">
         <div class="card mb-4 shadow-sm">
@@ -102,7 +104,7 @@
     <script type="text/javascript">
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
-        
+
         var featured_payload = @Html.Raw(JsonConvert.SerializeObject(featuredGalleries.Results.Select(g => new
         {
             g.CategoryId,
