@@ -25,10 +25,12 @@ function DoesBrowserSupportWebP() {
         // pre-version 11 macOS doesn't support webp.
         // caniuse.com states Safari version 14 required, but you can have new Safari on old macOS and this won't work.
         // some os' don't have a value for platform.os.version.
-        if (typeof platform !== "undefined" && platform.os.version) {
-            const osMainVersion = platform.os.version.substring(0, platform.os.version.indexOf("."));
-            if (platform.os.family === "OS X" && osMainVersion < 11 && platform.name === "Safari") {
-                //console.log("DoesBrowserSupportWebP(): No, because of old macOS");
+        // oct '21: Safari is reporting it's on an older macOS version that it really is, so falling back to browser version and old macOS be damned.
+        if (typeof platform !== "undefined" && platform.os.version) 
+        {
+            const browserMainVersion = platform.version.substring(0, platform.version.indexOf("."));
+            if (platform.os.family === "OS X" && browserMainVersion < 14 && platform.name === "Safari") {
+                console.log("DoesBrowserSupportWebP(): No, because of old Safari on macOS");
                 webpSupported = false;
             }
         }
