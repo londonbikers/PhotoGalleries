@@ -246,7 +246,11 @@ body {
 }
     .settings-box a {
         color: #ccc;
+        transition: .15s;
     }
+        .settings-box a:hover {
+            color: #fff;
+        }
     .settings-box b {
         color: #888;
         text-transform: uppercase;
