@@ -2,7 +2,7 @@
 @using Newtonsoft.Json
 @model Category
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Name;
     var galleries = (PagedResultSet<Gallery>)ViewData["galleries"];
 }
 
