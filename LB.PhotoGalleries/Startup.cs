@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using Microsoft.AspNetCore.Localization;
 
 namespace LB.PhotoGalleries
 {
@@ -82,6 +81,12 @@ namespace LB.PhotoGalleries
                 // create a user object in our database the first time they login
                 // or update them if claims/attributes change
                 options.Events.OnTicketReceived = async ctx => { await UserManagement.UpdateUserFromClaimsAsync(ctx); };
+            });
+
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
+                options.SupportedCultures = new List<CultureInfo> { new CultureInfo("en-GB"), new CultureInfo("en-GB") };
             });
 
             // the site can be configured to require a staff role to access the entire site.
@@ -187,6 +192,7 @@ namespace LB.PhotoGalleries
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSession();
+            app.UseRequestLocalization();
 
             app.UseEndpoints(endpoints => 
             {
@@ -221,13 +227,7 @@ namespace LB.PhotoGalleries
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            var supportedCultures = new[] { new CultureInfo("en-GB") };
-            app.UseRequestLocalization(new RequestLocalizationOptions
-            {
-                DefaultRequestCulture = new RequestCulture("en-GB"),
-                SupportedCultures = supportedCultures,
-                SupportedUICultures = supportedCultures
-            });
+            
         }
     }
 }
