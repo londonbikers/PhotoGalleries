@@ -16,8 +16,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using Microsoft.AspNetCore.Localization;
 
 namespace LB.PhotoGalleries
 {
@@ -217,6 +219,14 @@ namespace LB.PhotoGalleries
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
+
+            var supportedCultures = new[] { new CultureInfo("en-GB") };
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-GB"),
+                SupportedCultures = supportedCultures,
+                SupportedUICultures = supportedCultures
             });
         }
     }
