@@ -256,7 +256,17 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
-        public async Task<PagedResultSet<Image>> GetImagesForTagAsync(string tag, int page = 1, int pageSize = 20, int maxResults = 500)
+        /// <param name="querySortBy">How should we sort the search results?</param>
+        /// <param name="queryRange">What time range should the search results cover?</param>
+        /// <param name="queryDirection">What direction should the sorted search results be shown in?</param>
+        public async Task<PagedResultSet<Image>> GetImagesForTagAsync(
+            string tag, 
+            int page = 1, 
+            int pageSize = 20, 
+            int maxResults = 500, 
+            QuerySortBy querySortBy = QuerySortBy.DateCreated,
+            QueryRange queryRange = QueryRange.Forever,
+            QueryDirection queryDirection = QueryDirection.Descending)
         {
             if (string.IsNullOrEmpty(tag))
                 throw new ArgumentNullException(nameof(tag));
@@ -275,10 +285,21 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
+            var direction = queryDirection == QueryDirection.Ascending ? "ASC" : "DESC";
+            var orderAttribute = querySortBy switch
+            {
+                QuerySortBy.DateCreated => "i.Created",
+                QuerySortBy.Popularity => "i.Views",
+                QuerySortBy.Comments => "i.CommentCount",
+                _ => null
+            };
+
+            // cosmos db doesn't support ordering by aggregate system functions, i.e. COUNT()
+            // for such queries, we have to order the results after receiving the results
+
             // get the complete list of ids
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY i.Created DESC")
-                    .WithParameter("@maxResults", maxResults)
-                    .WithParameter("@tag", tag);
+            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY {orderAttribute} {direction}";
+            var queryDefinition = new QueryDefinition(query).WithParameter("@maxResults", maxResults).WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
             var ids = new List<DatabaseId>();
@@ -298,6 +319,9 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // now with all the ids we know how many total results there are and so can populate paging info
             var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
+
+            if (page == 1 && pagedResultSet.TotalPages == 0)
+                return pagedResultSet;
 
             // don't let users try and request a page that doesn't exist
             if (page > pagedResultSet.TotalPages)
@@ -573,6 +597,7 @@ namespace LB.PhotoGalleries.Application.Servers
             };
 
             image.Comments.Add(imageComment);
+            image.CommentCount++;
 
             // subscribe the user to comment notifications if they've asked to be
             if (receiveNotifications)
@@ -612,6 +637,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var removed = image.Comments.Remove(comment);
             if (removed)
             {
+                image.CommentCount--;
                 await Server.Instance.Images.UpdateImageAsync(image);
 
                 gallery.CommentCount--;
