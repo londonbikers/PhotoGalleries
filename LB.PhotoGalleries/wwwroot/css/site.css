@@ -75,6 +75,11 @@ header .nav-link {
     border-color: #ddd;
 }
 
+.page-link-sm {
+    font-size: 0.85em;
+    padding: 0.40rem 0.50rem;
+}
+
 .text-med-size {
     font-size: 85%;
 }

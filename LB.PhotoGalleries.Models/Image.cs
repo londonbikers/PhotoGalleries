@@ -61,6 +61,11 @@ namespace LB.PhotoGalleries.Models
         public List<Comment> Comments { get; set; }
 
         /// <summary>
+        /// The total number of comments made against the image. Used to enable ordering in Cosmos DB queries.
+        /// </summary>
+        public int CommentCount { get; set; }
+
+        /// <summary>
         /// A CSV of tags that define the context of the photo, i.e. what's in it, where it is, etc. 
         /// </summary>
         public string TagsCsv { get; set; }
@@ -92,6 +97,7 @@ namespace LB.PhotoGalleries.Models
         {
             Created = DateTime.Now;
             Comments = new List<Comment>();
+            CommentCount = 0;
             Metadata = new Metadata();
             Files = new ImageFiles();
             UserCommentSubscriptions = new List<string>();

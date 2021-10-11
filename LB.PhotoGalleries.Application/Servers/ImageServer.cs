@@ -285,20 +285,18 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
-            var direction = queryDirection == QueryDirection.Ascending ? "ASC" : "DESC";
+            //var direction = queryDirection == QueryDirection.Ascending ? "ASC" : "DESC";
             var orderAttribute = querySortBy switch
             {
-                QuerySortBy.DateCreated => "i.Created",
-                QuerySortBy.Popularity => "i.Views",
-                QuerySortBy.Comments => "i.CommentCount",
+                QuerySortBy.DateCreated => "i.Created DESC",
+                QuerySortBy.Popularity => "i.Views DESC, i.Created DESC",
+                QuerySortBy.Comments => "i.CommentCount DESC, i.Created DESC",
                 _ => null
             };
 
-            // cosmos db doesn't support ordering by aggregate system functions, i.e. COUNT()
-            // for such queries, we have to order the results after receiving the results
-
             // get the complete list of ids
-            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY {orderAttribute} {direction}";
+            //var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY {orderAttribute} {direction}";
+            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY {orderAttribute}";
             var queryDefinition = new QueryDefinition(query).WithParameter("@maxResults", maxResults).WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);

@@ -9,9 +9,36 @@
     <h4 class="display-4">Tag: @tag</h4>
     <div class="text-format text-link">We tag our photos so you can find them more easily. These are the ones we've tagged with @tag.</div>
     <hr />
+    
+    <form class="form-inline justify-content-center" id="filter-form">
+        <div class="mr-sm-3">
+            <ul class="pagination">
+                <li class="page-item disabled"><span class="page-link page-link-sm">Sort by</span></li>
+                <li class="page-item active"><a href="?s=datecreated" class="page-link page-link-sm">Date</a></li>
+                <li class="page-item"><a href="?s=popularity" class="page-link page-link-sm">Popularity</a></li>
+                <li class="page-item"><a href="?s=comments" class="page-link page-link-sm">Comments</a></li>
+            </ul>
+        </div>
+
+        <div class="mr-sm-3">
+            <ul class="pagination">
+                <li class="page-item disabled"><span class="page-link page-link-sm">Period</span></li>
+                <li class="page-item"><a href="#" class="page-link page-link-sm">Week</a></li>
+                <li class="page-item"><a href="#" class="page-link page-link-sm">Month</a></li>
+                <li class="page-item"><a href="#" class="page-link page-link-sm">Year</a></li>
+                <li class="page-item active"><a href="#" class="page-link page-link-sm">Forever</a></li>
+            </ul>
+        </div>
+
+        @*<ul class="pagination">
+            <li class="page-item disabled"><span class="page-link page-link-sm">Direction</span></li>
+            <li class="page-item active"><a href="#" class="page-link page-link-sm"><i class="bi bi-sort-down"></i></a></li>
+            <li class="page-item"><a href="#" class="page-link page-link-sm"><i class="bi bi-sort-up"></i></a></li>
+        </ul>*@
+    </form>
 
     @await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
-    
+
     @if (Model.TotalResults == 0)
     {
         <p class="lead">
@@ -19,10 +46,10 @@
         </p>
     }
 
-    <div class="row mt-3" data-bind="foreach: Images">
+    <div class="row mt-2" data-bind="foreach: Images">
         <div class="col-md-4">
             <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid"/></a>
+                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
                 <div class="card-body card-body-thin">
                     <span class="card-text" data-bind="text: Name"></span>
                     <div data-bind="visible: Count > 0" class="text-med-size mt-1">
