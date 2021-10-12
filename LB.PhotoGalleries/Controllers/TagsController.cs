@@ -13,9 +13,8 @@ namespace LB.PhotoGalleries.Controllers
         {
             Enum.TryParse(s, true, out QuerySortBy querySortBy);
             Enum.TryParse(r, true, out QueryRange queryRange);
-            Enum.TryParse(d, true, out QueryDirection queryDirection);
 
-            ViewData.Model = await Server.Instance.Images.GetImagesForTagAsync(tag, p, 21, querySortBy: querySortBy, queryRange: queryRange, queryDirection: queryDirection);
+            ViewData.Model = await Server.Instance.Images.GetImagesForTagAsync(tag, p, 21, querySortBy: querySortBy, queryRange: queryRange);
 
             ViewData["tag"] = tag;
             return View();
