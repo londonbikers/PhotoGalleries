@@ -2,9 +2,9 @@
 {
     public enum QueryRange
     {
-        LastWeek,
-        LastMonth,
+        Forever,
         LastYear,
-        Forever
+        LastMonth,
+        LastWeek
     }
 }

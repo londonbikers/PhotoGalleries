@@ -316,7 +316,14 @@ namespace LB.PhotoGalleries.Application.Servers
             Log.Debug($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             // now with all the ids we know how many total results there are and so can populate paging info
-            var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
+            var pagedResultSet = new PagedResultSet<Image>
+            {
+                PageSize = pageSize, 
+                TotalResults = ids.Count, 
+                CurrentPage = page,
+                QuerySortBy = querySortBy,
+                QueryRange = queryRange
+            };
 
             if (page == 1 && pagedResultSet.TotalPages == 0)
                 return pagedResultSet;

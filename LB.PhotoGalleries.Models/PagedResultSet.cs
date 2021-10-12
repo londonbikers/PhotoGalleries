@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LB.PhotoGalleries.Models.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace LB.PhotoGalleries.Models
@@ -26,6 +27,8 @@ namespace LB.PhotoGalleries.Models
             }
         }
         public int MaximumResults { get; set; }
+        public QuerySortBy QuerySortBy { get; set; }
+        public QueryRange QueryRange { get; set; }
         #endregion
 
         #region constructors
@@ -80,6 +83,49 @@ namespace LB.PhotoGalleries.Models
             }
 
             return numbers;
+        }
+
+        public string BuildQueryString(QueryRange queryRange)
+        {
+            var query = "?";
+
+            if (CurrentPage > 1)
+                query += "p=" + CurrentPage + "&";
+
+            query += "r=" + queryRange.ToString().ToLower();
+            return query;
+        }
+
+        public string BuildQueryString(QuerySortBy querySortBy)
+        {
+            var query = "?";
+
+            if (CurrentPage > 1)
+                query += "p=" + CurrentPage + "&";
+
+            query += "s=" + querySortBy.ToString().ToLower();
+            return query;
+        }
+
+        public string BuildQueryString(int pageNumber, string currentPath)
+        {
+            var query = "?";
+            var paramz = new List<string>();
+
+            if (pageNumber > 1)
+                paramz.Add("p=" + pageNumber);
+
+            if (QuerySortBy != QuerySortBy.DateCreated)
+                paramz.Add("s=" + QuerySortBy.ToString().ToLower());
+
+            if (QueryRange != QueryRange.Forever)
+                paramz.Add("r=" + QueryRange.ToString().ToLower());
+
+            if (paramz.Count == 0)
+                return currentPath;
+
+            query += string.Join('&', paramz);
+            return query;
         }
         #endregion
     }

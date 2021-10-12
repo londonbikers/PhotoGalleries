@@ -8,7 +8,7 @@ namespace LB.PhotoGalleries.Controllers
 {
     public class TagsController : Controller
     {
-        // GET: /t/motogp?p=1
+        // GET: /t/motogp?p=1&s=datecreated&r=forever
         public async Task<ActionResult> Details(string tag, int p = 1, string s = "", string r = "", string d = "")
         {
             Enum.TryParse(s, true, out QuerySortBy querySortBy);
@@ -16,6 +16,7 @@ namespace LB.PhotoGalleries.Controllers
             Enum.TryParse(d, true, out QueryDirection queryDirection);
 
             ViewData.Model = await Server.Instance.Images.GetImagesForTagAsync(tag, p, 21, querySortBy: querySortBy, queryRange: queryRange, queryDirection: queryDirection);
+
             ViewData["tag"] = tag;
             return View();
         }

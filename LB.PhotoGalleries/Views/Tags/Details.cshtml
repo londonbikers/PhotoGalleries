@@ -1,4 +1,5 @@
 ﻿@using Newtonsoft.Json
+@using LB.PhotoGalleries.Models.Enums
 @model PagedResultSet<Image>
 @{
     var tag = (string)ViewData["tag"];
@@ -14,19 +15,19 @@
         <div class="mr-sm-3">
             <ul class="pagination">
                 <li class="page-item disabled"><span class="page-link page-link-sm">Sort by</span></li>
-                <li class="page-item active"><a href="?s=datecreated" class="page-link page-link-sm">Date</a></li>
-                <li class="page-item"><a href="?s=popularity" class="page-link page-link-sm">Popularity</a></li>
-                <li class="page-item"><a href="?s=comments" class="page-link page-link-sm">Comments</a></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.DateCreated ? "active":"")"><a href="@Model.BuildQueryString(QuerySortBy.DateCreated)" class="page-link page-link-sm">Date</a></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.Popularity ? "active":"")"><a href="@Model.BuildQueryString(QuerySortBy.Popularity)" class="page-link page-link-sm">Popularity</a></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.Comments ? "active":"")"><a href="@Model.BuildQueryString(QuerySortBy.Comments)" class="page-link page-link-sm">Comments</a></li>
             </ul>
         </div>
 
         <div class="mr-sm-3">
             <ul class="pagination">
                 <li class="page-item disabled"><span class="page-link page-link-sm">Period</span></li>
-                <li class="page-item"><a href="#" class="page-link page-link-sm">Week</a></li>
-                <li class="page-item"><a href="#" class="page-link page-link-sm">Month</a></li>
-                <li class="page-item"><a href="#" class="page-link page-link-sm">Year</a></li>
-                <li class="page-item active"><a href="#" class="page-link page-link-sm">Forever</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastWeek ? "active":"")"><a href="@Model.BuildQueryString(QueryRange.LastWeek)" class="page-link page-link-sm">Week</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastMonth ? "active":"")"><a href="@Model.BuildQueryString(QueryRange.LastMonth)" class="page-link page-link-sm">Month</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastYear ? "active":"")"><a href="@Model.BuildQueryString(QueryRange.LastYear)" class="page-link page-link-sm">Year</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.Forever ? "active":"")"><a href="@Model.BuildQueryString(QueryRange.Forever)" class="page-link page-link-sm">Forever</a></li>
             </ul>
         </div>
 
