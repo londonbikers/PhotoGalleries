@@ -283,7 +283,6 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
-            //var direction = queryDirection == QueryDirection.Ascending ? "ASC" : "DESC";
             var orderAttribute = querySortBy switch
             {
                 QuerySortBy.DateCreated => "i.Created DESC",
@@ -292,8 +291,22 @@ namespace LB.PhotoGalleries.Application.Servers
                 _ => null
             };
 
+            var rangePart = string.Empty;
+            if (queryRange != QueryRange.Forever)
+            {
+                var rangeFrom = queryRange switch
+                {
+                    QueryRange.LastYear => DateTime.Now - TimeSpan.FromDays(365),
+                    QueryRange.LastMonth => DateTime.Now - TimeSpan.FromDays(30),
+                    QueryRange.LastWeek => DateTime.Now - TimeSpan.FromDays(7),
+                    _ => default
+                };
+
+                rangePart = $"AND i.Created >= \"{rangeFrom:yyyy-MM-ddTHH:mm:ss.fffffffZ}\"";
+            }
+
             // get the complete list of ids
-            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY {orderAttribute}";
+            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) {rangePart} ORDER BY {orderAttribute}";
             var queryDefinition = new QueryDefinition(query).WithParameter("@maxResults", maxResults).WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
