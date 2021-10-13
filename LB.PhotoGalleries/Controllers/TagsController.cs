@@ -9,7 +9,7 @@ namespace LB.PhotoGalleries.Controllers
     public class TagsController : Controller
     {
         // GET: /t/motogp?p=1&s=datecreated&r=forever
-        public async Task<ActionResult> Details(string tag, int p = 1, string s = "", string r = "", string d = "")
+        public async Task<ActionResult> Details(string tag, int p = 1, string s = "", string r = "")
         {
             Enum.TryParse(s, true, out QuerySortBy querySortBy);
             Enum.TryParse(r, true, out QueryRange queryRange);
