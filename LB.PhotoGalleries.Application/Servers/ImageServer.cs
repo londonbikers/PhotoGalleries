@@ -340,7 +340,11 @@ namespace LB.PhotoGalleries.Application.Servers
 
             // don't let users try and request a page that doesn't exist
             if (page > pagedResultSet.TotalPages)
-                return null;
+            {
+                pagedResultSet.TotalResults = 0;
+                pagedResultSet.Results.Clear();
+                return pagedResultSet;
+            }
 
             if (ids.Count <= 0) 
                 return pagedResultSet;

@@ -92,6 +92,9 @@ namespace LB.PhotoGalleries.Models
             if (CurrentPage > 1)
                 query += "p=" + CurrentPage + "&";
 
+            if (QuerySortBy != QuerySortBy.DateCreated)
+                query += "s=" + QuerySortBy.ToString().ToLower() + "&";
+
             query += "r=" + queryRange.ToString().ToLower();
             return query;
         }
@@ -104,6 +107,10 @@ namespace LB.PhotoGalleries.Models
                 query += "p=" + CurrentPage + "&";
 
             query += "s=" + querySortBy.ToString().ToLower();
+
+            if (QueryRange != QueryRange.Forever)
+                query += "&r=" + QueryRange.ToString().ToLower();
+
             return query;
         }
 
