@@ -36,5 +36,10 @@
         /// The name of the Azure Storage message queue we use to send notifications.
         /// </summary>
         public static string QueueNotificationsToProcess => "notifications-to-process";
+
+        /// <summary>
+        /// The string needed to format a date using DateTime.ToString() so that Cosmos DB can understand it as a DateTime.
+        /// </summary>
+        public static string CosmosDbDateTimeFormatString => "yyyy-MM-ddTHH:mm:ss.fffffffZ";
     }
 }

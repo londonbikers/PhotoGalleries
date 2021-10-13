@@ -302,7 +302,7 @@ namespace LB.PhotoGalleries.Application.Servers
                     _ => default
                 };
 
-                rangePart = $"AND i.Created >= \"{rangeFrom:yyyy-MM-ddTHH:mm:ss.fffffffZ}\"";
+                rangePart = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
             }
 
             // get the complete list of ids
