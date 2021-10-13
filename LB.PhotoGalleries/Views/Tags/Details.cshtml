@@ -30,12 +30,6 @@
                 <li class="page-item @(Model.QueryRange == QueryRange.Forever ? "active":"")"><a href="@Model.BuildQueryString(QueryRange.Forever)" class="page-link page-link-sm">Forever</a></li>
             </ul>
         </div>
-
-        @*<ul class="pagination">
-            <li class="page-item disabled"><span class="page-link page-link-sm">Direction</span></li>
-            <li class="page-item active"><a href="#" class="page-link page-link-sm"><i class="bi bi-sort-down"></i></a></li>
-            <li class="page-item"><a href="#" class="page-link page-link-sm"><i class="bi bi-sort-up"></i></a></li>
-        </ul>*@
     </form>
 
     @await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
