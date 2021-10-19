@@ -4,7 +4,6 @@ using LB.PhotoGalleries.Models.Utilities;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.CommentCounter
@@ -63,7 +62,6 @@ namespace LB.PhotoGalleries.CommentCounter
             }
 
             // query the database for images without CommentCount values, then set them to zero
-            var galleryStubs = new List<GalleryCommentCountStub>();
             const string imageQuery = "SELECT i.id, i.GalleryId FROM Images i WHERE NOT IS_DEFINED(i.CommentCount)";
             var imageQueryDefinition = new QueryDefinition(imageQuery);
             Console.WriteLine("Getting image stubs...");
