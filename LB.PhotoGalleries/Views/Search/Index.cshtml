@@ -31,7 +31,10 @@
         <ul class="pagination">
             <li class="page-item disabled"><span class="page-link page-link-sm">Sort by</span></li>
             <li class="page-item @(Model.QuerySortBy == QuerySortBy.DateCreated ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.DateCreated)" class="page-link page-link-sm">Date</a></li>
-            <li class="page-item @(Model.QuerySortBy == QuerySortBy.Popularity ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.Popularity)" class="page-link page-link-sm">Popularity</a></li>
+            @if (Model.SearchResultsType != SearchResultsType.Galleries || Model.TotalImageResults > 0)
+            {
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.Popularity ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.Popularity)" class="page-link page-link-sm">Popularity</a></li>
+            }
             <li class="page-item @(Model.QuerySortBy == QuerySortBy.Comments ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.Comments)" class="page-link page-link-sm">Comments</a></li>
         </ul>
     </div>
