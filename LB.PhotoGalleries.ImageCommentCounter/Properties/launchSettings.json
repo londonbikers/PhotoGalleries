@@ -1,8 +1,7 @@
 {
   "profiles": {
     "LB.PhotoGalleries.CommentCounter": {
-      "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\JayVanderZant\\OneDrive - Tetron\\LB\\LB Photos\\Worker\\appsettings.Staging.json\""
+      "commandName": "Project"
     }
   }
 }
