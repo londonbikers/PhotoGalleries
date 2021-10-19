@@ -4,8 +4,6 @@ using LB.PhotoGalleries.Models.Utilities;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.CommentCounter
@@ -23,6 +21,8 @@ namespace LB.PhotoGalleries.CommentCounter
             // go over all galleries and images with comments and update the gallery comment count
             // used as a one-off to set the initial values for this new property, though could potentially be
             // modified to re-calculate all counts if need be.
+
+            // oct '21: modified to fill in null values
             
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(args[0], optional: false)
@@ -42,27 +42,8 @@ namespace LB.PhotoGalleries.CommentCounter
             _imagesContainer = _database.GetContainer(Constants.ImagesContainerName);
             _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
 
-            // wipe all gallery comment counts first so we end up re-creating the counts
-            const string resetQuery = "SELECT g.id, g.CategoryId FROM Galleries g WHERE g.CommentCount > 0";
-            var resetQueryDefinition = new QueryDefinition(resetQuery);
-            Console.WriteLine("Getting gallery stubs for reset...");
-            var resetQueryResult = _galleriesContainer.GetItemQueryIterator<GalleryCommentCountStub>(resetQueryDefinition);
-            Console.WriteLine("Got gallery stubs for reset. Enumerating...");
-
-            while (resetQueryResult.HasMoreResults)
-            {
-                var galleryCommentCountStubs = await resetQueryResult.ReadNextAsync();
-                foreach (var galleryCommentCountStub in galleryCommentCountStubs)
-                {
-                    var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCommentCountStub.CategoryId, galleryCommentCountStub.Id);
-                    gallery.CommentCount = 0;
-                    await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                    Console.WriteLine("Reset gallery comment count for gallery id: " + galleryCommentCountStub.Id);
-                }
-            }
-
-            // query the database for galleries with comments, update count
-            const string galleryQuery = "SELECT g.id, g.CategoryId, ARRAY_LENGTH(g.Comments) AS CommentCount FROM Galleries g WHERE ARRAY_LENGTH(g.Comments) > 0";
+            // query the database for galleries without CommentCount, set their values to zero
+            const string galleryQuery = "SELECT g.id, g.CategoryId FROM Galleries g WHERE NOT IS_DEFINED(g.CommentComment)";
             var galleryQueryDefinition = new QueryDefinition(galleryQuery);
             Console.WriteLine("Getting gallery stubs...");
             var galleryQueryResult = _galleriesContainer.GetItemQueryIterator<GalleryCommentCountStub>(galleryQueryDefinition);
@@ -74,15 +55,14 @@ namespace LB.PhotoGalleries.CommentCounter
                 foreach (var galleryCommentCountStub in galleryCommentCountStubs)
                 {
                     var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryCommentCountStub.CategoryId, galleryCommentCountStub.Id);
-                    gallery.CommentCount = galleryCommentCountStub.CommentCount;
+                    gallery.CommentCount = 0;
                     await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                    Console.WriteLine("Gallery comments set for gallery id: " + galleryCommentCountStub.Id);
+                    Console.WriteLine("Gallery comments set to zero for gallery id: " + galleryCommentCountStub.Id);
                 }
             }
 
-            // query the database for images with comments, keep track of galleries and comment counts, then update gallery counts
-            var galleryStubs = new List<GalleryCommentCountStub>();
-            const string imageQuery = "SELECT i.id, i.GalleryCategoryId, i.GalleryId, ARRAY_LENGTH(i.Comments) AS CommentCount FROM Images i WHERE ARRAY_LENGTH(i.Comments) > 0";
+            // query the database for images without CommentCount values, then set them to zero
+            const string imageQuery = "SELECT i.id, i.GalleryId FROM Images i WHERE NOT IS_DEFINED(i.CommentCount)";
             var imageQueryDefinition = new QueryDefinition(imageQuery);
             Console.WriteLine("Getting image stubs...");
             var imageQueryResult = _imagesContainer.GetItemQueryIterator<ImageCommentCountStub>(imageQueryDefinition);
@@ -93,32 +73,11 @@ namespace LB.PhotoGalleries.CommentCounter
                 var imageCommentCountStubs = await imageQueryResult.ReadNextAsync();
                 foreach (var imageCommentCountStub in imageCommentCountStubs)
                 {
-                    // check if we have a gallery stub already
-                    // if so add the image comment count to that
-                    // if not, create a stub and assign the image count
-                    var galleryStub = galleryStubs.SingleOrDefault(g => g.Id == imageCommentCountStub.GalleryId);
-                    if (galleryStub == null)
-                    {
-                        galleryStub = new GalleryCommentCountStub
-                        {
-                            CategoryId = imageCommentCountStub.GalleryCategoryId,
-                            Id = imageCommentCountStub.GalleryId
-                        };
-                        galleryStubs.Add(galleryStub);
-                    }
-                    galleryStub.CommentCount += imageCommentCountStub.CommentCount;
+                    var image = await Server.Instance.Images.GetImageAsync(imageCommentCountStub.GalleryId, imageCommentCountStub.Id);
+                    image.CommentCount = 0;
+                    await Server.Instance.Images.UpdateImageAsync(image);
+                    Console.WriteLine($"Set image CommentCount to zero for image id: {image.Id}");
                 }
-            }
-
-            Console.WriteLine($"Added image comment counts to gallery stubs {galleryStubs.Count}");
-
-            // now that we've got a list of gallery stubs with total image counts we can enumerate them and update the gallery comment counts
-            foreach (var galleryStub in galleryStubs)
-            {
-                var gallery = await Server.Instance.Galleries.GetGalleryAsync(galleryStub.CategoryId, galleryStub.Id);
-                gallery.CommentCount += galleryStub.CommentCount;
-                await Server.Instance.Galleries.UpdateGalleryAsync(gallery);
-                Console.WriteLine("Gallery image comments set for gallery id: " + galleryStub.Id);
             }
         }
     }

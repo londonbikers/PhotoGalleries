@@ -256,7 +256,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="page">The page of galleries to return results from, for the first page use 1.</param>
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
-        public async Task<PagedResultSet<Image>> GetImagesForTagAsync(string tag, int page = 1, int pageSize = 20, int maxResults = 500)
+        /// <param name="querySortBy">How should we sort the search results?</param>
+        /// <param name="queryRange">What time range should the search results cover?</param>
+        public async Task<PagedResultSet<Image>> GetImagesForTagAsync(
+            string tag, 
+            int page = 1, 
+            int pageSize = 20, 
+            int maxResults = 500, 
+            QuerySortBy querySortBy = QuerySortBy.DateCreated,
+            QueryRange queryRange = QueryRange.Forever)
         {
             if (string.IsNullOrEmpty(tag))
                 throw new ArgumentNullException(nameof(tag));
@@ -275,10 +283,31 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
+            var orderClause = querySortBy switch
+            {
+                QuerySortBy.DateCreated => "i.Created DESC",
+                QuerySortBy.Popularity => "i.Views DESC, i.Created DESC",
+                QuerySortBy.Comments => "i.CommentCount DESC, i.Created DESC",
+                _ => null
+            };
+
+            var rangeClause = string.Empty;
+            if (queryRange != QueryRange.Forever)
+            {
+                var rangeFrom = queryRange switch
+                {
+                    QueryRange.LastYear => DateTime.Now - TimeSpan.FromDays(365),
+                    QueryRange.LastMonth => DateTime.Now - TimeSpan.FromDays(30),
+                    QueryRange.LastWeek => DateTime.Now - TimeSpan.FromDays(7),
+                    _ => default
+                };
+
+                rangeClause = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
+            }
+
             // get the complete list of ids
-            var queryDefinition = new QueryDefinition("SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) ORDER BY i.Created DESC")
-                    .WithParameter("@maxResults", maxResults)
-                    .WithParameter("@tag", tag);
+            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) {rangeClause} ORDER BY {orderClause}";
+            var queryDefinition = new QueryDefinition(query).WithParameter("@maxResults", maxResults).WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
             var ids = new List<DatabaseId>();
@@ -297,11 +326,25 @@ namespace LB.PhotoGalleries.Application.Servers
             Log.Debug($"ImageServer.GetImagesAsync(tag): Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
             // now with all the ids we know how many total results there are and so can populate paging info
-            var pagedResultSet = new PagedResultSet<Image> { PageSize = pageSize, TotalResults = ids.Count, CurrentPage = page };
+            var pagedResultSet = new PagedResultSet<Image>
+            {
+                PageSize = pageSize, 
+                TotalResults = ids.Count, 
+                CurrentPage = page,
+                QuerySortBy = querySortBy,
+                QueryRange = queryRange
+            };
+
+            if (page == 1 && pagedResultSet.TotalPages == 0)
+                return pagedResultSet;
 
             // don't let users try and request a page that doesn't exist
             if (page > pagedResultSet.TotalPages)
-                return null;
+            {
+                pagedResultSet.TotalResults = 0;
+                pagedResultSet.Results.Clear();
+                return pagedResultSet;
+            }
 
             if (ids.Count <= 0) 
                 return pagedResultSet;
@@ -329,7 +372,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
         /// <param name="includeInactiveGalleries">Indicates whether or not images in inactive (not active) galleries should be returned. False by default.</param>
-        public async Task<PagedResultSet<Image>> SearchForImagesAsync(string term, int page = 1, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
+        /// <param name="querySortBy">How should we sort the search results?</param>
+        /// <param name="queryRange">What time range should the search results cover?</param>
+        public async Task<PagedResultSet<Image>> SearchForImagesAsync(string term, 
+            int page = 1, 
+            int pageSize = 20, 
+            int maxResults = 500, 
+            bool includeInactiveGalleries = false,
+            QuerySortBy querySortBy = QuerySortBy.DateCreated,
+            QueryRange queryRange = QueryRange.Forever)
         {
             if (string.IsNullOrEmpty(term))
                 throw new ArgumentNullException(nameof(term));
@@ -348,9 +399,31 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
+            var orderClause = querySortBy switch
+            {
+                QuerySortBy.DateCreated => "i.Created DESC",
+                QuerySortBy.Popularity => "i.Views DESC, i.Created DESC",
+                QuerySortBy.Comments => "i.CommentCount DESC, i.Created DESC",
+                _ => null
+            };
+
+            var rangeClause = string.Empty;
+            if (queryRange != QueryRange.Forever)
+            {
+                var rangeFrom = queryRange switch
+                {
+                    QueryRange.LastYear => DateTime.Now - TimeSpan.FromDays(365),
+                    QueryRange.LastMonth => DateTime.Now - TimeSpan.FromDays(30),
+                    QueryRange.LastWeek => DateTime.Now - TimeSpan.FromDays(7),
+                    _ => default
+                };
+
+                rangeClause = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
+            }
+
             // get the complete list of ids
             var queryText = includeInactiveGalleries
-                ? "SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true) ORDER BY i.Created DESC"
+                ? $"SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE (CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true)) {rangeClause} ORDER BY {orderClause}"
                 : "NOT CURRENTLY SUPPORTED - NO WAY TO TELL!";
 
             var queryDefinition = new QueryDefinition(queryText)
@@ -573,6 +646,7 @@ namespace LB.PhotoGalleries.Application.Servers
             };
 
             image.Comments.Add(imageComment);
+            image.CommentCount++;
 
             // subscribe the user to comment notifications if they've asked to be
             if (receiveNotifications)
@@ -612,6 +686,7 @@ namespace LB.PhotoGalleries.Application.Servers
             var removed = image.Comments.Remove(comment);
             if (removed)
             {
+                image.CommentCount--;
                 await Server.Instance.Images.UpdateImageAsync(image);
 
                 gallery.CommentCount--;

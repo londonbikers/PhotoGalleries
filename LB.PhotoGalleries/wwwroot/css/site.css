@@ -1,5 +1,10 @@
 ﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
+
+body {
+    background-color: #f8f8f8;
+}
+
 #logo {
     transform: rotate(-7deg);
     filter: drop-shadow(3px 3px 4px rgba(0,0,0,0.5));
@@ -68,6 +73,11 @@ header .nav-link {
     color: #777;
     background-color: #eee;
     border-color: #ddd;
+}
+
+.page-link-sm {
+    font-size: 0.85em;
+    padding: 0.40rem 0.50rem;
 }
 
 .text-med-size {
@@ -241,7 +251,11 @@ body {
 }
     .settings-box a {
         color: #ccc;
+        transition: .15s;
     }
+        .settings-box a:hover {
+            color: #fff;
+        }
     .settings-box b {
         color: #888;
         text-transform: uppercase;

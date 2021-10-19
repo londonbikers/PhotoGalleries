@@ -1,0 +1,36 @@
+{
+  "indexingMode": "consistent",
+  "automatic": true,
+  "includedPaths": [
+    {
+      "path": "/*"
+    }
+  ],
+  "excludedPaths": [
+    {
+      "path": "/\"_etag\"/?"
+    }
+  ],
+  "compositeIndexes": [
+    [
+      {
+        "path": "/CommentCount",
+        "order": "descending"
+      },
+      {
+        "path": "/Created",
+        "order": "descending"
+      }
+    ],
+    [
+      {
+        "path": "/Views",
+        "order": "descending"
+      },
+      {
+        "path": "/Created",
+        "order": "descending"
+      }
+    ]
+  ]
+}

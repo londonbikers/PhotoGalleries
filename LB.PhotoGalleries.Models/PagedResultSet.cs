@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LB.PhotoGalleries.Models.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace LB.PhotoGalleries.Models
@@ -26,6 +27,8 @@ namespace LB.PhotoGalleries.Models
             }
         }
         public int MaximumResults { get; set; }
+        public QuerySortBy QuerySortBy { get; set; }
+        public QueryRange QueryRange { get; set; }
         #endregion
 
         #region constructors
@@ -35,7 +38,7 @@ namespace LB.PhotoGalleries.Models
         }
         #endregion
 
-        #region public methods
+        #region tag methods
         public int[] GetNavigationPageNumbers(int pagesToShow)
         {
             var numbers = new int[pagesToShow];
@@ -80,6 +83,56 @@ namespace LB.PhotoGalleries.Models
             }
 
             return numbers;
+        }
+
+        public string BuildTagQueryString(QueryRange queryRange)
+        {
+            var query = "?";
+
+            if (CurrentPage > 1)
+                query += "p=" + CurrentPage + "&";
+
+            if (QuerySortBy != QuerySortBy.DateCreated)
+                query += "s=" + QuerySortBy.ToString().ToLower() + "&";
+
+            query += "r=" + queryRange.ToString().ToLower();
+            return query;
+        }
+
+        public string BuildTagQueryString(QuerySortBy querySortBy)
+        {
+            var query = "?";
+
+            if (CurrentPage > 1)
+                query += "p=" + CurrentPage + "&";
+
+            query += "s=" + querySortBy.ToString().ToLower();
+
+            if (QueryRange != QueryRange.Forever)
+                query += "&r=" + QueryRange.ToString().ToLower();
+
+            return query;
+        }
+
+        public string BuildTagQueryString(int pageNumber, string currentPath)
+        {
+            var query = "?";
+            var paramz = new List<string>();
+
+            if (pageNumber > 1)
+                paramz.Add("p=" + pageNumber);
+
+            if (QuerySortBy != QuerySortBy.DateCreated)
+                paramz.Add("s=" + QuerySortBy.ToString().ToLower());
+
+            if (QueryRange != QueryRange.Forever)
+                paramz.Add("r=" + QueryRange.ToString().ToLower());
+
+            if (paramz.Count == 0)
+                return currentPath;
+
+            query += string.Join('&', paramz);
+            return query;
         }
         #endregion
     }

@@ -14,7 +14,7 @@ namespace LB.PhotoGalleries.Controllers
 {
     public class SearchController : Controller
     {
-        public async Task<IActionResult> Index(string q, int p = 1, SearchResultsType t = SearchResultsType.All)
+        public async Task<IActionResult> Index(string q, int p = 1, SearchResultsType t = SearchResultsType.All, string s = "", string r = "")
         {
             if (string.IsNullOrEmpty(q))
                 return RedirectToAction("Index", "Home");
@@ -26,6 +26,9 @@ namespace LB.PhotoGalleries.Controllers
             ViewData["query"] = q;
             const int pageSize = 21;
             const int maxResults = 500;
+
+            Enum.TryParse(s, true, out QuerySortBy querySortBy);
+            Enum.TryParse(r, true, out QueryRange queryRange);
 
             // don't allow invalid page numbers
             if (p < 1)
@@ -46,12 +49,12 @@ namespace LB.PhotoGalleries.Controllers
                 if (t == SearchResultsType.Galleries)
                 {
                     // search for just galleries
-                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults);
+                    galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults, querySortBy, queryRange);
                 } 
                 else if (t == SearchResultsType.Images)
                 {
                     // search for just images
-                    imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries: true);
+                    imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries: true, querySortBy, queryRange);
                 }
                 else
                 {
@@ -61,12 +64,12 @@ namespace LB.PhotoGalleries.Controllers
                         Task.Run(async () =>
                         {
                             // search for galleries
-                            galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults);
+                            galleryPagedResultSet = await Server.Instance.Galleries.SearchForGalleriesAsync(q, null, SearchStatus.Active, p, pageSize, maxResults, querySortBy, queryRange);
                         }),
                         Task.Run(async () =>
                         {
                             // search for images
-                            imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries:true);
+                            imagePagedResultSet = await Server.Instance.Images.SearchForImagesAsync(q, p, pageSize, maxResults, includeInactiveGalleries:true, querySortBy, queryRange);
                         })
                     };
 
@@ -82,9 +85,11 @@ namespace LB.PhotoGalleries.Controllers
             {
                 PageSize = pageSize,
                 CurrentPage = p,
-                QueryString = $"q={q}",
+                SearchTerm = q,
                 MaximumResults = maxResults,
-                SearchResultsType = t
+                SearchResultsType = t,
+                QuerySortBy = querySortBy,
+                QueryRange = queryRange
             };
 
             if (p == 1 && categories != null)

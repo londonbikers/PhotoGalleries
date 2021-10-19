@@ -1,4 +1,5 @@
 ﻿@using Newtonsoft.Json
+@using LB.PhotoGalleries.Models.Enums
 @model PagedResultSet<Image>
 @{
     var tag = (string)ViewData["tag"];
@@ -9,20 +10,45 @@
     <h4 class="display-4">Tag: @tag</h4>
     <div class="text-format text-link">We tag our photos so you can find them more easily. These are the ones we've tagged with @tag.</div>
     <hr />
+    
+    <form class="form-inline justify-content-center" id="filter-form">
+        <div class="mr-sm-3">
+            <ul class="pagination">
+                <li class="page-item disabled"><span class="page-link page-link-sm">Sort by</span></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.DateCreated ? "active":"")"><a href="@Model.BuildTagQueryString(QuerySortBy.DateCreated)" class="page-link page-link-sm">Date</a></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.Popularity ? "active":"")"><a href="@Model.BuildTagQueryString(QuerySortBy.Popularity)" class="page-link page-link-sm">Popularity</a></li>
+                <li class="page-item @(Model.QuerySortBy == QuerySortBy.Comments ? "active":"")"><a href="@Model.BuildTagQueryString(QuerySortBy.Comments)" class="page-link page-link-sm">Comments</a></li>
+            </ul>
+        </div>
+
+        <div class="mr-sm-3">
+            <ul class="pagination">
+                <li class="page-item disabled"><span class="page-link page-link-sm">Period</span></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastWeek ? "active":"")"><a href="@Model.BuildTagQueryString(QueryRange.LastWeek)" class="page-link page-link-sm">Week</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastMonth ? "active":"")"><a href="@Model.BuildTagQueryString(QueryRange.LastMonth)" class="page-link page-link-sm">Month</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.LastYear ? "active":"")"><a href="@Model.BuildTagQueryString(QueryRange.LastYear)" class="page-link page-link-sm">Year</a></li>
+                <li class="page-item @(Model.QueryRange == QueryRange.Forever ? "active":"")"><a href="@Model.BuildTagQueryString(QueryRange.Forever)" class="page-link page-link-sm">Forever</a></li>
+            </ul>
+        </div>
+    </form>
 
     @await Component.InvokeAsync("ImagePaginator", new { pagedResultSet = Model })
-    
+
     @if (Model.TotalResults == 0)
     {
         <p class="lead">
-            Sorry, we haven't got any photos for @tag yet
+            Sorry, we haven't got any photos for <b>@tag</b> yet.
+            @if (Model.QueryRange != QueryRange.Forever)
+            {
+                <text><br />Try expanding your time period.</text>
+            }
         </p>
     }
 
-    <div class="row mt-3" data-bind="foreach: Images">
+    <div class="row mt-2" data-bind="foreach: Images">
         <div class="col-md-4">
             <div class="card mb-4 shadow-sm">
-                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid"/></a>
+                <a data-bind="attr: { href: window.GetImageUrl(GalleryId, Id, Name) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid" /></a>
                 <div class="card-body card-body-thin">
                     <span class="card-text" data-bind="text: Name"></span>
                     <div data-bind="visible: Count > 0" class="text-med-size mt-1">

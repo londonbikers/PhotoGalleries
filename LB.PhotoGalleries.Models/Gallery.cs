@@ -31,7 +31,12 @@ namespace LB.PhotoGalleries.Models
         /// Comments can be made by users against photo galleries themselves as well as on specific photos.
         /// </summary>
         public List<Comment> Comments { get; set; }
-        
+
+        /// <summary>
+        /// The total number of comments made against the gallery and all images in the gallery.
+        /// </summary>
+        public int CommentCount { get; set; }
+
         /// <summary>
         /// The id of the user who created the gallery.
         /// </summary>
@@ -78,17 +83,13 @@ namespace LB.PhotoGalleries.Models
         /// Contains the IDs of users who have subscribed to comment notifications for this gallery.
         /// </summary>
         public List<string> UserCommentSubscriptions { get; set; }
-
-        /// <summary>
-        /// The total number of comments made against the gallery and all images in the gallery.
-        /// </summary>
-        public int CommentCount { get; set; }
         #endregion
 
         #region constructors
         public Gallery()
         {
             Comments = new List<Comment>();
+            CommentCount = 0;
             Created = DateTime.Now;
             UserCommentSubscriptions = new List<string>();
         }
