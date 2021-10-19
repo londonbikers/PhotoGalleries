@@ -283,7 +283,7 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
-            var orderAttribute = querySortBy switch
+            var orderClause = querySortBy switch
             {
                 QuerySortBy.DateCreated => "i.Created DESC",
                 QuerySortBy.Popularity => "i.Views DESC, i.Created DESC",
@@ -291,7 +291,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 _ => null
             };
 
-            var rangePart = string.Empty;
+            var rangeClause = string.Empty;
             if (queryRange != QueryRange.Forever)
             {
                 var rangeFrom = queryRange switch
@@ -302,11 +302,11 @@ namespace LB.PhotoGalleries.Application.Servers
                     _ => default
                 };
 
-                rangePart = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
+                rangeClause = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
             }
 
             // get the complete list of ids
-            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) {rangePart} ORDER BY {orderAttribute}";
+            var query = $"SELECT TOP @maxResults i.id, i.GalleryId FROM i WHERE CONTAINS(i.TagsCsv, @tag, true) {rangeClause} ORDER BY {orderClause}";
             var queryDefinition = new QueryDefinition(query).WithParameter("@maxResults", maxResults).WithParameter("@tag", tag);
             var container = Server.Instance.Database.GetContainer(Constants.ImagesContainerName);
             var queryResult = container.GetItemQueryIterator<JObject>(queryDefinition);
@@ -372,7 +372,15 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
         /// <param name="includeInactiveGalleries">Indicates whether or not images in inactive (not active) galleries should be returned. False by default.</param>
-        public async Task<PagedResultSet<Image>> SearchForImagesAsync(string term, int page = 1, int pageSize = 20, int maxResults = 500, bool includeInactiveGalleries = false)
+        /// <param name="querySortBy">How should we sort the search results?</param>
+        /// <param name="queryRange">What time range should the search results cover?</param>
+        public async Task<PagedResultSet<Image>> SearchForImagesAsync(string term, 
+            int page = 1, 
+            int pageSize = 20, 
+            int maxResults = 500, 
+            bool includeInactiveGalleries = false,
+            QuerySortBy querySortBy = QuerySortBy.DateCreated,
+            QueryRange queryRange = QueryRange.Forever)
         {
             if (string.IsNullOrEmpty(term))
                 throw new ArgumentNullException(nameof(term));
@@ -391,9 +399,31 @@ namespace LB.PhotoGalleries.Application.Servers
             if (maxResults > 500)
                 maxResults = 500;
 
+            var orderClause = querySortBy switch
+            {
+                QuerySortBy.DateCreated => "i.Created DESC",
+                QuerySortBy.Popularity => "i.Views DESC, i.Created DESC",
+                QuerySortBy.Comments => "i.CommentCount DESC, i.Created DESC",
+                _ => null
+            };
+
+            var rangeClause = string.Empty;
+            if (queryRange != QueryRange.Forever)
+            {
+                var rangeFrom = queryRange switch
+                {
+                    QueryRange.LastYear => DateTime.Now - TimeSpan.FromDays(365),
+                    QueryRange.LastMonth => DateTime.Now - TimeSpan.FromDays(30),
+                    QueryRange.LastWeek => DateTime.Now - TimeSpan.FromDays(7),
+                    _ => default
+                };
+
+                rangeClause = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
+            }
+
             // get the complete list of ids
             var queryText = includeInactiveGalleries
-                ? "SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true) ORDER BY i.Created DESC"
+                ? $"SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE (CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true)) {rangeClause} ORDER BY {orderClause}"
                 : "NOT CURRENTLY SUPPORTED - NO WAY TO TELL!";
 
             var queryDefinition = new QueryDefinition(queryText)

@@ -154,17 +154,6 @@ namespace LB.PhotoGalleries
         }
 
         /// <summary>
-        /// Returns a URL for the current query that changes what search results are displayed.
-        /// </summary>
-        public static string GetSearchTypeUrl(SearchResultsType searchResultsType, string query)
-        {
-            if (searchResultsType == SearchResultsType.All)
-                return $"/search?q={query}";
-            else
-                return $"/search?q={query}&t={searchResultsType.ToString().ToLower()}";
-        }
-
-        /// <summary>
         /// Returns the absolute URL of an image.
         /// </summary>
         public static string GetFullImageUrl(IConfiguration config, Image image)

@@ -152,7 +152,16 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <param name="pageSize">The maximum number of galleries to return per page, i.e. 20.</param>
         /// <param name="maxResults">The maximum number of galleries to get paged results for, i.e. how many pages to look for.</param>
         /// <param name="categoryId">Optionally specify a categoryId to limit results to a specific category.</param>
-        public async Task<PagedResultSet<Gallery>> SearchForGalleriesAsync(string term, string categoryId = null, SearchStatus searchStatus = SearchStatus.NotSpecified, int page = 1, int pageSize = 20, int maxResults = 500)
+        /// <param name="querySortBy">How should we sort the search results?</param>
+        /// <param name="queryRange">What time range should the search results cover?</param>
+        public async Task<PagedResultSet<Gallery>> SearchForGalleriesAsync(string term, 
+            string categoryId = null, 
+            SearchStatus searchStatus = SearchStatus.NotSpecified, 
+            int page = 1, 
+            int pageSize = 20, 
+            int maxResults = 500,
+            QuerySortBy querySortBy = QuerySortBy.DateCreated,
+            QueryRange queryRange = QueryRange.Forever)
         {
             if (!term.HasValue() && !categoryId.HasValue() && searchStatus == SearchStatus.NotSpecified)
                 throw new ArgumentException("Supply a term, categoryId or searchStatus");
@@ -197,7 +206,31 @@ namespace LB.PhotoGalleries.Application.Servers
                 categoryClause += $"g.CategoryId = '{categoryId}'";
             }
 
-            var queryText = $"SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE {nameClause} {statusClause} {categoryClause} ORDER BY g.Created DESC";
+            var orderClause = querySortBy switch
+            {
+                QuerySortBy.DateCreated => "g.Created DESC",
+                //QuerySortBy.Popularity => "g.Views DESC, g.Created DESC",
+                // galleries don't support the popularity option yet, so just use the default
+                QuerySortBy.Popularity => "g.Created DESC",
+                QuerySortBy.Comments => "g.CommentCount DESC, g.Created DESC",
+                _ => null
+            };
+
+            var rangeClause = string.Empty;
+            if (queryRange != QueryRange.Forever)
+            {
+                var rangeFrom = queryRange switch
+                {
+                    QueryRange.LastYear => DateTime.Now - TimeSpan.FromDays(365),
+                    QueryRange.LastMonth => DateTime.Now - TimeSpan.FromDays(30),
+                    QueryRange.LastWeek => DateTime.Now - TimeSpan.FromDays(7),
+                    _ => default
+                };
+
+                rangeClause = $"AND g.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
+            }
+
+            var queryText = $"SELECT TOP @maxResults g.id AS Id, g.CategoryId AS PartitionKey FROM g WHERE {nameClause} {statusClause} {categoryClause} {rangeClause} ORDER BY {orderClause}";
 
             // get the complete list of ids
             var queryDefinition = new QueryDefinition(queryText)

@@ -10,5 +10,17 @@
     {
       "path": "/\"_etag\"/?"
     }
+  ],
+  "compositeIndexes": [
+    [
+      {
+        "path": "/CommentCount",
+        "order": "descending"
+      },
+      {
+        "path": "/Created",
+        "order": "descending"
+      }
+    ]
   ]
 }

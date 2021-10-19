@@ -38,7 +38,7 @@ namespace LB.PhotoGalleries.Models
         }
         #endregion
 
-        #region public methods
+        #region tag methods
         public int[] GetNavigationPageNumbers(int pagesToShow)
         {
             var numbers = new int[pagesToShow];
@@ -85,7 +85,7 @@ namespace LB.PhotoGalleries.Models
             return numbers;
         }
 
-        public string BuildQueryString(QueryRange queryRange)
+        public string BuildTagQueryString(QueryRange queryRange)
         {
             var query = "?";
 
@@ -99,7 +99,7 @@ namespace LB.PhotoGalleries.Models
             return query;
         }
 
-        public string BuildQueryString(QuerySortBy querySortBy)
+        public string BuildTagQueryString(QuerySortBy querySortBy)
         {
             var query = "?";
 
@@ -114,7 +114,7 @@ namespace LB.PhotoGalleries.Models
             return query;
         }
 
-        public string BuildQueryString(int pageNumber, string currentPath)
+        public string BuildTagQueryString(int pageNumber, string currentPath)
         {
             var query = "?";
             var paramz = new List<string>();

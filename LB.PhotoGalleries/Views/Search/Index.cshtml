@@ -17,14 +17,35 @@
                 <li class="page-item disabled">
                     <span class="page-link">Showing</span>
                 </li>
-                <li class="page-item@(Model.SearchResultsType == SearchResultsType.All ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.All, query)">All</a></li>
-                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Categories ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Categories, query)">Categories</a></li>
-                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Galleries ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Galleries, query)">Galleries</a></li>
-                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Images ? " sub-active" : "")"><a class="page-link" href="@Helpers.GetSearchTypeUrl(SearchResultsType.Images, query)">Photos</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.All ? " sub-active" : "")"><a class="page-link" href="@Model.BuildSearchQueryString(SearchResultsType.All)">All</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Categories ? " sub-active" : "")"><a class="page-link" href="@Model.BuildSearchQueryString(SearchResultsType.Categories)">Categories</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Galleries ? " sub-active" : "")"><a class="page-link" href="@Model.BuildSearchQueryString(SearchResultsType.Galleries)">Galleries</a></li>
+                <li class="page-item@(Model.SearchResultsType == SearchResultsType.Images ? " sub-active" : "")"><a class="page-link" href="@Model.BuildSearchQueryString(SearchResultsType.Images)">Photos</a></li>
             </ul>
         </nav>
     </div>
 </div>
+
+<form class="form-inline justify-content-center" id="filter-form">
+    <div class="mr-sm-3">
+        <ul class="pagination">
+            <li class="page-item disabled"><span class="page-link page-link-sm">Sort by</span></li>
+            <li class="page-item @(Model.QuerySortBy == QuerySortBy.DateCreated ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.DateCreated)" class="page-link page-link-sm">Date</a></li>
+            <li class="page-item @(Model.QuerySortBy == QuerySortBy.Popularity ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.Popularity)" class="page-link page-link-sm">Popularity</a></li>
+            <li class="page-item @(Model.QuerySortBy == QuerySortBy.Comments ? "active":"")"><a href="@Model.BuildSearchQueryString(QuerySortBy.Comments)" class="page-link page-link-sm">Comments</a></li>
+        </ul>
+    </div>
+
+    <div class="mr-sm-3">
+        <ul class="pagination">
+            <li class="page-item disabled"><span class="page-link page-link-sm">Period</span></li>
+            <li class="page-item @(Model.QueryRange == QueryRange.LastWeek ? "active":"")"><a href="@Model.BuildSearchQueryString(QueryRange.LastWeek)" class="page-link page-link-sm">Week</a></li>
+            <li class="page-item @(Model.QueryRange == QueryRange.LastMonth ? "active":"")"><a href="@Model.BuildSearchQueryString(QueryRange.LastMonth)" class="page-link page-link-sm">Month</a></li>
+            <li class="page-item @(Model.QueryRange == QueryRange.LastYear ? "active":"")"><a href="@Model.BuildSearchQueryString(QueryRange.LastYear)" class="page-link page-link-sm">Year</a></li>
+            <li class="page-item @(Model.QueryRange == QueryRange.Forever ? "active":"")"><a href="@Model.BuildSearchQueryString(QueryRange.Forever)" class="page-link page-link-sm">Forever</a></li>
+        </ul>
+    </div>
+</form>
 
 <hr />
 
