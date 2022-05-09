@@ -13,6 +13,7 @@ namespace LB.PhotoGalleries.Controllers.Api
     [ApiController]
     public class GalleriesController : ControllerBase
     {
+        #region comments
         [Authorize]
         [HttpPost("/api/galleries/comments")]
         public async Task<ActionResult> CreateComment(string categoryId, string galleryId)
@@ -64,7 +65,9 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             return NotFound();
         }
+        #endregion
 
+        #region tags
         [HttpDelete("/api/galleries/remove-tag")]
         [Authorize(Roles = "Administrator,Photographer")]
         public async Task<ActionResult> RemoveTag(string categoryId, string galleryId, string tag)
@@ -88,6 +91,7 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             return Ok($"{tag} tag removed from all gallery images");
         }
+        #endregion
 
         [Authorize(Roles = "Administrator,Photographer")]
         [HttpPut("/api/galleries/order-images")]

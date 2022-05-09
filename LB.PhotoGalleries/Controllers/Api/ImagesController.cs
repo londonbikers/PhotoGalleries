@@ -168,6 +168,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             return Ok();
         }
 
+        #region comments
         [Authorize]
         [HttpPost("/api/images/comments")]
         public async Task<ActionResult> CreateComment(string galleryId, string imageId)
@@ -221,7 +222,9 @@ namespace LB.PhotoGalleries.Controllers.Api
 
             return NotFound();
         }
+        #endregion
 
+        #region tags
         [HttpPost("/api/images/add-tag")]
         [Authorize(Roles = "Administrator,Photographer")]
         public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
@@ -271,6 +274,7 @@ namespace LB.PhotoGalleries.Controllers.Api
             await Server.Instance.Images.UpdateImageAsync(image);
             return Ok();
         }
+        #endregion
 
         [HttpPost("/api/images/replace-image")]
         [Authorize(Roles = "Administrator,Photographer")]
