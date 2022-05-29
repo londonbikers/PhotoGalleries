@@ -11,7 +11,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Imageflow.NativeRuntime.ubuntu_16_04-x86_64" Version="1.5.8-rc62" />
     <PackageReference Include="Imageflow.Server" Version="0.6.5" />
     <PackageReference Include="Imageflow.Server.HybridCache" Version="0.6.5" />
     <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.6.5" />

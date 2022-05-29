@@ -9,7 +9,6 @@
 	<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.27.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.24" />
     <PackageReference Include="Serilog" Version="2.11.0" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LB.PhotoGalleries.Models\LB.PhotoGalleries.Models.csproj" />
