@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs.Models;
+using Imageflow.Fluent;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Models.Exceptions;
@@ -57,7 +58,7 @@ namespace LB.PhotoGalleries.Application.Servers
                 if (string.IsNullOrEmpty(filename))
                     throw new ArgumentNullException(nameof(filename));
 
-                CheckImageDimensions(imageStream);
+                await CheckImageDimensionsAsync(imageStream);
 
                 if (image == null)
                 {
@@ -932,19 +933,19 @@ namespace LB.PhotoGalleries.Application.Servers
         /// <summary>
         /// Checks if an uploaded image meets the minimum dimensions. Will throw a ImageTooSmallException if not.
         /// </summary>
-        private static void CheckImageDimensions(Stream imageStream)
+        private static async Task CheckImageDimensionsAsync(Stream imageStream)
         {
-            var image = System.Drawing.Image.FromStream(imageStream);
-            var orientation = image.Width >= image.Height
+            var info = await ImageJob.GetImageInfo(new BytesSource(Utilities.ConvertStreamToBytes(imageStream)));
+            var orientation = info.ImageWidth >= info.ImageHeight
                 ? ImageOrientation.Landscape
                 : ImageOrientation.Portrait;
 
-            var imageTooSmallErrorMessage = $"Image must be equal or bigger than 800px on the longest side. Detected size {image.Width}x{image.Height}";
+            var imageTooSmallErrorMessage = $"Image must be equal or bigger than 800px on the longest side. Detected size {info.ImageWidth}x{info.ImageHeight}";
             switch (orientation)
             {
-                case ImageOrientation.Landscape when image.Width < 800:
+                case ImageOrientation.Landscape when info.ImageWidth < 800:
                     throw new ImageTooSmallException(imageTooSmallErrorMessage);
-                case ImageOrientation.Portrait when image.Height < 800:
+                case ImageOrientation.Portrait when info.ImageHeight < 800:
                     throw new ImageTooSmallException(imageTooSmallErrorMessage);
             }
 

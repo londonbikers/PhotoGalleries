@@ -12,9 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Imageflow.NativeRuntime.ubuntu_16_04-x86_64" Version="1.5.8-rc62" />
-    <PackageReference Include="Imageflow.Server" Version="0.6.3" />
-    <PackageReference Include="Imageflow.Server.HybridCache" Version="0.6.3" />
-    <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.6.3" />
+    <PackageReference Include="Imageflow.Server" Version="0.6.5" />
+    <PackageReference Include="Imageflow.Server.HybridCache" Version="0.6.5" />
+    <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.6.5" />
     <PackageReference Include="Mailjet.Api" Version="2.0.2" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.20.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.1.24" />

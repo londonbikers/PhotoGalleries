@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Imageflow.Net" Version="0.7.24" />
+    <PackageReference Include="Imageflow.Net" Version="0.8.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
