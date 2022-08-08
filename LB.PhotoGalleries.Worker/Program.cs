@@ -284,7 +284,19 @@ namespace LB.PhotoGalleries.Worker
                 var containerClient = _blobServiceClient.GetBlobContainerClient(imageFileSpec.ContainerName);
                 var uploadStopwatch = new Stopwatch();
                 uploadStopwatch.Start();
-                await containerClient.UploadBlobAsync(storageId, imageFile);
+
+                try
+                {
+                    await containerClient.UploadBlobAsync(storageId, imageFile);
+                }
+                catch (Azure.RequestFailedException e) when (e.Message == "The specified blob already exists.")
+                {
+                    // remove the existing blob and re-try
+                    await containerClient.DeleteBlobAsync(storageId);
+                    await containerClient.UploadBlobAsync(storageId, imageFile);
+                    _log.Warning("LB.PhotoGalleries.Worker.Program.ProcessImageAsync(): Existing blob found. Deleted and uploaded new blob");
+                }                
+                
                 uploadStopwatch.Stop();
 
                 _log.Information($"LB.PhotoGalleries.Worker.Program.ProcessImageAsync() - Upload blob elapsed time: {uploadStopwatch.ElapsedMilliseconds}ms");
