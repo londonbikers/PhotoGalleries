@@ -289,12 +289,13 @@ namespace LB.PhotoGalleries.Worker
                 {
                     await containerClient.UploadBlobAsync(storageId, imageFile);
                 }
-                catch (Azure.RequestFailedException e) when (e.Message == "The specified blob already exists.")
+                catch (Exception ex)
                 {
-                    // remove the existing blob and re-try
+                    // trying to catch a blob already exists issue...
                     await containerClient.DeleteBlobAsync(storageId);
-                    await containerClient.UploadBlobAsync(storageId, imageFile);
-                    _log.Warning("LB.PhotoGalleries.Worker.Program.ProcessImageAsync(): Existing blob found. Deleted and uploaded new blob");
+                    image.Position = 0;
+                    await containerClient.UploadBlobAsync(storageId, imageFile);                        
+                    _log.Warning(ex, "LB.PhotoGalleries.Worker.Program.ProcessImageAsync(): Suspected existing blob found. Deleted previous blob and uploaded new one");
                 }                
                 
                 uploadStopwatch.Stop();
