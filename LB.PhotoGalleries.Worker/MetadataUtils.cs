@@ -29,7 +29,7 @@ namespace LB.PhotoGalleries.Worker
         /// <param name="imageBytes">The byte array containing the recently-uploaded image file to inspect for metadata.</param>
         /// <param name="overwriteImageProperties">Specifies whether or not to update image properties from metadata that already have values.</param>
         /// <param name="log">Optionally pass in an ILogger instance to enable internal logging</param>
-        public static async Task ParseAndAssignImageMetadata(Image image, byte[] imageBytes, bool overwriteImageProperties, ILogger log = null)
+        public static async Task ParseAndAssignImageMetadataAsync(Image image, byte[] imageBytes, bool overwriteImageProperties, ILogger log = null)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();

@@ -242,7 +242,7 @@ namespace LB.PhotoGalleries.Worker
                 ProcessImageAsync(image, imageBytes, spec).GetAwaiter().GetResult();
             });
 
-            MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties, _log);
+            await MetadataUtils.ParseAndAssignImageMetadataAsync(image, imageBytes, message.OverwriteImageProperties, _log);
             await UpdateImageAsync(image);
 
             // pre-cache the image so it renders instantly for visitors
@@ -475,7 +475,7 @@ namespace LB.PhotoGalleries.Worker
 
             var image = await GetImageAsync(message.ImageId, message.GalleryId);
             var imageBytes = await GetImageBytesAsync(image);
-            MetadataUtils.ParseAndAssignImageMetadata(image, imageBytes, message.OverwriteImageProperties);
+            MetadataUtils.ParseAndAssignImageMetadataAsync(image, imageBytes, message.OverwriteImageProperties);
             await UpdateImageAsync(image);
 
             _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id}");
