@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.4.2" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
     <PackageReference Include="Imageflow.Net" Version="0.7.6" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.13.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.8" />
