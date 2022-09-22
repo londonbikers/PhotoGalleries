@@ -67,8 +67,18 @@ namespace LB.PhotoGalleries.Worker
                 // set the message queue listener
                 var queueName = _configuration["Storage:ImageProcessingQueueName"];
                 _queueClient = new QueueClient(_configuration["Storage:ConnectionString"], queueName);
-                int.TryParse(_configuration["Storage:MessageBatchSize"], out var messageBatchSize);
-                int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
+                if (!int.TryParse(_configuration["Storage:MessageBatchSize"], out var messageBatchSize))
+                {
+                    _log.Fatal("Storage:ConnectionString config key could not be parsed.");
+                    return;
+                }
+
+                if (!int.TryParse(_configuration["Storage:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins))
+                {
+                    _log.Fatal("Storage:MessageBatchVisibilityTimeoutMins config key could not be parsed.");
+                    return;
+                }
+
                 if (!await _queueClient.ExistsAsync())
                 {
                     _log.Fatal($"LB.PhotoGalleries.Worker.Program.Main() - {queueName} queue does not exist. Cannot continue.");
@@ -126,15 +136,19 @@ namespace LB.PhotoGalleries.Worker
         #region initialisation methods
         private static void InitialiseConfiguration(string[] args)
         {
+            Console.WriteLine("InitialiseConfiguration: Starting");
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(args[0], optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .AddCommandLine(args)
                 .Build();
+
+            Console.WriteLine("InitialiseConfiguration: Complete");
         }
 
         private static void InitialiseLogging()
         {
+            Console.WriteLine("InitialiseLogging: Starting...");
             var loggerConfiguration = new LoggerConfiguration();
             var loggingMinimumLevel = _configuration["Logging:MinimumLevel"];
             switch (loggingMinimumLevel)
@@ -488,7 +502,7 @@ namespace LB.PhotoGalleries.Worker
 
             var image = await GetImageAsync(message.ImageId, message.GalleryId);
             var imageBytes = await GetImageBytesAsync(image);
-            MetadataUtils.ParseAndAssignImageMetadataAsync(image, imageBytes, message.OverwriteImageProperties);
+            await MetadataUtils.ParseAndAssignImageMetadataAsync(image, imageBytes, message.OverwriteImageProperties);
             await UpdateImageAsync(image);
 
             _log.Information($"LB.PhotoGalleries.Worker.Program.ReprocessImageMetadataAsync() - Reprocessed metadata on image {image.Id}");
