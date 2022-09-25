@@ -2,6 +2,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
 
 namespace LB.PhotoGalleries
@@ -12,7 +13,8 @@ namespace LB.PhotoGalleries
         {
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
-                .WriteTo.Console()
+                .Enrich.WithMachineName()
+                .WriteTo.Async(a => a.Console(theme: AnsiConsoleTheme.Code))
                 .CreateBootstrapLogger();
 
             try
