@@ -102,7 +102,7 @@ namespace LB.PhotoGalleries.ComparisonTool
                     table.AddColumn("Size (kb)");
 
                     ProcessInputFileAsync(file, specs, outputPath, table, overallProgress).GetAwaiter().GetResult();
-                    AnsiConsole.Render(table);
+                    AnsiConsole.Write(table);
                 });
             });
 
@@ -192,7 +192,7 @@ namespace LB.PhotoGalleries.ComparisonTool
             }
 
             individualImageStopwatch.Stop();
-            AnsiConsole.Render(new Markup("[bold red]Something went wrong with an image generation.[/]"));
+            AnsiConsole.Write(new Markup("[bold red]Something went wrong with an image generation.[/]"));
             return null;
         }
     }
