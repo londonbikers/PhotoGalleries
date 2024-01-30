@@ -1,13 +1,12 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
-using LB.PhotoGalleries.Models.Enums;
 using LB.PhotoGalleries.Shared;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace LB.PhotoGalleries
 {

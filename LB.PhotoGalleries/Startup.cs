@@ -74,7 +74,7 @@ namespace LB.PhotoGalleries
                 // ensures that the name claim is used to populate ASP.NET Identity username, i.e. User.Identity.Name
                 options.TokenValidationParameters.NameClaimType = "name";
 
-                // ensures that role any claims are used to populate ASP.NET Identity roles
+                // ensures that any role claims are used to populate ASP.NET Identity roles (centralised entitlement management)
                 options.ClaimActions.MapJsonKey("role", "role", "role");
                 options.TokenValidationParameters.RoleClaimType = "role";
 
@@ -86,7 +86,7 @@ namespace LB.PhotoGalleries
             services.Configure<RequestLocalizationOptions>(options =>
             {
                 options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
-                options.SupportedCultures = new List<CultureInfo> { new CultureInfo("en-GB"), new CultureInfo("en-GB") };
+                options.SupportedCultures = new List<CultureInfo> { new("en-GB"), new("en-GB") };
             });
 
             // the site can be configured to require a staff role to access the entire site.
@@ -131,7 +131,7 @@ namespace LB.PhotoGalleries
                     // How much RAM to use for the write queue before switching to synchronous writes
                     QueueSizeLimitInBytes = queueSizeLimitInBytes,
 
-                    // The maximum size of the cache
+                    // The maximum size of the cache on disk
                     CacheSizeLimitInBytes = cacheSizeLimitInBytes,
                 });
             }
@@ -141,7 +141,6 @@ namespace LB.PhotoGalleries
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        // ReSharper disable once UnusedMember.Global
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -226,8 +225,6 @@ namespace LB.PhotoGalleries
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
-
-            
         }
     }
 }
