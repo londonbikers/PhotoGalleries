@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -58,10 +59,11 @@ namespace LB.PhotoGalleries
             .AddCookie("Cookies")
             .AddOpenIdConnect("oidc", options =>
             {
-                // idp configuration (implicit grant type)
+                // idp configuration (hybrid flow)
                 options.Authority = Configuration["Authentication:Authority"];
                 options.ClientId = Configuration["Authentication:ClientId"];
                 options.ClientSecret = Configuration["Authentication:ClientSecret"];
+                options.ResponseType = "code id_token";
 
                 // token and claim configuration
                 options.SaveTokens = true;
@@ -79,13 +81,13 @@ namespace LB.PhotoGalleries
                 options.TokenValidationParameters.RoleClaimType = "role";
 
                 // create a user object in our database the first time they login
-                // or update them if claims/attributes change
+                // or update them if their claims change
                 options.Events.OnTicketReceived = async ctx => { await UserManagement.UpdateUserFromClaimsAsync(ctx); };
             });
 
             services.Configure<RequestLocalizationOptions>(options =>
             {
-                options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en-GB");
+                options.DefaultRequestCulture = new RequestCulture("en-GB");
                 options.SupportedCultures = new List<CultureInfo> { new("en-GB"), new("en-GB") };
             });
 
@@ -143,6 +145,7 @@ namespace LB.PhotoGalleries
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // needed when running behind a reverse proxy (NGINX in our case)
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
