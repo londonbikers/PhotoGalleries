@@ -1,10 +1,9 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum SearchResultsType
 {
-    public enum SearchResultsType
-    {
-        All,
-        Categories,
-        Galleries,
-        Images
-    }
+    All,
+    Categories,
+    Galleries,
+    Images
 }

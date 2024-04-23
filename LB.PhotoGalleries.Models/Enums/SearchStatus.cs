@@ -1,9 +1,8 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum SearchStatus
 {
-    public enum SearchStatus
-    {
-        NotSpecified,
-        Active,
-        Inactive
-    }
+    NotSpecified,
+    Active,
+    Inactive
 }

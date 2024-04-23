@@ -1,10 +1,9 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum QueryRange
 {
-    public enum QueryRange
-    {
-        Forever,
-        LastYear,
-        LastMonth,
-        LastWeek
-    }
+    Forever,
+    LastYear,
+    LastMonth,
+    LastWeek
 }

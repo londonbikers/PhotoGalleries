@@ -1,8 +1,7 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum WorkerOperation
 {
-    public enum WorkerOperation
-    {
-        Process,
-        ReprocessMetadata
-    }
+    Process,
+    ReprocessMetadata
 }

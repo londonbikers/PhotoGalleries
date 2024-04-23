@@ -8,90 +8,89 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace LB.PhotoGalleries.Controllers
+namespace LB.PhotoGalleries.Controllers;
+
+public class GalleriesController : Controller
 {
-    public class GalleriesController : Controller
+    #region members
+    private readonly IConfiguration _configuration;
+    #endregion
+
+    #region constructors
+    public GalleriesController(IConfiguration configuration)
     {
-        #region members
-        private readonly IConfiguration _configuration;
-        #endregion
+        _configuration = configuration;
+    }
+    #endregion
 
-        #region constructors
-        public GalleriesController(IConfiguration configuration)
+    // GET: /g/<category>/<galleryId>/<name>
+    public async Task<ActionResult> Details(string categoryName, string galleryId, string name)
+    {
+        ViewData["Configuration"] = _configuration;
+        var decodedCategoryName = Helpers.DecodeParameterFromUrl(categoryName);
+        var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(decodedCategoryName, StringComparison.CurrentCultureIgnoreCase));
+        if (category == null)
+            return RedirectToAction("Index");
+
+        var gallery = await Server.Instance.Galleries.GetGalleryAsync(category.Id, galleryId);
+        if (gallery == null)
+            return RedirectToAction("Index");
+
+        var images = Utilities.OrderImages(await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id)).ToList();
+        ViewData["images"] = images;
+
+        if (gallery.CreatedByUserId.HasValue())
         {
-            _configuration = configuration;
+            // migrated galleries won't have a user id
+            ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
         }
-        #endregion
 
-        // GET: /g/<category>/<galleryId>/<name>
-        public async Task<ActionResult> Details(string categoryName, string galleryId, string name)
+        ViewData.Model = gallery;
+
+        long pixels = 0;
+        foreach (var image in (List<Image>) ViewData["images"])
+            if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
+                pixels += image.Metadata.Width.Value * image.Metadata.Height.Value;
+
+        var megapixels = Convert.ToInt32(pixels / 1000000);
+        ViewData["megapixels"] = megapixels;
+
+        // build the open-graph model to enable great presentation when pages are indexed/shared
+        var openGraphModel = new OpenGraphModel {Title = gallery.Name, Url = Request.GetRawUrl().AbsoluteUri};
+        if (images.Count > 0)
         {
-            ViewData["Configuration"] = _configuration;
-            var decodedCategoryName = Helpers.DecodeParameterFromUrl(categoryName);
-            var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(decodedCategoryName, StringComparison.CurrentCultureIgnoreCase));
-            if (category == null)
-                return RedirectToAction("Index");
-
-            var gallery = await Server.Instance.Galleries.GetGalleryAsync(category.Id, galleryId);
-            if (gallery == null)
-                return RedirectToAction("Index");
-
-            var images = Utilities.OrderImages(await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id)).ToList();
-            ViewData["images"] = images;
-
-            if (gallery.CreatedByUserId.HasValue())
+            var image = images.SingleOrDefault(i => i.Position == 0) ?? images[0];
+            var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{image.Files.OriginalId}" };
+            if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
             {
-                // migrated galleries won't have a user id
-                ViewData["user"] = await Server.Instance.Users.GetUserAsync(gallery.CreatedByUserId);
-            }
+                int width;
+                int height;
 
-            ViewData.Model = gallery;
-
-            long pixels = 0;
-            foreach (var image in (List<Image>) ViewData["images"])
-                if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
-                    pixels += image.Metadata.Width.Value * image.Metadata.Height.Value;
-
-            var megapixels = Convert.ToInt32(pixels / 1000000);
-            ViewData["megapixels"] = megapixels;
-
-            // build the open-graph model to enable great presentation when pages are indexed/shared
-            var openGraphModel = new OpenGraphModel {Title = gallery.Name, Url = Request.GetRawUrl().AbsoluteUri};
-            if (images.Count > 0)
-            {
-                var image = images.SingleOrDefault(i => i.Position == 0) ?? images[0];
-                var openGraphImage = new OpenGraphModel.OpenGraphImageModel { Url = $"{_configuration["BaseUrl"]}diog/{image.Files.OriginalId}" };
-                if (image.Metadata.Width.HasValue && image.Metadata.Height.HasValue)
+                if (image.Metadata.Width > image.Metadata.Height)
                 {
-                    int width;
-                    int height;
-
-                    if (image.Metadata.Width > image.Metadata.Height)
-                    {
-                        width = 2048;
-                        var dHeight = (decimal)image.Metadata.Height / ((decimal)image.Metadata.Width / (decimal)2048);
-                        height = (int)Math.Round(dHeight);
-                    }
-                    else
-                    {
-                        height = 2048;
-                        var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)2048);
-                        width = (int)Math.Round(dWidth);
-                    }
-
-                    openGraphImage.Width = width;
-                    openGraphImage.Height = height;
-                    openGraphImage.ContentType = OpenGraphModel.OpenGraphImageContentTypes.Jpeg;
+                    width = 2048;
+                    var dHeight = (decimal)image.Metadata.Height / ((decimal)image.Metadata.Width / (decimal)2048);
+                    height = (int)Math.Round(dHeight);
+                }
+                else
+                {
+                    height = 2048;
+                    var dWidth = (decimal)image.Metadata.Width / ((decimal)image.Metadata.Height / (decimal)2048);
+                    width = (int)Math.Round(dWidth);
                 }
 
-                openGraphModel.Images.Add(openGraphImage);
+                openGraphImage.Width = width;
+                openGraphImage.Height = height;
+                openGraphImage.ContentType = OpenGraphModel.OpenGraphImageContentTypes.Jpeg;
             }
 
-            if (!string.IsNullOrEmpty(gallery.Description))
-                openGraphModel.Description = Helpers.GetFirstParagraph(gallery.Description);
-            ViewData["openGraphModel"] = openGraphModel;
-
-            return View();
+            openGraphModel.Images.Add(openGraphImage);
         }
+
+        if (!string.IsNullOrEmpty(gallery.Description))
+            openGraphModel.Description = Helpers.GetFirstParagraph(gallery.Description);
+        ViewData["openGraphModel"] = openGraphModel;
+
+        return View();
     }
 }

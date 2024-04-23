@@ -13,6 +13,7 @@
     var firstParagraph = Helpers.GetFirstParagraph(Model.Description);
     var subsequentParagraphs = Helpers.GetSubsequentParagraphs(Model.Description);
     var userId = Helpers.GetUserId(User);
+    System.Diagnostics.Debug.Assert(User.Identity != null, "User.Identity != null");
     var user = User.Identity.IsAuthenticated ? await Server.Instance.Users.GetUserAsync(userId) : null;
     var subscribeToCommentRepliesParam = user != null && galleryUser?.CommunicationPreferences != null && galleryUser.CommunicationPreferences.ReceiveCommentNotifications ? " checked=\"checked\"" : null;
     var userIsSubscribedToCommentReplies = user != null && Model.UserCommentSubscriptions.Contains(user.Id);
@@ -161,8 +162,8 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Comments.Count})));
-        var galleryId = '@Model.Id';
+        const payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Comments.Count})));
+        const galleryId = '@Model.Id';
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {
@@ -173,8 +174,8 @@
 
             self.CreateComment = function ()
             {
-                var comment = $("#comment-postbox").val();
-                var receiveNotifications = $("#get-notifications").prop("checked") === true;
+                const comment = $("#comment-postbox").val();
+                const receiveNotifications = $("#get-notifications").prop("checked") === true;
 
                 if (comment === '') {
                     console.log("CreateComment: no comment supplied.");

@@ -1,13 +1,12 @@
 ﻿using LB.PhotoGalleries.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LB.PhotoGalleries.Controllers.Components
+namespace LB.PhotoGalleries.Controllers.Components;
+
+public class SearchPaginatorViewComponent : ViewComponent
 {
-    public class SearchPaginatorViewComponent : ViewComponent
+    public IViewComponentResult Invoke(SearchPagedResultSet searchPagedResultSet)
     {
-        public IViewComponentResult Invoke(SearchPagedResultSet searchPagedResultSet)
-        {
-            return View(searchPagedResultSet);
-        }
+        return View(searchPagedResultSet);
     }
 }

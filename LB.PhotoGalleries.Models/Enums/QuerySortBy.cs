@@ -1,9 +1,8 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum QuerySortBy
 {
-    public enum QuerySortBy
-    {
-        DateCreated,
-        Popularity,
-        Comments
-    }
+    DateCreated,
+    Popularity,
+    Comments
 }

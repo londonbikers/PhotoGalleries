@@ -1,6 +1,6 @@
 ﻿namespace LB.PhotoGalleries.Models.Utilities
 {
-    public class Constants
+    public static class Constants
     {
         public static string UsersContainerName => "Users";
         public static string GalleriesContainerName => "Galleries";

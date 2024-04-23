@@ -1,8 +1,7 @@
-﻿namespace LB.PhotoGalleries.Models
+﻿namespace LB.PhotoGalleries.Models;
+
+public class EmailPreferencesModel
 {
-    public class EmailPreferencesModel
-    {
-        public bool ReceiveCommentNotifications { get; set; }
-        public bool EmailPreferencesUpdated { get; set; }
-    }
+    public bool ReceiveCommentNotifications { get; set; }
+    public bool EmailPreferencesUpdated { get; set; }
 }

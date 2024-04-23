@@ -1,9 +1,8 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum OrderBy
 {
-    public enum OrderBy
-    {
-        Name,
-        Filename,
-        TakenDate
-    }
+    Name,
+    Filename,
+    TakenDate
 }

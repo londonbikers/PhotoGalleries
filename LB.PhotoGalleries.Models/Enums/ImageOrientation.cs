@@ -1,8 +1,7 @@
-﻿namespace LB.PhotoGalleries.Models.Enums
+﻿namespace LB.PhotoGalleries.Models.Enums;
+
+public enum ImageOrientation
 {
-    public enum ImageOrientation
-    {
-        Landscape,
-        Portrait
-    }
+    Landscape,
+    Portrait
 }
