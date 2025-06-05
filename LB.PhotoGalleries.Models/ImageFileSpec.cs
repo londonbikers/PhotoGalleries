@@ -92,7 +92,7 @@ public class ImageFileSpec
         if (string.IsNullOrEmpty(image.Files.OriginalId))
             throw new ArgumentException("image.Files.OriginalId is empty!");
 
-        // take the id from the original image, as when we allow image-replacements, the the original image id will change
+        // take the id from the original image, as when we allow image-replacements, the original image id will change
         // and so all new generated images need to change name as well to break client caches.
         var id = Path.GetFileNameWithoutExtension(image.Files.OriginalId);
         if (FileSpecFormat == FileSpecFormat.Jpeg)
