@@ -43,7 +43,7 @@ namespace LB.PhotoGalleries.CommentCounter
             _galleriesContainer = _database.GetContainer(Constants.GalleriesContainerName);
 
             // query the database for galleries without CommentCount, set their values to zero
-            const string galleryQuery = "SELECT g.id, g.CategoryId FROM Galleries g WHERE NOT IS_DEFINED(g.CommentComment)";
+            const string galleryQuery = "SELECT g.id, g.CategoryId FROM Galleries g WHERE NOT IS_DEFINED(g.CommentCount)";
             var galleryQueryDefinition = new QueryDefinition(galleryQuery);
             Console.WriteLine("Getting gallery stubs...");
             var galleryQueryResult = _galleriesContainer.GetItemQueryIterator<GalleryCommentCountStub>(galleryQueryDefinition);
