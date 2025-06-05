@@ -15,7 +15,7 @@ A website to showcase the https://londonbikers.com photo galleries, both old and
 
 * Photo galleries
 * Gallery categories
-* Photom metadata display, i.e. camera settings
+* Photo metadata display, i.e. camera settings
 * Tag extraction from metadata
 * Tag generation via Azure Cognitive Services
 * Discourse API integration to allow cross-posting onto londonbikers.com
