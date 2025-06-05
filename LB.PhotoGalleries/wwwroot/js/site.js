@@ -49,8 +49,8 @@ function EncodeParamForUrl(parameter)
     // remove some characters
     parameter = parameter.replace(/\(|\)|'|@|#/g, "");
 
-    // replace hyphens with underscores
-    parameter = parameter.replace("-", "_");
+    // replace hyphens with underscores (all occurrences)
+    parameter = parameter.replace(/-/g, "_");
 
     // replace others with hyphens
     parameter = parameter.replace(/-| |\.|\//g, "-");
@@ -148,7 +148,7 @@ function IsMobileDevice() {
 }
 
 function GetBackgroundImage(image) {
-    if (image.LowResStorageId !== null) {
+    if (image?.Files?.SpecLowResId) {
         return `url(/dilr/${image.Files.SpecLowResId})`;
     }
     return null;
