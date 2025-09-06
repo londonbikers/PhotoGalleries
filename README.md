@@ -27,7 +27,7 @@ Photos will need migrating from both our archive and the current LB photos websi
 
 ## Development approach:
 
-Due to limited development resources/time, the focus will be on quick development, implementing things as simply as possible and adding sophistication as and when needed. i.e. please don't judge the code for it not being at enterprise level just yet :-)
+Due to limited development resources/time, the focus will be on quick development, implementing things as simply as possible and adding sophistication as and when needed. i.e. please don't judge the code for it not being at enterprise level just yet :)
 
 ## Website Structure:
 
