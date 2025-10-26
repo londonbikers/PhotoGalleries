@@ -31,16 +31,16 @@ Due to limited development resources/time, the focus will be on quick developmen
 
 ## Website Structure:
 
-| path | description |
-|---|---|
-|/|latest galleries + intro|
-|/categories|list of categories|
-|/categories/{name}|category detail page|
-|/galleries/{id}/{name}|gallery detail|
-|/admin|admin landing page|
-|/admin/categories|categories list|
-|/admin/categories/new|create a new category|
-|/admin/categories/{id}|category detail page|
-|/admin/galleries|gallery list|
-|/admin/galleries/new|create a new gallery|
-|/admin/galleries/{id}|gallery detail|
+| path                      | description              |
+|---------------------------|--------------------------|
+| `/`                       | latest galleries + intro |
+| `/categories`             | list of categories       |
+| `/categories/{name}`      | category detail page     |
+| `/galleries/{id}/{name}`  | gallery detail           |
+| `/admin`                  | admin landing page       |
+| `/admin/categories`       | categories list          |
+| `/admin/categories/new`   | create a new category    |
+| `/admin/categories/{id}`  | category detail page     |
+| `/admin/galleries`        | gallery list             |
+| `/admin/galleries/new`    | create a new gallery     |
+| `/admin/galleries/{id}`   | gallery detail           |
