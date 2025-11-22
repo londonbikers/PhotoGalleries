@@ -40,13 +40,29 @@ public class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .UseSerilog((context, services, configuration) => configuration
-                .ReadFrom.Configuration(context.Configuration)
-                .ReadFrom.Services(services)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.Debug()
-                .WriteTo.ApplicationInsights(new TelemetryConfiguration(context.Configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces))
+            .UseSerilog((context, services, configuration) =>
+            {
+                configuration
+                    .ReadFrom.Configuration(context.Configuration)
+                    .ReadFrom.Services(services)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.Debug();
+
+                // Only add ApplicationInsights if configured
+                var aiConnectionString = context.Configuration["ApplicationInsights:ConnectionString"];
+                var aiInstrumentationKey = context.Configuration["ApplicationInsights:InstrumentationKey"];
+                if (!string.IsNullOrEmpty(aiConnectionString) || !string.IsNullOrEmpty(aiInstrumentationKey))
+                {
+                    var telemetryConfig = new TelemetryConfiguration();
+                    if (!string.IsNullOrEmpty(aiConnectionString))
+                        telemetryConfig.ConnectionString = aiConnectionString;
+                    else if (!string.IsNullOrEmpty(aiInstrumentationKey))
+                        telemetryConfig.ConnectionString = $"InstrumentationKey={aiInstrumentationKey}";
+
+                    configuration.WriteTo.ApplicationInsights(telemetryConfig, TelemetryConverter.Traces);
+                }
+            })
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>();

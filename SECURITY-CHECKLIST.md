@@ -5,9 +5,9 @@ This document tracks security issues, dependency updates, and technical improvem
 ## 🚨 IMMEDIATE ACTION REQUIRED
 
 ### Framework & Support
-- [ ] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
-  - [ ] Update all `.csproj` files from `net6.0` to `net9.0`
-  - [ ] Test application thoroughly in dev environment
+- [x] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
+  - [x] Update all `.csproj` files from `net6.0` to `net9.0`
+  - [x] Test application thoroughly in dev environment
   - [ ] Update CI/CD pipelines
   - [ ] Update Azure Web App runtime stack
 

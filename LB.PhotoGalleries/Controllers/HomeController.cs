@@ -69,7 +69,7 @@ public class HomeController : Controller
     /// Signs the user out. If the user access another page that requires authorisation then they'll be asked to authenticate again.
     /// </summary>
     [Authorize]
-    public async Task SignOut()
+    public new async Task SignOut()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignOutAsync("oidc");
