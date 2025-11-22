@@ -19,13 +19,13 @@ This document tracks security issues, dependency updates, and technical improvem
   - Fix: Added per-object authorization checks to verify user owns the gallery
   - Also fixed: AddTag, AddTags, and RemoveTag methods had the same vulnerability
 
-- [ ] **Fix Cross-Site Scripting (XSS) Vulnerabilities** (HIGH PRIORITY)
-  - [ ] Add HTML encoding for `Image.Name` in views
-  - [ ] Add HTML encoding for `Image.Caption` in views (Details.cshtml:93)
-  - [ ] Add HTML encoding for `Image.Credit` in views
-  - [ ] Replace `Html.Raw()` for Gallery descriptions with sanitized rendering
-  - [ ] Add HTML encoding for `Comment.Text`
-  - [ ] Implement allowlist-based HTML sanitization library (e.g., HtmlSanitizer)
+- [x] **Fix Cross-Site Scripting (XSS) Vulnerabilities** (HIGH PRIORITY)
+  - [x] Add HTML encoding for `Image.Name` in views
+  - [x] Add HTML encoding for `Image.Caption` in views (Details.cshtml:93)
+  - [x] Add HTML encoding for `Image.Credit` in views
+  - [x] Replace `Html.Raw()` for Category descriptions with sanitised rendering
+  - [x] Add HTML encoding for `Comment.Text`
+  - [ ] Consider implementing allowlist-based HTML sanitisation library (e.g., HtmlSanitizer) if rich text formatting is needed for descriptions
 
 ## 🔴 HIGH PRIORITY
 
