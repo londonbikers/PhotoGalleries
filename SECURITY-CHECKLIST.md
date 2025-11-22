@@ -24,8 +24,11 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] Add HTML encoding for `Image.Caption` in views (Details.cshtml:93)
   - [x] Add HTML encoding for `Image.Credit` in views
   - [x] Replace `Html.Raw()` for Category descriptions with sanitised rendering
-  - [x] Add HTML encoding for `Comment.Text`
-  - [ ] Consider implementing allowlist-based HTML sanitisation library (e.g., HtmlSanitizer) if rich text formatting is needed for descriptions
+  - [x] Add HTML encoding for `Comment.Text` (user comments remain fully encoded)
+  - [x] Implemented HtmlSanitizer library for photographer/admin content (Image.Name, Caption, Credit, Category.Description)
+    - Allows safe HTML tags (p, br, strong, b, em, i, u, a) whilst preventing XSS
+    - Preserves existing HTML formatting from legacy data
+    - User-generated comments remain fully HTML-encoded for maximum security
 
 ## 🔴 HIGH PRIORITY
 

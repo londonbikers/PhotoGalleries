@@ -1,6 +1,8 @@
-﻿using LB.PhotoGalleries.Application;
+﻿using Ganss.Xss;
+using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Shared;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
@@ -194,6 +196,42 @@ public class Helpers
     {
         var galleryUrl = GetFullGalleryUrl(config, gallery);
         return $"{galleryUrl}#c{commentCreated.Ticks}";
+    }
+
+    /// <summary>
+    /// Sanitises HTML content to prevent XSS attacks whilst allowing safe HTML tags.
+    /// Returns an HtmlString that can be rendered in Razor views.
+    /// </summary>
+    public static IHtmlContent SanitiseHtml(string html)
+    {
+        if (string.IsNullOrEmpty(html))
+            return new HtmlString(string.Empty);
+
+        var sanitiser = new HtmlSanitizer();
+
+        // Configure allowed tags (basic formatting only)
+        sanitiser.AllowedTags.Clear();
+        sanitiser.AllowedTags.Add("p");
+        sanitiser.AllowedTags.Add("br");
+        sanitiser.AllowedTags.Add("strong");
+        sanitiser.AllowedTags.Add("b");
+        sanitiser.AllowedTags.Add("em");
+        sanitiser.AllowedTags.Add("i");
+        sanitiser.AllowedTags.Add("u");
+        sanitiser.AllowedTags.Add("a");
+
+        // Only allow safe attributes on links
+        sanitiser.AllowedAttributes.Clear();
+        sanitiser.AllowedAttributes.Add("href");
+        sanitiser.AllowedAttributes.Add("title");
+
+        // Ensure links open in new window and are safe
+        sanitiser.AllowedSchemes.Clear();
+        sanitiser.AllowedSchemes.Add("http");
+        sanitiser.AllowedSchemes.Add("https");
+
+        var sanitised = sanitiser.Sanitize(html);
+        return new HtmlString(sanitised);
     }
 
     #region private methods

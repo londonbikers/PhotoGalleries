@@ -10,6 +10,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
     <PackageReference Include="Imageflow.Server" Version="0.8.3" />
     <PackageReference Include="Imageflow.Server.HybridCache" Version="0.8.3" />
     <PackageReference Include="Imageflow.Server.Storage.AzureBlob" Version="0.8.3" />
