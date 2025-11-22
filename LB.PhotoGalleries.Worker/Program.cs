@@ -43,13 +43,6 @@ namespace LB.PhotoGalleries.Worker
 
         private static async Task Main(string[] args)
         {
-            if (args == null || args.Length == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No configuration filename argument supplied. Cannot continue.");
-                return;
-            }
-
             InitialiseConfiguration(args);
             InitialiseLogging();
 
@@ -137,12 +130,30 @@ namespace LB.PhotoGalleries.Worker
         private static void InitialiseConfiguration(string[] args)
         {
             Console.WriteLine("InitialiseConfiguration: Starting");
-            _configuration = new ConfigurationBuilder()
-                .AddJsonFile(args[0], optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .AddCommandLine(args)
-                .Build();
+            var configBuilder = new ConfigurationBuilder();
 
+            // If a config file path is provided as an argument, use it
+            if (args != null && args.Length > 0)
+            {
+                Console.WriteLine($"Using configuration file: {args[0]}");
+                configBuilder.AddJsonFile(args[0], optional: false, reloadOnChange: true);
+            }
+            else
+            {
+                // Load appsettings.json (contains default/placeholder values)
+                configBuilder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+                // Add user secrets (for local development) - these override appsettings.json values
+                configBuilder.AddUserSecrets<Program>();
+                Console.WriteLine("Using appsettings.json and user secrets for configuration");
+            }
+
+            // Add environment variables and command line args (these have highest priority)
+            configBuilder.AddEnvironmentVariables();
+            if (args != null && args.Length > 0)
+                configBuilder.AddCommandLine(args);
+
+            _configuration = configBuilder.Build();
             Console.WriteLine("InitialiseConfiguration: Complete");
         }
 
@@ -175,7 +186,21 @@ namespace LB.PhotoGalleries.Worker
 
             loggerConfiguration.WriteTo.File(Path.Combine(_configuration["Logging:Path"], "lb.photogalleries.worker.log"), rollingInterval: RollingInterval.Day);
             loggerConfiguration.WriteTo.Console();
-            loggerConfiguration.WriteTo.ApplicationInsights(new TelemetryConfiguration(_configuration["ApplicationInsights:InstrumentationKey"]), TelemetryConverter.Traces);
+
+            // Only add ApplicationInsights if configured
+            var aiConnectionString = _configuration["ApplicationInsights:ConnectionString"];
+            var aiInstrumentationKey = _configuration["ApplicationInsights:InstrumentationKey"];
+            if (!string.IsNullOrEmpty(aiConnectionString) || !string.IsNullOrEmpty(aiInstrumentationKey))
+            {
+                var telemetryConfig = new TelemetryConfiguration();
+                if (!string.IsNullOrEmpty(aiConnectionString))
+                    telemetryConfig.ConnectionString = aiConnectionString;
+                else if (!string.IsNullOrEmpty(aiInstrumentationKey))
+                    telemetryConfig.ConnectionString = $"InstrumentationKey={aiInstrumentationKey}";
+
+                loggerConfiguration.WriteTo.ApplicationInsights(telemetryConfig, TelemetryConverter.Traces);
+            }
+
             _log = loggerConfiguration.CreateLogger();
             _log.Information("Starting worker...");
         }

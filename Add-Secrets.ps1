@@ -1,11 +1,27 @@
 param(
     [Parameter(Mandatory=$true)]
-    [string]$SourceFile
+    [string]$SourceFile,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("Web", "Worker")]
+    [string]$Project
 )
+
+# Map project selection to folder path
+$projectPath = switch ($Project) {
+    "Web"    { "LB.PhotoGalleries" }
+    "Worker" { "LB.PhotoGalleries.Worker" }
+}
 
 # Verify the file exists
 if (-not (Test-Path $SourceFile)) {
     Write-Error "File not found: $SourceFile"
+    exit 1
+}
+
+# Verify the project folder exists
+if (-not (Test-Path $projectPath)) {
+    Write-Error "Project folder not found: $projectPath"
     exit 1
 }
 
@@ -47,8 +63,8 @@ function Get-FlattenedKeys {
 
 # Flatten the JSON and apply to user-secrets
 Get-FlattenedKeys -Object $json | ForEach-Object {
-    dotnet user-secrets set $_.Key $_.Value
+    dotnet user-secrets set $_.Key $_.Value --project $projectPath
     Write-Host "Set: $($_.Key)" -ForegroundColor Green
 }
 
-Write-Host "`nSuccessfully imported secrets from $SourceFile" -ForegroundColor Cyan
+Write-Host "`nSuccessfully imported secrets from $SourceFile to $Project project ($projectPath)" -ForegroundColor Cyan

@@ -21,6 +21,20 @@
             }
         },
         {
+            "name": ".NET Core Launch (Worker)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/LB.PhotoGalleries.Worker/bin/Debug/net9.0/LB.PhotoGalleries.Worker.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/LB.PhotoGalleries.Worker",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            }
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
