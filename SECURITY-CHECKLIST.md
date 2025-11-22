@@ -102,46 +102,46 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Dependency Updates (Medium Priority)
 
-- [ ] **Update Azure SDK Packages**
-  - [ ] `Azure.Storage.Blobs` 12.19.1 → 12.26.0
-  - [ ] `Azure.Storage.Queues` 12.17.1 → 12.24.0
-  - [ ] `Microsoft.Azure.Cosmos` 3.39.1 → 3.55.0
+- [x] **Update Azure SDK Packages**
+  - [x] `Azure.Storage.Blobs` 12.19.1 → 12.26.0
+  - [x] `Azure.Storage.Queues` 12.17.1 → 12.24.0
+  - [x] `Microsoft.Azure.Cosmos` 3.39.1 → 3.55.0
 
-- [ ] **Update Serilog Packages**
-  - [ ] `Serilog` 3.1.1 → 4.3.0
-  - [ ] `Serilog.AspNetCore` 6.1.0 → 9.0.0
-  - [ ] `Serilog.Enrichers.Environment` 2.3.0 → 3.0.1
-  - [ ] `Serilog.Sinks.ApplicationInsights` 4.0.0 → 4.1.0
-  - [ ] `Serilog.Sinks.Async` 1.5.0 → 2.1.0
-  - [ ] `Serilog.Sinks.Console` 5.0.1 → 6.1.1
-  - [ ] `Serilog.Sinks.Debug` 2.0.0 → 3.0.0
-  - [ ] `Serilog.Sinks.File` 5.0.0 → 7.0.0
+- [x] **Update Serilog Packages**
+  - [x] `Serilog` 3.1.1 → 4.3.0
+  - [x] `Serilog.AspNetCore` 6.1.0 → 9.0.0
+  - [x] `Serilog.Enrichers.Environment` 2.3.0 → 3.0.1
+  - [x] `Serilog.Sinks.ApplicationInsights` 4.0.0 → 4.1.0
+  - [x] `Serilog.Sinks.Async` 1.5.0 → 2.1.0
+  - [x] `Serilog.Sinks.Console` 5.0.1 → 6.1.1
+  - [x] `Serilog.Sinks.Debug` 2.0.0 → 3.0.0
+  - [x] `Serilog.Sinks.File` 5.0.0 → 7.0.0
 
-- [ ] **Update Application Insights**
-  - [ ] `Microsoft.ApplicationInsights.AspNetCore` 2.22.0 → 2.23.0
+- [x] **Update Application Insights**
+  - [x] `Microsoft.ApplicationInsights.AspNetCore` 2.22.0 → 2.23.0
 
-- [ ] **Update Other Packages**
-  - [ ] `Imageflow.Server` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Server.HybridCache` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Server.Storage.AzureBlob` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Net` 0.13.1 → 0.14.1
-  - [ ] `Newtonsoft.Json` 13.0.3 → 13.0.4
-  - [ ] `MetadataExtractor` 2.8.1 → 2.9.0
+- [x] **Update Other Packages**
+  - [x] `Imageflow.Server` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Server.HybridCache` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Server.Storage.AzureBlob` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Net` 0.13.1 → 0.14.1
+  - [ ] `Newtonsoft.Json` 13.0.3 → 13.0.4 (not found in solution)
+  - [x] `MetadataExtractor` 2.8.1 → 2.9.0 (fixed breaking change: GetGeoLocation() → TryGetGeoLocation())
 
 ## 🟢 LOW PRIORITY
 
 ### Dependency Updates
 
-- [ ] **Update Testing Packages**
-  - [ ] `Microsoft.NET.Test.Sdk` 17.6.0 → 18.0.1
-  - [ ] `xunit` 2.4.2 → 2.9.3
-  - [ ] `xunit.runner.visualstudio` 2.4.5 → 3.1.5
-  - [ ] `coverlet.collector` 6.0.0 → 6.0.4
+- [x] **Update Testing Packages**
+  - [x] `Microsoft.NET.Test.Sdk` 17.6.0 → 18.0.1
+  - [x] `xunit` 2.4.2 → 2.9.3
+  - [x] `xunit.runner.visualstudio` 2.4.5 → 3.1.5
+  - [x] `coverlet.collector` 6.0.0 → 6.0.4
 
-- [ ] **Update Other Dependencies**
-  - [ ] `Spectre.Console` 0.49.0 → 0.54.0
-  - [ ] `System.Data.SqlClient` 4.8.6 → 4.9.0
-  - [ ] `Microsoft.AspNetCore.Session` 2.2.0 → 2.3.0
+- [x] **Update Other Dependencies**
+  - [x] `Spectre.Console` 0.49.0 → 0.54.0
+  - [x] `System.Data.SqlClient` 4.8.6 → 4.9.0
+  - [ ] `Microsoft.AspNetCore.Session` 2.2.0 → 2.3.0 (already on latest available)
 
 ## 🔧 TECHNICAL DEBT & CODE QUALITY
 
