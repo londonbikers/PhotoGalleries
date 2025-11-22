@@ -406,3 +406,6 @@ ASALocalRun/
 
 # debug args etc
 LB.PhotoGalleries.Worker/Properties/launchSettings.json
+
+# Claude Code
+.claude/
