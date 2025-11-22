@@ -23,7 +23,7 @@ public class ImagesController : ControllerBase
     [Authorize(Roles = "Administrator,Photographer")]
     public async Task<ActionResult> SetPosition(string galleryId, string imageId, int position)
     {
-        // Verify the user is authorized to edit images in this gallery
+        // Verify the user is authorised to edit images in this gallery
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
         if (image == null)
             return NotFound("Image not found");
@@ -242,10 +242,10 @@ public class ImagesController : ControllerBase
         if (image == null)
             return NotFound("Image not found");
 
-        // Verify the user is authorized to edit images in this gallery
+        // Verify the user is authorised to edit images in this gallery
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
         if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
-            return Unauthorized("You are not authorized to modify images in this gallery.");
+            return Unauthorized("You are not authorised to modify images in this gallery.");
 
         if (image.TagsCsv.TagsContain(tag))
             return Ok();
@@ -269,10 +269,10 @@ public class ImagesController : ControllerBase
         if (image == null)
             return NotFound("Image not found");
 
-        // Verify the user is authorized to edit images in this gallery
+        // Verify the user is authorised to edit images in this gallery
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
         if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
-            return Unauthorized("You are not authorized to modify images in this gallery.");
+            return Unauthorized("You are not authorised to modify images in this gallery.");
 
         foreach (var tag in tags.Split(','))
         {
@@ -295,10 +295,10 @@ public class ImagesController : ControllerBase
         if (image == null)
             return NotFound("Image not found");
 
-        // Verify the user is authorized to edit images in this gallery
+        // Verify the user is authorised to edit images in this gallery
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
         if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
-            return Unauthorized("You are not authorized to modify images in this gallery.");
+            return Unauthorized("You are not authorised to modify images in this gallery.");
 
         if (!image.TagsCsv.TagsContain(tag))
             return Ok();
