@@ -64,16 +64,13 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Dependency Updates (High Priority)
 
-- [ ] **Update Authentication Packages**
-  - [ ] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 6.0.29 → 9.0.x
+- [x] **Update Authentication Packages**
+  - [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 6.0.29 → 9.0.0
   - [ ] Test authentication flow thoroughly after update
 
-- [ ] **Update Configuration Packages**
-  - [ ] `Microsoft.Extensions.Configuration` 6.0.1 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.CommandLine` 6.0.0 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.EnvironmentVariables` 6.0.1 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.Json` 6.0.0 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.UserSecrets` 6.0.1 → 9.0.x
+- [x] **Update Configuration Packages**
+  - [x] `Microsoft.Extensions.Configuration` 6.0.1 → 9.0.0
+  - Note: CommandLine, EnvironmentVariables, Json, and UserSecrets are transitive dependencies automatically updated by ASP.NET Core 9.0
 
 ## 🟡 MEDIUM PRIORITY
 
