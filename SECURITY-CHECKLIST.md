@@ -53,11 +53,14 @@ This document tracks security issues, dependency updates, and technical improvem
   - Don't rely on Referer header (easily spoofed)
   - Use authenticated session or other server-side mechanism
 
-- [ ] **Validate User Picture URLs**
-  - Location: `LB.PhotoGalleries.Application/UserManagement.cs:68`
-  - Add URL scheme validation (only allow https://)
-  - Validate Content-Type of downloaded content
-  - Add file size limits
+- [x] **Validate User Picture URLs**
+  - Location: `LB.PhotoGalleries.Application/Servers/UserServer.cs:190-269`
+  - Added URL scheme validation (only HTTPS allowed)
+  - Added Content-Type validation (only image/jpeg and image/png)
+  - Added file size limit (5MB maximum)
+  - Added file signature validation using magic numbers
+  - Added 30-second timeout to prevent hanging requests
+  - Prevents SSRF attacks, resource exhaustion, and malicious file downloads
 
 ### Dependency Updates (High Priority)
 
