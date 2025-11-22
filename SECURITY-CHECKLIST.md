@@ -13,10 +13,11 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Critical Security Vulnerabilities
 
-- [ ] **Fix Authorization in SetPosition API** (HIGH PRIORITY)
-  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:24-27`
+- [x] **Fix Authorization in SetPosition API** (HIGH PRIORITY)
+  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:24-37`
   - Issue: Any photographer can modify images in galleries they don't own
-  - Fix: Add per-object authorization check to verify user owns the gallery
+  - Fix: Added per-object authorization checks to verify user owns the gallery
+  - Also fixed: AddTag, AddTags, and RemoveTag methods had the same vulnerability
 
 - [ ] **Fix Cross-Site Scripting (XSS) Vulnerabilities** (HIGH PRIORITY)
   - [ ] Add HTML encoding for `Image.Name` in views
