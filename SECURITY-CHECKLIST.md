@@ -41,10 +41,12 @@ This document tracks security issues, dependency updates, and technical improvem
   - Validates file signatures before upload/replace operations
   - Prevents malicious files disguised as images with spoofed Content-Type headers
 
-- [ ] **Reduce ImageFlow Size Limits**
-  - Location: `LB.PhotoGalleries/Startup.cs:175-177`
-  - Change from 99999x99999 to reasonable limits (e.g., 8000x8000)
-  - Document why limits were chosen
+- [x] **Reduce ImageFlow Size Limits**
+  - Location: `LB.PhotoGalleries/Startup.cs:179-181`
+  - Changed from 99999x99999 to 16000x16000
+  - Limit accommodates professional cameras (e.g., Phase One IQ4 150MP: 14204x10652)
+  - Allows for panoramas and stitched images
+  - Prevents DoS attacks from requesting massive image resizes (256MP limit)
 
 - [ ] **Fix Watermark Bypass Vulnerability**
   - Location: `LB.PhotoGalleries.Application/ImageResizing.cs:56`

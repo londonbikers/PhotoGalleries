@@ -167,14 +167,18 @@ public class Startup
         // ImageFlow says: it's a good idea to limit image sizes for security. Requests causing these to be exceeded will fail
         // ImageFlow says: the last argument to FrameSizeLimit() is the maximum number of megapixels
         // we don't resize larger images to reduce the number of unique urls so we can increase caching hits, it's a trade off 
-        // as we increase filesize, keep the same total download time but cache more images as we are only returning about five 
+        // as we increase filesize, keep the same total download time but cache more images as we are only returning about five
         // possible image sizes rather than millions more permutations.
         // ImageFlow doesn't seem to be able to watermark images without width/height arguments, so use a RewriteHandler to ensure they're always set internally.
+        // Security: Image size limits set to 16000x16000 to accommodate professional cameras whilst preventing resource exhaustion attacks
+        // - Handles current high-end cameras (e.g., Phase One IQ4 150MP: 14204x10652)
+        // - Allows for panoramas and stitched images
+        // - Prevents DoS attacks from requesting massive image resizes
         app.UseImageflow(new ImageflowMiddlewareOptions()
             .SetJobSecurityOptions(new SecurityOptions()
-                .SetMaxDecodeSize(new FrameSizeLimit(99999, 99999, 200))
-                .SetMaxFrameSize(new FrameSizeLimit(99999, 99999, 200))
-                .SetMaxEncodeSize(new FrameSizeLimit(99999, 99999, 200)))
+                .SetMaxDecodeSize(new FrameSizeLimit(16000, 16000, 200))
+                .SetMaxFrameSize(new FrameSizeLimit(16000, 16000, 200))
+                .SetMaxEncodeSize(new FrameSizeLimit(16000, 16000, 200)))
             .SetAllowCaching(bool.Parse(Configuration["ImageFlow:ClientCachingEnabled"]))
             .SetDefaultCacheControlString("public, max-age=2592000")
             .MapPath("/local-images", Path.Combine(env.WebRootPath, "img"))
