@@ -38,6 +38,10 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
 
             var stream = file.OpenReadStream();
 
+            // Validate file signature to ensure it's actually an image
+            if (!Helpers.ValidateImageFileSignature(stream))
+                return BadRequest("Invalid file type. Only JPEG and PNG images are accepted.");
+
             try
             {
                 await Server.Instance.Images.CreateImageAsync(categoryId, galleryId, stream, file.FileName);

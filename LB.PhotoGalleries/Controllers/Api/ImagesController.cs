@@ -342,6 +342,10 @@ public class ImagesController : ControllerBase
 
         var stream = file.OpenReadStream();
 
+        // Validate file signature to ensure it's actually an image
+        if (!Helpers.ValidateImageFileSignature(stream))
+            return BadRequest("Invalid file type. Only JPEG and PNG images are accepted.");
+
         try
         {
             await Server.Instance.Images.ReplaceImageAsync(galleryCategoryId, galleryId, imageId, stream, file.FileName);

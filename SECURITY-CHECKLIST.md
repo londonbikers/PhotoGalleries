@@ -34,10 +34,12 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Security Issues
 
-- [ ] **Add File Signature Validation**
-  - Location: `LB.PhotoGalleries/Controllers/Admin/ImagesController.cs:307-308`
-  - Add magic number validation, don't rely solely on Content-Type header
-  - Verify file signatures match expected image formats
+- [x] **Add File Signature Validation**
+  - Location: `LB.PhotoGalleries/Controllers/Admin/ImagesController.cs:30` and `LB.PhotoGalleries/Controllers/API/ImagesController.cs:340`
+  - Added magic number validation for JPEG (FF D8 FF) and PNG (89 50 4E 47 0D 0A 1A 0A)
+  - Created Helpers.ValidateImageFileSignature() method to verify actual file content
+  - Validates file signatures before upload/replace operations
+  - Prevents malicious files disguised as images with spoofed Content-Type headers
 
 - [ ] **Reduce ImageFlow Size Limits**
   - Location: `LB.PhotoGalleries/Startup.cs:175-177`
