@@ -32,7 +32,12 @@ jobs:
         username: ${{ secrets.TEST_REMOTE_USER }}
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
-        script: sudo systemctl stop prod-lbp.service
+        script: |
+          if command -v sudo &> /dev/null; then
+            sudo systemctl stop prod-lbp.service || systemctl stop prod-lbp.service
+          else
+            systemctl stop prod-lbp.service
+          fi
 
     - name: Copying files to server
       uses: appleboy/scp-action@master
@@ -55,4 +60,9 @@ jobs:
         username: ${{ secrets.TEST_REMOTE_USER }}
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
-        script: sudo systemctl start prod-lbp.service
+        script: |
+          if command -v sudo &> /dev/null; then
+            sudo systemctl start prod-lbp.service || systemctl start prod-lbp.service
+          else
+            systemctl start prod-lbp.service
+          fi
