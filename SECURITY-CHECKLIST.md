@@ -80,10 +80,12 @@ This document tracks security issues, dependency updates, and technical improvem
   - jQuery configured to automatically send X-CSRF-TOKEN header with all AJAX requests
   - All API POST, PUT, DELETE endpoints protected with [ValidateAntiForgeryToken]
 
-- [ ] **Fix Comment Deletion Integrity**
-  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:191-208`
-  - Add validation that comment belongs to specified image
-  - Add integrity checks
+- [x] **Fix Comment Deletion Integrity**
+  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:204-238` and `LB.PhotoGalleries/Controllers/API/GalleriesController.cs:34-60`
+  - Added validation that image belongs to specified gallery
+  - Added validation that gallery belongs to specified category
+  - Added null checks for gallery and image
+  - Prevents manipulation of request parameters to delete comments from unrelated images/galleries
 
 - [ ] **Add Rate Limiting**
   - [ ] Implement rate limiting on comment creation endpoints

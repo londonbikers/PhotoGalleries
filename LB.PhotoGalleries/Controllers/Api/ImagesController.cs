@@ -207,7 +207,21 @@ public class ImagesController : ControllerBase
     public async Task<ActionResult> DeleteComment(string categoryId, string galleryId, string imageId, long commentCreatedTicks, string commentCreatedByUserId)
     {
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
+        if (gallery == null)
+            return NotFound("Gallery not found");
+
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+        if (image == null)
+            return NotFound("Image not found");
+
+        // Verify image belongs to the specified gallery
+        if (image.GalleryId != galleryId)
+            return BadRequest("Image does not belong to the specified gallery");
+
+        // Verify gallery belongs to the specified category
+        if (image.GalleryCategoryId != categoryId)
+            return BadRequest("Gallery does not belong to the specified category");
+
         var comment = image.Comments.SingleOrDefault(c => c.CreatedByUserId == commentCreatedByUserId && c.Created.Ticks == commentCreatedTicks);
 
         if (comment == null)
