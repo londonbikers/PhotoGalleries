@@ -16,6 +16,7 @@ public class GalleriesController : ControllerBase
     #region comments
     [Authorize]
     [HttpPost("/api/galleries/comments")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> CreateComment(string categoryId, string galleryId)
     {
         var comment = Request.Form["comment"].FirstOrDefault();
@@ -32,6 +33,7 @@ public class GalleriesController : ControllerBase
 
     [Authorize]
     [HttpDelete("/api/galleries/comments")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteComment(string categoryId, string galleryId, long commentCreatedTicks, string commentCreatedByUserId)
     {
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
@@ -52,6 +54,7 @@ public class GalleriesController : ControllerBase
 
     [Authorize]
     [HttpDelete("/api/galleries/comment-subscriptions")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteUserCommentSubscription(string categoryId, string galleryId)
     {
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
@@ -70,6 +73,7 @@ public class GalleriesController : ControllerBase
     #region tags
     [HttpDelete("/api/galleries/remove-tag")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> RemoveTag(string categoryId, string galleryId, string tag)
     {
         if (!tag.HasValue())
@@ -95,6 +99,7 @@ public class GalleriesController : ControllerBase
 
     [Authorize(Roles = "Administrator,Photographer")]
     [HttpPut("/api/galleries/order-images")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> OrderImages(string categoryId, string galleryId, string by)
     {
         if (!categoryId.HasValue())
@@ -124,6 +129,7 @@ public class GalleriesController : ControllerBase
 
     [Authorize(Roles = "Administrator,Photographer")]
     [HttpPut("/api/galleries/update-created")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> UpdateCreated(string categoryId, string galleryId, long created)
     {
         if (!categoryId.HasValue())
@@ -145,6 +151,7 @@ public class GalleriesController : ControllerBase
 
     [Authorize(Roles = "Administrator")]
     [HttpPut("/api/galleries/reprocess-metadata")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> ReprocessMetadata(string galleryId)
     {
         if (!galleryId.HasValue())

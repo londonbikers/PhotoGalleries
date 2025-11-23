@@ -71,10 +71,14 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Security Issues
 
-- [ ] **Add CSRF Protection to API Endpoints**
-  - [ ] Add `[ValidateAntiForgeryToken]` to ImagesController API methods
-  - [ ] Add `[ValidateAntiForgeryToken]` to GalleriesController API methods
-  - [ ] Update JavaScript to include anti-forgery tokens in AJAX calls
+- [x] **Add CSRF Protection to API Endpoints**
+  - [x] Add `[ValidateAntiForgeryToken]` to ImagesController API methods
+  - [x] Add `[ValidateAntiForgeryToken]` to GalleriesController API methods
+  - [x] Update JavaScript to include anti-forgery tokens in AJAX calls
+  - Implementation: Added anti-forgery configuration in [Startup.cs:50-55](LB.PhotoGalleries/Startup.cs#L50-L55)
+  - Tokens included in all pages via @Html.AntiForgeryToken() in layouts
+  - jQuery configured to automatically send X-CSRF-TOKEN header with all AJAX requests
+  - All API POST, PUT, DELETE endpoints protected with [ValidateAntiForgeryToken]
 
 - [ ] **Fix Comment Deletion Integrity**
   - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:191-208`

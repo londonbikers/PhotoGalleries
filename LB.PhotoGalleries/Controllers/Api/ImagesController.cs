@@ -21,6 +21,7 @@ public class ImagesController : ControllerBase
     /// <returns>Nothing, unless something goes wrong :)</returns>
     [HttpPost("/api/images/set-position")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> SetPosition(string galleryId, string imageId, int position)
     {
         // Verify the user is authorised to edit images in this gallery
@@ -43,6 +44,7 @@ public class ImagesController : ControllerBase
     /// <param name="galleryId">The id of the gallery to update each image for.</param>
     [HttpPost("/api/images/bulk-update")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> BulkUpdate(string categoryId, string galleryId)
     {
         if (string.IsNullOrEmpty(categoryId))
@@ -129,6 +131,7 @@ public class ImagesController : ControllerBase
     /// <param name="galleryId">The id of the gallery the images were uploaded for.</param>
     [HttpPost("/api/images/upload-complete")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> UploadComplete(string categoryId, string galleryId)
     {
         if (string.IsNullOrEmpty(categoryId))
@@ -154,6 +157,7 @@ public class ImagesController : ControllerBase
     /// <param name="galleryId">The unique identifier for the gallery to generate image files for.</param>
     [HttpPost("/api/images/generate-image-files")]
     [Authorize(Roles = "Administrator")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> GenerateImageFiles(string galleryId)
     {
         if (string.IsNullOrEmpty(galleryId))
@@ -165,6 +169,7 @@ public class ImagesController : ControllerBase
 
     [HttpPost("/api/images/delete-pregen-image-files")]
     [Authorize(Roles = "Administrator")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeletePreGenImageFiles(string categoryId, string galleryId)
     {
         if (string.IsNullOrEmpty(categoryId))
@@ -180,6 +185,7 @@ public class ImagesController : ControllerBase
     #region comments
     [Authorize]
     [HttpPost("/api/images/comments")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> CreateComment(string galleryId, string imageId)
     {
         var comment = Request.Form["comment"].FirstOrDefault();
@@ -197,6 +203,7 @@ public class ImagesController : ControllerBase
 
     [Authorize]
     [HttpDelete("/api/images/comments")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteComment(string categoryId, string galleryId, string imageId, long commentCreatedTicks, string commentCreatedByUserId)
     {
         var gallery = await Server.Instance.Galleries.GetGalleryAsync(categoryId, galleryId);
@@ -218,6 +225,7 @@ public class ImagesController : ControllerBase
 
     [Authorize]
     [HttpDelete("/api/images/comment-subscriptions")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteUserCommentSubscription(string galleryId, string imageId)
     {
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
@@ -236,6 +244,7 @@ public class ImagesController : ControllerBase
     #region tags
     [HttpPost("/api/images/add-tag")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
     {
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
@@ -257,6 +266,7 @@ public class ImagesController : ControllerBase
 
     [HttpPost("/api/images/add-tags")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> AddTags(string galleryId, string imageId, string tags)
     {
         if (!tags.HasValue())
@@ -289,6 +299,7 @@ public class ImagesController : ControllerBase
 
     [HttpDelete("/api/images/remove-tag")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> RemoveTag(string galleryId, string imageId, string tag)
     {
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
@@ -311,6 +322,7 @@ public class ImagesController : ControllerBase
 
     [HttpPost("/api/images/replace-image")]
     [Authorize(Roles = "Administrator,Photographer")]
+    [ValidateAntiForgeryToken]
     [RequestSizeLimit(104857600)]
     [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
     public async Task<ActionResult> ReplaceImage(string galleryCategoryId, string galleryId, string imageId)
@@ -365,6 +377,7 @@ public class ImagesController : ControllerBase
 
     [Authorize(Roles = "Administrator")]
     [HttpPut("/api/images/reprocess-metadata")]
+    [ValidateAntiForgeryToken]
     public async Task<ActionResult> ReprocessMetadata(string galleryId, string imageId)
     {
         if (!galleryId.HasValue())

@@ -47,6 +47,13 @@ public class Startup
         // make sure all our urls are generated in lower-case for purely aesthetic reasons
         services.Configure<RouteOptions>(o => o.LowercaseUrls = true);
 
+        // configure anti-forgery for CSRF protection
+        services.AddAntiforgery(options =>
+        {
+            // header name for AJAX requests to include the anti-forgery token
+            options.HeaderName = "X-CSRF-TOKEN";
+        });
+
         services.AddControllersWithViews();
 
         // reduces down the claims received

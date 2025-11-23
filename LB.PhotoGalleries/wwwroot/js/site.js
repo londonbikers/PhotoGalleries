@@ -5,6 +5,20 @@
 
 var _longDateFormat = "Do MMMM YYYY, hh:mm";
 
+// --[ CSRF PROTECTION ]-----------------------------------------------------------------------------------
+
+// Configure jQuery to automatically include the anti-forgery token in all AJAX requests
+$(function() {
+    var token = $('input[name="__RequestVerificationToken"]').val();
+    if (token) {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            }
+        });
+    }
+});
+
 // -- [ FUNCTIONS ]----------------------------------------------------------------------------------------
 
 function DoesBrowserSupportWebP() {
