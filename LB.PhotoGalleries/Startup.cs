@@ -41,6 +41,7 @@ public class Startup
         {
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.IsEssential = true;
         });
 
@@ -63,7 +64,12 @@ public class Startup
                 options.DefaultScheme = "Cookies";
                 options.DefaultChallengeScheme = "oidc";
             })
-            .AddCookie("Cookies")
+            .AddCookie("Cookies", options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            })
             .AddOpenIdConnect("oidc", options =>
             {
                 // idp configuration (hybrid flow)

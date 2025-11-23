@@ -97,9 +97,12 @@ This document tracks security issues, dependency updates, and technical improvem
   - Consider reducing from 100MB to more reasonable limit
   - Implement per-user quota system
 
-- [ ] **Add Cookie SameSite Attribute**
-  - Location: `LB.PhotoGalleries/Startup.cs:40-45`
-  - Add `SameSite = SameSiteMode.Strict` or `Lax` to session cookies
+- [x] **Add Cookie SameSite Attribute**
+  - Location: `LB.PhotoGalleries/Startup.cs:40-46` and `LB.PhotoGalleries/Startup.cs:67-72`
+  - Added `SameSite = SameSiteMode.Lax` to session cookies
+  - Added `SameSite = SameSiteMode.Lax` to authentication cookies
+  - Also added `HttpOnly` and `SecurePolicy.Always` to authentication cookies
+  - Using Lax instead of Strict to ensure OAuth/OIDC authentication flows work correctly
 
 ### Dependency Updates (Medium Priority)
 
