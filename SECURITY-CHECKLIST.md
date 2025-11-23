@@ -8,8 +8,8 @@ This document tracks security issues, dependency updates, and technical improvem
 - [x] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
   - [x] Update all `.csproj` files from `net6.0` to `net9.0`
   - [x] Test application thoroughly in dev environment
-  - [ ] Update CI/CD pipelines
-  - [ ] Update Azure Web App runtime stack
+  - [x] Update CI/CD pipelines (GitHub Actions workflows updated to .NET 9.0)
+  - [ ] Update Azure Web App runtime stack (manual Azure Portal configuration required)
 
 ### Critical Security Vulnerabilities
 
