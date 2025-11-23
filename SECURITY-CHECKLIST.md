@@ -48,11 +48,6 @@ This document tracks security issues, dependency updates, and technical improvem
   - Allows for panoramas and stitched images
   - Prevents DoS attacks from requesting massive image resizes (256MP limit)
 
-- [ ] **Fix Watermark Bypass Vulnerability**
-  - Location: `LB.PhotoGalleries.Application/ImageResizing.cs:56`
-  - Don't rely on Referer header (easily spoofed)
-  - Use authenticated session or other server-side mechanism
-
 - [x] **Validate User Picture URLs**
   - Location: `LB.PhotoGalleries.Application/Servers/UserServer.cs:190-269`
   - Added URL scheme validation (only HTTPS allowed)
