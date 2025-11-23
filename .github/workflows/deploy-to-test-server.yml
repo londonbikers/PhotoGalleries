@@ -34,7 +34,7 @@ jobs:
         username: ${{ secrets.TEST_REMOTE_USER }}
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
-        strip_components: 7
+        strip_components: 10
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net9.0/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
         overwrite: true
