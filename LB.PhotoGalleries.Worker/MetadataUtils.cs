@@ -134,8 +134,7 @@ public class MetadataUtils
         }
 
         var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
-        var location = gpsDirectory?.GetGeoLocation();
-        if (location != null)
+        if (gpsDirectory != null && gpsDirectory.TryGetGeoLocation(out var location))
         {
             image.Metadata.LocationLatitude = location.Latitude;
             image.Metadata.LocationLongitude = location.Longitude;

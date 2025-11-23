@@ -21,10 +21,19 @@ public class ImagesController : ControllerBase
     /// <returns>Nothing, unless something goes wrong :)</returns>
     [HttpPost("/api/images/set-position")]
     [Authorize(Roles = "Administrator,Photographer")]
-    public async Task SetPosition(string galleryId, string imageId, int position)
+    public async Task<ActionResult> SetPosition(string galleryId, string imageId, int position)
     {
-        // todo: check that the user is authorised to edit this image once caching is in place and such checks are cheap to perform
+        // Verify the user is authorised to edit images in this gallery
+        var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+        if (image == null)
+            return NotFound("Image not found");
+
+        var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
+        if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+            return Unauthorized("You are not authorised to modify images in this gallery.");
+
         await Server.Instance.Images.UpdateImagePositionAsync(galleryId, imageId, position);
+        return Ok();
     }
 
     /// <summary>
@@ -230,6 +239,14 @@ public class ImagesController : ControllerBase
     public async Task<ActionResult> AddTag(string galleryId, string imageId, string tag)
     {
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+        if (image == null)
+            return NotFound("Image not found");
+
+        // Verify the user is authorised to edit images in this gallery
+        var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
+        if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+            return Unauthorized("You are not authorised to modify images in this gallery.");
+
         if (image.TagsCsv.TagsContain(tag))
             return Ok();
 
@@ -249,6 +266,14 @@ public class ImagesController : ControllerBase
             return BadRequest("tags does not contain multiple items");
 
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+        if (image == null)
+            return NotFound("Image not found");
+
+        // Verify the user is authorised to edit images in this gallery
+        var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
+        if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+            return Unauthorized("You are not authorised to modify images in this gallery.");
+
         foreach (var tag in tags.Split(','))
         {
             var processedTag = tag.Trim().ToLower();
@@ -257,7 +282,7 @@ public class ImagesController : ControllerBase
 
             image.TagsCsv = Utilities.AddTagToCsv(image.TagsCsv, processedTag);
         }
-            
+
         await Server.Instance.Images.UpdateImageAsync(image);
         return Ok();
     }
@@ -267,6 +292,14 @@ public class ImagesController : ControllerBase
     public async Task<ActionResult> RemoveTag(string galleryId, string imageId, string tag)
     {
         var image = await Server.Instance.Images.GetImageAsync(galleryId, imageId);
+        if (image == null)
+            return NotFound("Image not found");
+
+        // Verify the user is authorised to edit images in this gallery
+        var gallery = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
+        if (!Helpers.CanUserEditObject(User, gallery.CreatedByUserId))
+            return Unauthorized("You are not authorised to modify images in this gallery.");
+
         if (!image.TagsCsv.TagsContain(tag))
             return Ok();
 
@@ -308,6 +341,10 @@ public class ImagesController : ControllerBase
             return BadRequest($"Sorry, content type of {file.ContentType} is not accepted.");
 
         var stream = file.OpenReadStream();
+
+        // Validate file signature to ensure it's actually an image
+        if (!Helpers.ValidateImageFileSignature(stream))
+            return BadRequest("Invalid file type. Only JPEG and PNG images are accepted.");
 
         try
         {

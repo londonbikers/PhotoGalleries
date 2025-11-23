@@ -8,7 +8,7 @@
 
 <div class="text-center">
     <h4 class="display-4">@ViewData.Model.Name</h4>
-    <div class="text-format text-link">@Html.Raw(ViewData.Model.Description)</div>
+    <div class="text-format text-link">@Helpers.SanitiseHtml(ViewData.Model.Description)</div>
 
     <div class="row mb-3 mt-3">
         <div class="col">

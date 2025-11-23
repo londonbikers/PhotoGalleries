@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (web)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/LB.PhotoGalleries/bin/Debug/net9.0/LB.PhotoGalleries.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/LB.PhotoGalleries",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "https://localhost:44343"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bContent root path:\\s+(.+)",
+                "uriFormat": "https://localhost:44343"
+            }
+        },
+        {
+            "name": ".NET Core Launch (Worker)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/LB.PhotoGalleries.Worker/bin/Debug/net9.0/LB.PhotoGalleries.Worker.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/LB.PhotoGalleries.Worker",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

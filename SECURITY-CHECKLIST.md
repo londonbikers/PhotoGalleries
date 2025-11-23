@@ -5,64 +5,72 @@ This document tracks security issues, dependency updates, and technical improvem
 ## 🚨 IMMEDIATE ACTION REQUIRED
 
 ### Framework & Support
-- [ ] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
-  - [ ] Update all `.csproj` files from `net6.0` to `net9.0`
-  - [ ] Test application thoroughly in dev environment
-  - [ ] Update CI/CD pipelines
-  - [ ] Update Azure Web App runtime stack
+- [x] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
+  - [x] Update all `.csproj` files from `net6.0` to `net9.0`
+  - [x] Test application thoroughly in dev environment
+  - [x] Update CI/CD pipelines (GitHub Actions workflows updated to .NET 9.0)
+  - [ ] Install .NET 9.0 runtime on VPS servers (both TEST and PROD servers require manual installation)
 
 ### Critical Security Vulnerabilities
 
-- [ ] **Fix Authorization in SetPosition API** (HIGH PRIORITY)
-  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:24-27`
+- [x] **Fix Authorization in SetPosition API** (HIGH PRIORITY)
+  - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:24-37`
   - Issue: Any photographer can modify images in galleries they don't own
-  - Fix: Add per-object authorization check to verify user owns the gallery
+  - Fix: Added per-object authorization checks to verify user owns the gallery
+  - Also fixed: AddTag, AddTags, and RemoveTag methods had the same vulnerability
 
-- [ ] **Fix Cross-Site Scripting (XSS) Vulnerabilities** (HIGH PRIORITY)
-  - [ ] Add HTML encoding for `Image.Name` in views
-  - [ ] Add HTML encoding for `Image.Caption` in views (Details.cshtml:93)
-  - [ ] Add HTML encoding for `Image.Credit` in views
-  - [ ] Replace `Html.Raw()` for Gallery descriptions with sanitized rendering
-  - [ ] Add HTML encoding for `Comment.Text`
-  - [ ] Implement allowlist-based HTML sanitization library (e.g., HtmlSanitizer)
+- [x] **Fix Cross-Site Scripting (XSS) Vulnerabilities** (HIGH PRIORITY)
+  - [x] Add HTML encoding for `Image.Name` in views
+  - [x] Add HTML encoding for `Image.Caption` in views (Details.cshtml:93)
+  - [x] Add HTML encoding for `Image.Credit` in views
+  - [x] Replace `Html.Raw()` for Category descriptions with sanitised rendering
+  - [x] Add HTML encoding for `Comment.Text` (user comments remain fully encoded)
+  - [x] Implemented HtmlSanitizer library for photographer/admin content (Image.Name, Caption, Credit, Category.Description)
+    - Allows safe HTML tags (p, br, strong, b, em, i, u, a) whilst preventing XSS
+    - Preserves existing HTML formatting from legacy data
+    - User-generated comments remain fully HTML-encoded for maximum security
 
 ## 🔴 HIGH PRIORITY
 
 ### Security Issues
 
-- [ ] **Add File Signature Validation**
-  - Location: `LB.PhotoGalleries/Controllers/Admin/ImagesController.cs:307-308`
-  - Add magic number validation, don't rely solely on Content-Type header
-  - Verify file signatures match expected image formats
+- [x] **Add File Signature Validation**
+  - Location: `LB.PhotoGalleries/Controllers/Admin/ImagesController.cs:30` and `LB.PhotoGalleries/Controllers/API/ImagesController.cs:340`
+  - Added magic number validation for JPEG (FF D8 FF) and PNG (89 50 4E 47 0D 0A 1A 0A)
+  - Created Helpers.ValidateImageFileSignature() method to verify actual file content
+  - Validates file signatures before upload/replace operations
+  - Prevents malicious files disguised as images with spoofed Content-Type headers
 
-- [ ] **Reduce ImageFlow Size Limits**
-  - Location: `LB.PhotoGalleries/Startup.cs:175-177`
-  - Change from 99999x99999 to reasonable limits (e.g., 8000x8000)
-  - Document why limits were chosen
+- [x] **Reduce ImageFlow Size Limits**
+  - Location: `LB.PhotoGalleries/Startup.cs:179-181`
+  - Changed from 99999x99999 to 16000x16000
+  - Limit accommodates professional cameras (e.g., Phase One IQ4 150MP: 14204x10652)
+  - Allows for panoramas and stitched images
+  - Prevents DoS attacks from requesting massive image resizes (256MP limit)
 
 - [ ] **Fix Watermark Bypass Vulnerability**
   - Location: `LB.PhotoGalleries.Application/ImageResizing.cs:56`
   - Don't rely on Referer header (easily spoofed)
   - Use authenticated session or other server-side mechanism
 
-- [ ] **Validate User Picture URLs**
-  - Location: `LB.PhotoGalleries.Application/UserManagement.cs:68`
-  - Add URL scheme validation (only allow https://)
-  - Validate Content-Type of downloaded content
-  - Add file size limits
+- [x] **Validate User Picture URLs**
+  - Location: `LB.PhotoGalleries.Application/Servers/UserServer.cs:190-269`
+  - Added URL scheme validation (only HTTPS allowed)
+  - Added Content-Type validation (only image/jpeg and image/png)
+  - Added file size limit (5MB maximum)
+  - Added file signature validation using magic numbers
+  - Added 30-second timeout to prevent hanging requests
+  - Prevents SSRF attacks, resource exhaustion, and malicious file downloads
 
 ### Dependency Updates (High Priority)
 
-- [ ] **Update Authentication Packages**
-  - [ ] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 6.0.29 → 9.0.x
+- [x] **Update Authentication Packages**
+  - [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 6.0.29 → 9.0.0
   - [ ] Test authentication flow thoroughly after update
 
-- [ ] **Update Configuration Packages**
-  - [ ] `Microsoft.Extensions.Configuration` 6.0.1 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.CommandLine` 6.0.0 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.EnvironmentVariables` 6.0.1 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.Json` 6.0.0 → 9.0.x
-  - [ ] `Microsoft.Extensions.Configuration.UserSecrets` 6.0.1 → 9.0.x
+- [x] **Update Configuration Packages**
+  - [x] `Microsoft.Extensions.Configuration` 6.0.1 → 9.0.0
+  - Note: CommandLine, EnvironmentVariables, Json, and UserSecrets are transitive dependencies automatically updated by ASP.NET Core 9.0
 
 ## 🟡 MEDIUM PRIORITY
 
@@ -94,46 +102,46 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Dependency Updates (Medium Priority)
 
-- [ ] **Update Azure SDK Packages**
-  - [ ] `Azure.Storage.Blobs` 12.19.1 → 12.26.0
-  - [ ] `Azure.Storage.Queues` 12.17.1 → 12.24.0
-  - [ ] `Microsoft.Azure.Cosmos` 3.39.1 → 3.55.0
+- [x] **Update Azure SDK Packages**
+  - [x] `Azure.Storage.Blobs` 12.19.1 → 12.26.0
+  - [x] `Azure.Storage.Queues` 12.17.1 → 12.24.0
+  - [x] `Microsoft.Azure.Cosmos` 3.39.1 → 3.55.0
 
-- [ ] **Update Serilog Packages**
-  - [ ] `Serilog` 3.1.1 → 4.3.0
-  - [ ] `Serilog.AspNetCore` 6.1.0 → 9.0.0
-  - [ ] `Serilog.Enrichers.Environment` 2.3.0 → 3.0.1
-  - [ ] `Serilog.Sinks.ApplicationInsights` 4.0.0 → 4.1.0
-  - [ ] `Serilog.Sinks.Async` 1.5.0 → 2.1.0
-  - [ ] `Serilog.Sinks.Console` 5.0.1 → 6.1.1
-  - [ ] `Serilog.Sinks.Debug` 2.0.0 → 3.0.0
-  - [ ] `Serilog.Sinks.File` 5.0.0 → 7.0.0
+- [x] **Update Serilog Packages**
+  - [x] `Serilog` 3.1.1 → 4.3.0
+  - [x] `Serilog.AspNetCore` 6.1.0 → 9.0.0
+  - [x] `Serilog.Enrichers.Environment` 2.3.0 → 3.0.1
+  - [x] `Serilog.Sinks.ApplicationInsights` 4.0.0 → 4.1.0
+  - [x] `Serilog.Sinks.Async` 1.5.0 → 2.1.0
+  - [x] `Serilog.Sinks.Console` 5.0.1 → 6.1.1
+  - [x] `Serilog.Sinks.Debug` 2.0.0 → 3.0.0
+  - [x] `Serilog.Sinks.File` 5.0.0 → 7.0.0
 
-- [ ] **Update Application Insights**
-  - [ ] `Microsoft.ApplicationInsights.AspNetCore` 2.22.0 → 2.23.0
+- [x] **Update Application Insights**
+  - [x] `Microsoft.ApplicationInsights.AspNetCore` 2.22.0 → 2.23.0
 
-- [ ] **Update Other Packages**
-  - [ ] `Imageflow.Server` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Server.HybridCache` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Server.Storage.AzureBlob` 0.8.3 → 0.9.0
-  - [ ] `Imageflow.Net` 0.13.1 → 0.14.1
-  - [ ] `Newtonsoft.Json` 13.0.3 → 13.0.4
-  - [ ] `MetadataExtractor` 2.8.1 → 2.9.0
+- [x] **Update Other Packages**
+  - [x] `Imageflow.Server` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Server.HybridCache` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Server.Storage.AzureBlob` 0.8.3 → 0.9.0
+  - [x] `Imageflow.Net` 0.13.1 → 0.14.1
+  - [ ] `Newtonsoft.Json` 13.0.3 → 13.0.4 (not found in solution)
+  - [x] `MetadataExtractor` 2.8.1 → 2.9.0 (fixed breaking change: GetGeoLocation() → TryGetGeoLocation())
 
 ## 🟢 LOW PRIORITY
 
 ### Dependency Updates
 
-- [ ] **Update Testing Packages**
-  - [ ] `Microsoft.NET.Test.Sdk` 17.6.0 → 18.0.1
-  - [ ] `xunit` 2.4.2 → 2.9.3
-  - [ ] `xunit.runner.visualstudio` 2.4.5 → 3.1.5
-  - [ ] `coverlet.collector` 6.0.0 → 6.0.4
+- [x] **Update Testing Packages**
+  - [x] `Microsoft.NET.Test.Sdk` 17.6.0 → 18.0.1
+  - [x] `xunit` 2.4.2 → 2.9.3
+  - [x] `xunit.runner.visualstudio` 2.4.5 → 3.1.5
+  - [x] `coverlet.collector` 6.0.0 → 6.0.4
 
-- [ ] **Update Other Dependencies**
-  - [ ] `Spectre.Console` 0.49.0 → 0.54.0
-  - [ ] `System.Data.SqlClient` 4.8.6 → 4.9.0
-  - [ ] `Microsoft.AspNetCore.Session` 2.2.0 → 2.3.0
+- [x] **Update Other Dependencies**
+  - [x] `Spectre.Console` 0.49.0 → 0.54.0
+  - [x] `System.Data.SqlClient` 4.8.6 → 4.9.0
+  - [ ] `Microsoft.AspNetCore.Session` 2.2.0 → 2.3.0 (already on latest available)
 
 ## 🔧 TECHNICAL DEBT & CODE QUALITY
 

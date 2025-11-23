@@ -1,10 +1,13 @@
-﻿using LB.PhotoGalleries.Application;
+﻿using Ganss.Xss;
+using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Shared;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 
@@ -194,6 +197,54 @@ public class Helpers
     {
         var galleryUrl = GetFullGalleryUrl(config, gallery);
         return $"{galleryUrl}#c{commentCreated.Ticks}";
+    }
+
+    /// <summary>
+    /// Sanitises HTML content to prevent XSS attacks whilst allowing safe HTML tags.
+    /// Returns an HtmlString that can be rendered in Razor views.
+    /// </summary>
+    public static IHtmlContent SanitiseHtml(string html)
+    {
+        if (string.IsNullOrEmpty(html))
+            return new HtmlString(string.Empty);
+
+        var sanitiser = new HtmlSanitizer();
+
+        // Configure allowed tags (basic formatting only)
+        sanitiser.AllowedTags.Clear();
+        sanitiser.AllowedTags.Add("p");
+        sanitiser.AllowedTags.Add("br");
+        sanitiser.AllowedTags.Add("strong");
+        sanitiser.AllowedTags.Add("b");
+        sanitiser.AllowedTags.Add("em");
+        sanitiser.AllowedTags.Add("i");
+        sanitiser.AllowedTags.Add("u");
+        sanitiser.AllowedTags.Add("a");
+
+        // Only allow safe attributes on links
+        sanitiser.AllowedAttributes.Clear();
+        sanitiser.AllowedAttributes.Add("href");
+        sanitiser.AllowedAttributes.Add("title");
+
+        // Ensure links open in new window and are safe
+        sanitiser.AllowedSchemes.Clear();
+        sanitiser.AllowedSchemes.Add("http");
+        sanitiser.AllowedSchemes.Add("https");
+
+        var sanitised = sanitiser.Sanitize(html);
+        return new HtmlString(sanitised);
+    }
+
+    /// <summary>
+    /// Validates that a file's magic number (file signature) matches an expected image format.
+    /// This prevents malicious files being uploaded disguised as images by checking actual file content,
+    /// not just the HTTP Content-Type header which can be spoofed.
+    /// </summary>
+    /// <param name="stream">The file stream to validate. Stream position will be reset to 0 after validation.</param>
+    /// <returns>True if the file signature matches a valid image format (JPEG, PNG), false otherwise.</returns>
+    public static bool ValidateImageFileSignature(Stream stream)
+    {
+        return Utilities.ValidateImageFileSignature(stream);
     }
 
     #region private methods

@@ -192,6 +192,20 @@ public class UserServer
         if (user.Picture.HasValue() && user.Picture.Equals(originalPictureUrl, StringComparison.CurrentCultureIgnoreCase))
             return;
 
+        // Security: Validate the picture URL before downloading to prevent SSRF attacks
+        if (!Uri.TryCreate(originalPictureUrl, UriKind.Absolute, out var pictureUri))
+        {
+            Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - Invalid URL format: {originalPictureUrl}");
+            return;
+        }
+
+        // Security: Only allow HTTPS URLs to prevent man-in-the-middle attacks
+        if (pictureUri.Scheme != Uri.UriSchemeHttps)
+        {
+            Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - Only HTTPS URLs are allowed. Rejected: {originalPictureUrl}");
+            return;
+        }
+
         // picture URL is different, download and store it
         var containerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageUserPicturesContainerName);
 
@@ -207,9 +221,43 @@ public class UserServer
         fileId = $"{user.Id}-{DateTime.Now.Ticks}.jpg";
         using var client = new HttpClient();
 
+        // Security: Set reasonable timeout and size limits to prevent resource exhaustion
+        client.Timeout = TimeSpan.FromSeconds(30);
+
         try
         {
-            await using var imageStream = await client.GetStreamAsync(originalPictureUrl);
+            // Security: Download with validation
+            using var response = await client.GetAsync(originalPictureUrl, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            // Security: Validate Content-Type is an image
+            var contentType = response.Content.Headers.ContentType?.MediaType;
+            if (string.IsNullOrEmpty(contentType) ||
+                (!contentType.StartsWith("image/jpeg", StringComparison.OrdinalIgnoreCase) &&
+                 !contentType.StartsWith("image/png", StringComparison.OrdinalIgnoreCase) &&
+                 !contentType.StartsWith("image/jpg", StringComparison.OrdinalIgnoreCase)))
+            {
+                Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - Invalid content type: {contentType}. Only JPEG and PNG images are allowed.");
+                return;
+            }
+
+            // Security: Validate content length to prevent resource exhaustion (max 5MB)
+            const long maxFileSize = 5 * 1024 * 1024;
+            if (response.Content.Headers.ContentLength.HasValue && response.Content.Headers.ContentLength.Value > maxFileSize)
+            {
+                Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - File too large: {response.Content.Headers.ContentLength.Value} bytes. Maximum allowed: {maxFileSize} bytes.");
+                return;
+            }
+
+            await using var imageStream = await response.Content.ReadAsStreamAsync();
+
+            // Security: Validate file signature to ensure it's actually an image
+            if (!Utilities.ValidateImageFileSignature(imageStream))
+            {
+                Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - Invalid file signature. File is not a valid JPEG or PNG image.");
+                return;
+            }
+
             await containerClient.UploadBlobAsync(fileId, imageStream);
             user.PictureHostedUrl = containerClient.Uri + "/" + fileId;
             user.Picture = originalPictureUrl;

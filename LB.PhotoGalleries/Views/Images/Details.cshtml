@@ -81,7 +81,7 @@
                 <a asp-area="Admin" asp-controller="Images" asp-action="Edit" asp-route-categoryId="@Model.GalleryCategoryId" asp-route-galleryId="@Model.GalleryId" asp-route-imageId="@Model.Id" title="Edit Photo"><img src="/img/edit.svg" width="20" class="image-fade" /></a>
             </div>
         }
-        <h6>@Model.Name</h6>
+        <h6>@Helpers.SanitiseHtml(Model.Name)</h6>
         <div>
             Shown in: 
             <a asp-controller="Categories" asp-action="Details" asp-route-name="@Helpers.EncodeParamForUrl(category.Name)">@category.Name</a> /
@@ -90,7 +90,7 @@
 
         @if (!string.IsNullOrEmpty(Model.Caption))
         {
-            <div class="text-format text-link">@Model.Caption</div>
+            <div class="text-format text-link">@Helpers.SanitiseHtml(Model.Caption)</div>
         }
 
         @if (Model.TagsCsv.HasValue())
@@ -98,7 +98,7 @@
             <div class="mt-1">
                 @foreach (var tag in Model.TagsCsv.Split(","))
                 {
-                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@tag" class="badge badge-secondary">@tag</a>
+                    <a asp-controller="Tags" asp-action="Details" asp-route-tag="@tag" class="badge badge-secondary">@Html.Encode(tag)</a>
                 }
             </div>
         }
@@ -111,7 +111,7 @@
                     {
                         <text>Credit: </text>
                     }
-                    @Model.Credit
+                    @Helpers.SanitiseHtml(Model.Credit)
                 </small>
             </div>
         }
@@ -255,7 +255,7 @@
                                 <a href="javascript:void(0)" data-bind="click: function() { DeleteComment('@comment.Created.Ticks', '@comment.CreatedByUserId') }">delete</a>
                             }
                         </div>
-                        <div class="pt-2 text-format no-float text-link">@comment.Text</div>
+                        <div class="pt-2 text-format no-float text-link">@Html.Encode(comment.Text)</div>
                     </div>
                 </div>
             }

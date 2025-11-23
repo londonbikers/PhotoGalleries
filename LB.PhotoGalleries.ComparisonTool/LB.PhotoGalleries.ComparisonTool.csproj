@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="Imageflow.Server" Version="0.8.3" />
-    <PackageReference Include="Spectre.Console" Version="0.49.0" />
+    <PackageReference Include="Imageflow.Server" Version="0.9.0" />
+    <PackageReference Include="Spectre.Console" Version="0.54.0" />
   </ItemGroup>
 
   <ItemGroup>
