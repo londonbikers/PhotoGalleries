@@ -61,7 +61,7 @@ This document tracks security issues, dependency updates, and technical improvem
 
 - [x] **Update Authentication Packages**
   - [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 6.0.29 → 9.0.0
-  - [ ] Test authentication flow thoroughly after update
+  - [x] Test authentication flow thoroughly after update - Completed, no issues found
 
 - [x] **Update Configuration Packages**
   - [x] `Microsoft.Extensions.Configuration` 6.0.1 → 9.0.0
@@ -87,15 +87,15 @@ This document tracks security issues, dependency updates, and technical improvem
   - Added null checks for gallery and image
   - Prevents manipulation of request parameters to delete comments from unrelated images/galleries
 
-- [ ] **Add Rate Limiting**
-  - [ ] Implement rate limiting on comment creation endpoints
-  - [ ] Consider adding CAPTCHA for public comment forms
-  - [ ] Add rate limiting middleware to API endpoints
+- [ ] **Add Rate Limiting** (DEFERRED)
+  - Decision: Not implementing at this time
+  - Rationale: Low traffic volume, CSRF protection already in place, can revisit if abuse occurs
 
-- [ ] **Reduce Upload Size Limits**
+- [ ] **Reduce Upload Size Limits** (NOT IMPLEMENTING)
   - Location: `LB.PhotoGalleries/Controllers/Admin/ImagesController.cs:281-282`
-  - Consider reducing from 100MB to more reasonable limit
-  - Implement per-user quota system
+  - Decision: Keeping 100MB limit as-is
+  - Rationale: Ability to handle very large professional photos is a feature strength
+  - Current limit appropriate for professional photography use case
 
 - [x] **Add Cookie SameSite Attribute**
   - Location: `LB.PhotoGalleries/Startup.cs:40-46` and `LB.PhotoGalleries/Startup.cs:67-72`
@@ -230,8 +230,13 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Notes
 - .NET 9.0 upgrade completed and deployed to production (2025-01-23)
-- All immediate security vulnerabilities addressed
+- Worker VPS upgraded to .NET 9.0 runtime (2025-01-23)
+- All immediate and high-priority security vulnerabilities addressed
+- All medium-priority security issues completed
 - Both TEST and PROD environments running .NET 9.0 successfully
+- Authentication flow tested and working correctly after OpenIdConnect package update
+- Rate limiting deferred - current traffic volume doesn't warrant implementation
+- Upload size limits kept at 100MB - appropriate for professional photography use case
 - No known CVEs in current dependencies (as of review date)
 - Application shows good engineering practices overall
-- Focus remaining work on medium-priority security hardening and technical debt
+- Remaining work: Low-priority technical debt and architectural improvements
