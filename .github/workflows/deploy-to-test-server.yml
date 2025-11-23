@@ -26,6 +26,16 @@ jobs:
     - name: Remove server specific config files
       run: sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net9.0/publish/appsettings*
 
+    - name: Stop service before deployment
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.TEST_REMOTE_HOST }}
+        port: ${{ secrets.TEST_PORT }}
+        username: ${{ secrets.TEST_REMOTE_USER }}
+        key: ${{ secrets.TEST_SSH_KEY }}
+        passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
+        script: sudo systemctl stop test-lbp.service
+
     - name: Copying files to server
       uses: appleboy/scp-action@master
       with:
@@ -38,3 +48,13 @@ jobs:
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net9.0/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
         overwrite: true
+
+    - name: Restart service after deployment
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.TEST_REMOTE_HOST }}
+        port: ${{ secrets.TEST_PORT }}
+        username: ${{ secrets.TEST_REMOTE_USER }}
+        key: ${{ secrets.TEST_SSH_KEY }}
+        passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
+        script: sudo systemctl start test-lbp.service
