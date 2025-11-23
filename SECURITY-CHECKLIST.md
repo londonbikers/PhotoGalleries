@@ -9,7 +9,7 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] Update all `.csproj` files from `net6.0` to `net9.0`
   - [x] Test application thoroughly in dev environment
   - [x] Update CI/CD pipelines (GitHub Actions workflows updated to .NET 9.0)
-  - [ ] Update Azure Web App runtime stack (manual Azure Portal configuration required)
+  - [ ] Install .NET 9.0 runtime on VPS servers (both TEST and PROD servers require manual installation)
 
 ### Critical Security Vulnerabilities
 
