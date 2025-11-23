@@ -9,7 +9,7 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] Update all `.csproj` files from `net6.0` to `net9.0`
   - [x] Test application thoroughly in dev environment
   - [x] Update CI/CD pipelines (GitHub Actions workflows updated to .NET 9.0)
-  - [ ] Install .NET 9.0 runtime on VPS servers (both TEST and PROD servers require manual installation)
+  - [x] Install .NET 9.0 runtime on VPS servers (both TEST and PROD servers now running .NET 9.0)
 
 ### Critical Security Vulnerabilities
 
@@ -221,11 +221,13 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Review Dates
 - Initial Review: 2025-01-22
-- Last Updated: 2025-01-22
+- Last Updated: 2025-01-23
 - Next Review: _TBD_
 
 ### Notes
-- .NET 6.0 reached end of support on November 12, 2024
+- .NET 9.0 upgrade completed and deployed to production (2025-01-23)
+- All immediate security vulnerabilities addressed
+- Both TEST and PROD environments running .NET 9.0 successfully
 - No known CVEs in current dependencies (as of review date)
 - Application shows good engineering practices overall
-- Focus on security hardening before production deployment
+- Focus remaining work on medium-priority security hardening and technical debt
