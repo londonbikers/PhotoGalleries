@@ -79,6 +79,10 @@ This document tracks security issues, dependency updates, and technical improvem
   - Tokens included in all pages via @Html.AntiForgeryToken() in layouts
   - jQuery configured to automatically send X-CSRF-TOKEN header with all AJAX requests
   - All API POST, PUT, DELETE endpoints protected with [ValidateAntiForgeryToken]
+  - ⚠️ **This sweep covered API controllers only.** CodeQL later found two unprotected POST endpoints
+    in **MVC** controllers that it never reached — `AccountController.EmailPreferences` and
+    `Areas/Admin/Controllers/ImagesController.Upload`. Both fixed 2026-08-08, see below. The original
+    statement was accurate as written but read as broader coverage than it had.
 
 - [x] **Fix Comment Deletion Integrity**
   - Location: `LB.PhotoGalleries/Controllers/API/ImagesController.cs:204-238` and `LB.PhotoGalleries/Controllers/API/GalleriesController.cs:34-60`
@@ -150,6 +154,54 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] `Microsoft.AspNetCore.Session` — reference removed entirely 2026-08-08. Session ships in the
         `Microsoft.AspNetCore.App` shared framework on net9.0, so the legacy netstandard2.0 package was
         redundant. `AddSession()`/`UseSession()` resolve without it.
+
+## 🔍 CODEQL TRIAGE — 2026-08-08
+
+CodeQL had been in `disabled_inactivity` state since 2025-11-23 and was re-enabled during the dependency
+pass. Its first successful scan raised 14 alerts. Full triage: **3 real, 11 noise.**
+
+### Fixed
+
+- [x] **Add CSRF protection to `AccountController.EmailPreferences`** (POST)
+  - Added `[ValidateAntiForgeryToken]`. The view already emitted the token via `Html.BeginForm()`, so
+    no view change was needed.
+  - Impact was low — an attacker could flip a victim's comment-notification preference.
+
+- [x] **Add CSRF protection to `Areas/Admin/Controllers/ImagesController.Upload`** (POST)
+  - Added `[ValidateAntiForgeryToken]`, **plus a matching `headers` entry in the Dropzone config** in
+    `Areas/Admin/Views/Galleries/Edit.cshtml`.
+  - ⚠️ **The two changes are inseparable.** `site.js` attaches `X-CSRF-TOKEN` through `$.ajaxSetup`,
+    which covers jQuery AJAX only. Dropzone uses `XMLHttpRequest` directly, so adding the attribute
+    on its own would have made every admin image upload fail with a 400. Anyone reverting one of
+    these must revert both.
+  - Root cause of the gap: the original CSRF sweep covered API controllers, and this is an MVC
+    controller in an Area.
+
+- [x] **Add security headers** — `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`,
+      `Referrer-Policy: strict-origin-when-cross-origin`
+  - Implemented as middleware in `Startup.cs`, placed before `UseHttpsRedirection()` so it covers
+    static files and ImageFlow output as well as MVC responses. `Startup.cs` previously had no
+    security headers at all beyond `UseHsts()`, so the site was framable.
+  - Also added to `web.config` for IIS parity. Note **`web.config` is inert in production** — the app
+    runs behind Kestrel on a Linux VPS — so the middleware is the functional fix. The duplication
+    exists because the CodeQL rule inspects `web.config` specifically.
+  - `SAMEORIGIN` rather than `DENY`, so our own pages can still frame each other.
+  - Content-Security-Policy deliberately **not** added: the views carry a lot of inline script and a
+    CSP strict enough to be worth having would break them. Worth doing as its own piece of work.
+
+### Dismissed as false positives
+
+| Alert | Rule | Why |
+|---|---|---|
+| #86 | `cs/user-controlled-bypass` | `Api/ImagesController.cs:289` is `if (!tags.Contains(',')) return BadRequest(...)` — input validation, not a security guard. Real authorisation (`CanUserEditObject`) happens afterwards and is not user-controlled. |
+| #21, #26, #27 | `cs/web/xss` | All three are `asp-route-returnUrl="@Context.Request.Path"`. Razor tag helpers URL-encode route values. The sink was also checked: `HomeController.SignIn` uses `LocalRedirect()`, which throws on non-local URLs, so there is no open redirect either. |
+| #89 | `cs/web/missing-x-frame-options` | Duplicate raised against `bin/Debug/net9.0/web.config`, a build artifact. |
+| 11 JS alerts | various | All in vendored `wwwroot/lib` third-party code. |
+
+### Scan configuration
+
+`.github/codeql/codeql-config.yml` excludes `wwwroot/lib`, `**/bin` and `**/obj`. Excluding the vendored
+JavaScript does **not** make it safe — see the front-end library note in TRACKING below.
 
 ## 📦 DEPENDENCY UPDATE PASS — 2026-08-08
 
@@ -363,5 +415,5 @@ against a live Cosmos instance.
 - .NET 10 upgrade is the next significant piece of framework work, and now gates the Azure.Storage,
   Serilog.AspNetCore and Microsoft.Extensions package updates. .NET 9 (STS) support ends 2026-11-10.
 - Application shows good engineering practices overall
-- Remaining work: .NET 10 upgrade, vendored front-end libraries, CodeQL alert triage, low-priority
+- Remaining work: .NET 10 upgrade, vendored front-end libraries, low-priority
   technical debt and architectural improvements
