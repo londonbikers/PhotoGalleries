@@ -56,6 +56,16 @@ updates:
         update-types:
           - version-update:semver-minor
 
+      # Microsoft.ApplicationInsights.AspNetCore 3.x pulls
+      # Microsoft.ApplicationInsights 3.x, which Serilog.Sinks.ApplicationInsights
+      # 5.0.1 excludes (requires >= 2.23.0 && < 3.0.0). This one is worth calling
+      # out: the mismatch surfaces as NU1608, a *warning*, so such a PR can pass
+      # CI while leaving a real runtime incompatibility. Remove when the Serilog
+      # sink supports App Insights 3.x.
+      - dependency-name: "Microsoft.ApplicationInsights.AspNetCore"
+        update-types:
+          - version-update:semver-major
+
       # Imageflow.Net and Spectre.Console are 0.x, where a minor bump is
       # breaking by convention. Imageflow also carries a native runtime.
       # Remove once each has been smoke-tested against real image processing

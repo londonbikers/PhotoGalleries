@@ -195,15 +195,26 @@ pulls the patched `System.Text.Json` 6.0.11) and scanned clean, but Models was s
 every other project reaches Imageflow *through* Models, that one stale reference propagated
 GHSA-8g4q-xg66-9fp4 into seven projects.
 
-### ⚠️ Outstanding — no fix currently available
+### ⚠️ Outstanding — fix available via `Mailjet.Api` 4.x
 
 - [ ] `System.Net.Http` 4.3.0 — **High**, GHSA-7jgj-8wvc-jh57
 - [ ] `System.Text.RegularExpressions` 4.3.0 — **High**, GHSA-cmhx-cq75-c4mj
 
-Both arrive via `Mailjet.Api` 3.0.1 → `NETStandard.Library` 1.6.1. 3.0.1 is the latest Mailjet.Api, so
-there is no upgrade path — resolving these means replacing the Mailjet client library. On `net9.0` both
-assemblies resolve to the shared framework at runtime, so practical exposure is low, but the audit will
-continue to flag them.
+Both arrive via `Mailjet.Api` 3.0.1 → `NETStandard.Library` 1.6.1.
+
+> **Correction.** This was initially recorded as "no fix available, 3.0.1 is the latest Mailjet.Api".
+> That was wrong — it came from a query scoped to major version 3. **`Mailjet.Api` 4.0.1 exists**, and
+> Dependabot raised it as soon as version updates were enabled.
+
+`Mailjet.Api` 4.0.1 targets `netstandard2.0` and depends only on `Microsoft.CSharp` 4.7.0 and
+`Newtonsoft.Json` 13.0.4 — it drops `NETStandard.Library` entirely. Verified locally: the web project
+builds clean against 4.0.1 and `dotnet list package --vulnerable --include-transitive` then reports
+**no vulnerable packages at all**.
+
+Remaining work before taking it: 4.x is a major version bump. The existing call sites in
+`LB.PhotoGalleries/Services/NotificationService.cs` (`MailjetClient`, `MailjetRequest`, `Send.Resource`,
+`GetErrorMessage()`) all still compile, but **email sending has not been exercised at runtime** — smoke
+test notification emails before deploying.
 
 ### Deliberately held back
 
@@ -333,12 +344,20 @@ against a live Cosmos instance.
 - Rate limiting deferred - current traffic volume doesn't warrant implementation
 - Upload size limits kept at 100MB - appropriate for professional photography use case
 - ⚠️ "No known CVEs in current dependencies" was recorded on 2025-01-23 but is no longer accurate. As of
-  2026-08-08 two **High** severity transitive advisories remain via `Mailjet.Api` → `NETStandard.Library`,
-  with no upgrade path available. See the 2026-08-08 dependency update pass above.
+  2026-08-08 two **High** severity transitive advisories remain via `Mailjet.Api` → `NETStandard.Library`.
+  `Mailjet.Api` 4.0.1 resolves both. See the 2026-08-08 dependency update pass above.
 - Dependabot version updates were not enabled until 2026-08-08; only security updates ran before then,
-  which is why dependencies drifted between reviews
+  which is why dependencies drifted between reviews. Enabling them immediately surfaced the Mailjet 4.x
+  upgrade that a manual review had missed — worth remembering the next time a dependency is written off
+  as having no upgrade path.
+- CodeQL was in `disabled_inactivity` state and had not run since 2025-11-23. Re-enabled 2026-08-08; its
+  first successful scan raised 14 alerts (6 high, 8 medium), 11 of them in vendored `wwwroot/lib`
+  JavaScript. See below.
+- ⚠️ `wwwroot/lib` front-end libraries have **no update mechanism at all** — no `package.json`, hand-copied
+  in, invisible to Dependabot. `moment.js` is also deprecated upstream. This is the largest remaining
+  unmanaged dependency surface.
 - .NET 10 upgrade is the next significant piece of framework work, and now gates the Azure.Storage,
-  Serilog.AspNetCore and Microsoft.Extensions package updates
+  Serilog.AspNetCore and Microsoft.Extensions package updates. .NET 9 (STS) support ends 2026-11-10.
 - Application shows good engineering practices overall
-- Remaining work: .NET 10 upgrade, stale CI workflow actions, low-priority technical debt and
-  architectural improvements
+- Remaining work: `Mailjet.Api` 4.x, .NET 10 upgrade, vendored front-end libraries, CodeQL alert triage,
+  low-priority technical debt and architectural improvements
