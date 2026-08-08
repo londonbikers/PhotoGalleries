@@ -128,8 +128,10 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] `Imageflow.Server` 0.8.3 → 0.9.0
   - [x] `Imageflow.Server.HybridCache` 0.8.3 → 0.9.0
   - [x] `Imageflow.Server.Storage.AzureBlob` 0.8.3 → 0.9.0
-  - [x] `Imageflow.Net` 0.13.1 → 0.14.1
-  - [ ] `Newtonsoft.Json` 13.0.3 → 13.0.4 (not found in solution)
+  - [x] `Imageflow.Net` 0.13.1 → 0.14.1 (⚠️ only applied to Worker at the time; Models was missed and
+        stayed on 0.13.1 — corrected 2026-08-08, see below)
+  - [x] `Newtonsoft.Json` 13.0.3 → 13.0.4 (⚠️ previously recorded as "not found in solution", but it is
+        referenced by Models — applied 2026-08-08)
   - [x] `MetadataExtractor` 2.8.1 → 2.9.0 (fixed breaking change: GetGeoLocation() → TryGetGeoLocation())
 
 ## 🟢 LOW PRIORITY
@@ -145,7 +147,100 @@ This document tracks security issues, dependency updates, and technical improvem
 - [x] **Update Other Dependencies**
   - [x] `Spectre.Console` 0.49.0 → 0.54.0
   - [x] `System.Data.SqlClient` 4.8.6 → 4.9.0
-  - [ ] `Microsoft.AspNetCore.Session` 2.2.0 → 2.3.0 (already on latest available)
+  - [x] `Microsoft.AspNetCore.Session` — reference removed entirely 2026-08-08. Session ships in the
+        `Microsoft.AspNetCore.App` shared framework on net9.0, so the legacy netstandard2.0 package was
+        redundant. `AddSession()`/`UseSession()` resolve without it.
+
+## 📦 DEPENDENCY UPDATE PASS — 2026-08-08
+
+Scope: bring packages current **within the .NET 9 line**. All projects remain on `net9.0`; no target
+framework changed.
+
+### Completed
+
+- [x] **Enable Dependabot version updates** — added `.github/dependabot.yml` (NuGet + GitHub Actions,
+      weekly). Previously absent, so only *security* updates ran; version updates require the config
+      file. This is why package versions had drifted across the solution.
+- [x] `HtmlSanitizer` 9.0.886 → 9.1.982 — resolves GHSA-j92c-7v7g-gj3f (template tag sanitisation
+      bypass). Supersedes Dependabot PR #69, which proposed the narrower 9.0.892 fix.
+      Note: `Helpers.SanitiseHtml()` uses a strict allowlist that never permitted `template`, so the
+      bypass was not exploitable in this application. Updated as defence in depth.
+- [x] `Microsoft.Extensions.Configuration.*` 9.0.0 → 9.0.18 (7 projects)
+- [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` 9.0.0 → 9.0.18
+- [x] `Serilog` 4.3.0 → 4.4.0
+- [x] `Serilog.Sinks.ApplicationInsights` 4.1.0 → 5.0.1
+- [x] `Newtonsoft.Json` 13.0.3 → 13.0.4
+- [x] `MetadataExtractor` 2.9.0 → 2.9.3
+- [x] `System.Data.SqlClient` 4.9.0 → 4.9.1
+- [x] `Mailjet.Api` 3.0.0 → 3.0.1
+- [x] `Microsoft.NET.Test.Sdk` 18.0.1 → 18.8.1
+- [x] `coverlet.collector` 6.0.4 → 10.0.1
+- [x] `Microsoft.Azure.Cosmos` 3.55.0 → 3.62.1 *(isolated in its own commit — largest blast radius)*
+- [x] `Imageflow.Net` (Models) 0.13.1 → 0.14.1 — see "Advisories resolved" below
+- [x] Removed redundant `Microsoft.AspNetCore.Session` 2.2.0 reference
+
+### Advisories resolved
+
+Vulnerable package count went from **6 → 2** (`dotnet list package --vulnerable --include-transitive`):
+
+| Package | Severity | How resolved |
+|---|---|---|
+| `HtmlSanitizer` 9.0.886 | Moderate | → 9.1.982 |
+| `AngleSharp` 0.17.1 | Moderate | transitively, via HtmlSanitizer |
+| `System.Security.Cryptography.Xml` 4.5.0 | Moderate | transitively |
+| `System.Text.Json` 6.0.9 | **High** | `Imageflow.Net` 0.13.1 → 0.14.1 in Models |
+
+The `System.Text.Json` case is worth recording: Worker was already on `Imageflow.Net` 0.14.1 (which
+pulls the patched `System.Text.Json` 6.0.11) and scanned clean, but Models was still on 0.13.1. Because
+every other project reaches Imageflow *through* Models, that one stale reference propagated
+GHSA-8g4q-xg66-9fp4 into seven projects.
+
+### ⚠️ Outstanding — no fix currently available
+
+- [ ] `System.Net.Http` 4.3.0 — **High**, GHSA-7jgj-8wvc-jh57
+- [ ] `System.Text.RegularExpressions` 4.3.0 — **High**, GHSA-cmhx-cq75-c4mj
+
+Both arrive via `Mailjet.Api` 3.0.1 → `NETStandard.Library` 1.6.1. 3.0.1 is the latest Mailjet.Api, so
+there is no upgrade path — resolving these means replacing the Mailjet client library. On `net9.0` both
+assemblies resolve to the shared framework at runtime, so practical exposure is low, but the audit will
+continue to flag them.
+
+### Deliberately held back
+
+- [ ] `Azure.Storage.Blobs` 12.26.0 → 12.29.1 / `Azure.Storage.Queues` 12.24.0 → 12.27.1.
+      **Blocked on the .NET 10 upgrade.** 12.29.1 raises the `Azure.Core` floor to 1.55.0, which depends
+      on `Microsoft.Extensions.{Configuration,Hosting}.Abstractions` 10.0.3 and drags the solution onto
+      the .NET 10 package line (NU1605 package downgrade errors). `Azure.Core` 1.47.3 — the version in
+      use today — has no `Microsoft.Extensions` dependencies at all. No known advisories affect the
+      pinned versions. Cosmos is unaffected: it floors `Azure.Core` at 1.44.1 in both 3.55.0 and 3.62.1.
+- [ ] `Microsoft.ApplicationInsights.AspNetCore` 2.23.0 → 3.1.2. Pulls
+      `Microsoft.ApplicationInsights` 3.x, which `Serilog.Sinks.ApplicationInsights` 5.0.1 excludes
+      (requires `>= 2.23.0 && < 3.0.0`). Blocked until the Serilog sink supports App Insights 3.x.
+- [ ] `Imageflow.Net` → 0.15.1 and `Spectre.Console` 0.54.0 → 0.57.2. Both 0.x, where minor releases are
+      breaking by convention. Needs a real image-processing smoke test rather than a compile check.
+- [ ] `Microsoft.Extensions.*`, `Microsoft.AspNetCore.*` and `Serilog.AspNetCore` 10.x — require
+      `net10.0`. Dependabot is configured to suppress these majors until the framework upgrade.
+
+### ⚠️ CI workflows are stale
+
+The GitHub Actions workflows have drifted badly and need attention independently of this pass:
+
+- [ ] `github/codeql-action` **v1** — deprecated and disabled by GitHub; `codeql-analysis.yml` is
+      likely failing on every run. Needs v3.
+- [ ] `actions/checkout` v2 → v5, and one workflow pinned to `@master`
+- [ ] `actions/setup-dotnet` v1 → v5
+- [ ] `appleboy/scp-action` and `appleboy/ssh-action` float unpinned on `@master`
+
+The new Dependabot `github-actions` ecosystem will raise these, but the CodeQL v1 → v3 jump may need
+manual intervention.
+
+### Verification
+
+`dotnet restore` clean (no NU1605/NU1608/NU1902) · Release build 0 errors · 6/6 tests pass.
+
+Note the test suite is only 6 tests, so the build is doing nearly all the verification work. The Cosmos
+3.62.1 bump in particular has only been compile-and-resolve checked and has **not** been exercised
+against a live Cosmos instance.
 
 ## 🔧 TECHNICAL DEBT & CODE QUALITY
 
@@ -225,7 +320,7 @@ This document tracks security issues, dependency updates, and technical improvem
 
 ### Review Dates
 - Initial Review: 2025-01-22
-- Last Updated: 2025-01-23
+- Last Updated: 2026-08-08 (dependency update pass)
 - Next Review: _TBD_
 
 ### Notes
@@ -237,6 +332,13 @@ This document tracks security issues, dependency updates, and technical improvem
 - Authentication flow tested and working correctly after OpenIdConnect package update
 - Rate limiting deferred - current traffic volume doesn't warrant implementation
 - Upload size limits kept at 100MB - appropriate for professional photography use case
-- No known CVEs in current dependencies (as of review date)
+- ⚠️ "No known CVEs in current dependencies" was recorded on 2025-01-23 but is no longer accurate. As of
+  2026-08-08 two **High** severity transitive advisories remain via `Mailjet.Api` → `NETStandard.Library`,
+  with no upgrade path available. See the 2026-08-08 dependency update pass above.
+- Dependabot version updates were not enabled until 2026-08-08; only security updates ran before then,
+  which is why dependencies drifted between reviews
+- .NET 10 upgrade is the next significant piece of framework work, and now gates the Azure.Storage,
+  Serilog.AspNetCore and Microsoft.Extensions package updates
 - Application shows good engineering practices overall
-- Remaining work: Low-priority technical debt and architectural improvements
+- Remaining work: .NET 10 upgrade, stale CI workflow actions, low-priority technical debt and
+  architectural improvements
