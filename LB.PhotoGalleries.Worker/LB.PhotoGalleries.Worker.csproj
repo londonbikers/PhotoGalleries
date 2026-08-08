@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.27.1" />
     <PackageReference Include="Imageflow.NativeRuntime.ubuntu-x86_64" Version="2.0.0-preview8" />
-    <PackageReference Include="Imageflow.Net" Version="0.14.1" />
+    <PackageReference Include="Imageflow.Net" Version="0.15.1" />
     <PackageReference Include="MetadataExtractor" Version="2.9.3" />
 	  <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.62.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.18" />

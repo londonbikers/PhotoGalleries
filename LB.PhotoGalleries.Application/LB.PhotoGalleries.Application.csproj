@@ -4,8 +4,8 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.27.1" />
 	<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.62.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.18" />
     <PackageReference Include="Serilog" Version="4.4.0" />
