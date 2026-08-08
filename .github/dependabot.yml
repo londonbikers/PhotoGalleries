@@ -40,6 +40,33 @@ updates:
         update-types:
           - version-update:semver-major
 
+      # Packages deliberately held back. Each ignores *minor* updates only, so
+      # patch releases on the current line still raise PRs — a security fix
+      # shipped as e.g. Azure.Storage.Blobs 12.26.x would not be suppressed.
+      #
+      # Azure.Storage: 12.29.1/12.27.1 raise the Azure.Core floor to 1.55.0,
+      # which depends on Microsoft.Extensions.{Configuration,Hosting}
+      # .Abstractions 10.0.3 and drags the solution onto the .NET 10 package
+      # line (NU1605 package downgrade). Azure.Core 1.47.3 has no
+      # Microsoft.Extensions dependencies. Remove when moving to net10.0.
+      - dependency-name: "Azure.Storage.Blobs"
+        update-types:
+          - version-update:semver-minor
+      - dependency-name: "Azure.Storage.Queues"
+        update-types:
+          - version-update:semver-minor
+
+      # Imageflow.Net and Spectre.Console are 0.x, where a minor bump is
+      # breaking by convention. Imageflow also carries a native runtime.
+      # Remove once each has been smoke-tested against real image processing
+      # rather than a compile check.
+      - dependency-name: "Imageflow.Net"
+        update-types:
+          - version-update:semver-minor
+      - dependency-name: "Spectre.Console"
+        update-types:
+          - version-update:semver-minor
+
   # GitHub Actions used by the CodeQL and deployment workflows.
   - package-ecosystem: github-actions
     directory: "/"
