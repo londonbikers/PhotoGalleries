@@ -1,0 +1,58 @@
+version: 2
+
+updates:
+  # NuGet packages across all projects in LB.PhotoGalleries.sln.
+  # Dependabot discovers every .csproj from the repository root.
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      # Roll routine servicing updates into a single weekly PR so the
+      # review burden stays proportional to the risk.
+      nuget-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # These packages track the .NET release cadence, so their major
+      # versions require a matching target framework. The solution is on
+      # net9.0; suppressing majors avoids a standing pile of 10.x PRs that
+      # cannot be merged. Remove this block when moving to net10.0.
+      #
+      # Security updates are unaffected: .NET servicing fixes ship as
+      # patches on the 9.0.x line, which is not ignored here.
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "Serilog.AspNetCore"
+        update-types:
+          - version-update:semver-major
+
+  # GitHub Actions used by the CodeQL and deployment workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      actions-all:
+        patterns:
+          - "*"
