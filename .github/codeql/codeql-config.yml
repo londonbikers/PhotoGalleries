@@ -1,0 +1,20 @@
+name: "PhotoGalleries CodeQL config"
+
+# Exclude code we do not author from analysis. The first successful scan after
+# re-enabling CodeQL raised 14 alerts, 11 of which were in vendored third-party
+# JavaScript under wwwroot/lib. That volume buries findings in our own code,
+# which is the opposite of useful.
+#
+# Excluding these does NOT make them safe. wwwroot/lib has no update mechanism
+# at all - no package.json, hand-copied files, invisible to Dependabot, and
+# moment.js is deprecated upstream. That is tracked separately in
+# SECURITY-CHECKLIST.md and needs solving on its own terms, not by scanning.
+paths-ignore:
+  - LB.PhotoGalleries/wwwroot/lib
+
+  # Build output. CodeQL analysed bin/Debug/net9.0/web.config as if it were
+  # source, producing a duplicate of the alert already raised against the real
+  # LB.PhotoGalleries/web.config. These are gitignored but exist in the runner
+  # workspace after autobuild.
+  - "**/bin"
+  - "**/obj"
