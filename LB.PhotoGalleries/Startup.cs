@@ -174,6 +174,25 @@ public class Startup
             app.UseHsts();
         }
 
+        // security headers, applied to every response including static files and ImageFlow output.
+        // set before the rest of the pipeline runs so they're present when the response starts.
+        app.Use(async (context, next) =>
+        {
+            var headers = context.Response.Headers;
+
+            // prevent other origins framing the site (clickjacking). SAMEORIGIN rather than DENY so
+            // our own pages can still frame each other if needed.
+            headers["X-Frame-Options"] = "SAMEORIGIN";
+
+            // stop browsers MIME-sniffing a response away from its declared content type
+            headers["X-Content-Type-Options"] = "nosniff";
+
+            // don't leak full urls to third parties via the referer header
+            headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+            await next();
+        });
+
         app.UseHttpsRedirection();
 
         // configure ImageFlow for image resizing and serving

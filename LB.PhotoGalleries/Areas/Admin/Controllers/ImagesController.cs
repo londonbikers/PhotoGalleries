@@ -25,6 +25,7 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
         #endregion
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(104857600)]
         [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
         public async Task<IActionResult> Upload(string categoryId, string galleryId, IFormFile file)

@@ -29,6 +29,7 @@ public class AccountController : Controller
 
     [Route("/account/email-preferences")]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EmailPreferences(EmailPreferencesModel emailPreferencesModel)
     {
         var user = await Server.Instance.Users.GetUserAsync(Helpers.GetUserId(User));

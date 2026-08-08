@@ -803,6 +803,10 @@
             paramName: "file",
             maxFilesize: 50,
             acceptedFiles: "image/*,.jpg,.jpeg,.png,/gif",
+            // Dropzone uses XMLHttpRequest directly, so the $.ajaxSetup handler in site.js that adds
+            // the anti-forgery token to jQuery AJAX calls does not apply here. The Upload action is
+            // [ValidateAntiForgeryToken], so the header has to be set explicitly or uploads 400.
+            headers: { 'X-CSRF-TOKEN': $('input[name="__RequestVerificationToken"]').val() },
             init: function() {
                 this.on("addedfile",
                     function() {
