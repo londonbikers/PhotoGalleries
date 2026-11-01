@@ -25,11 +25,11 @@ updates:
     ignore:
       # These packages track the .NET release cadence, so their major
       # versions require a matching target framework. The solution is on
-      # net9.0; suppressing majors avoids a standing pile of 10.x PRs that
-      # cannot be merged. Remove this block when moving to net10.0.
+      # net10.0; suppressing majors avoids a standing pile of 11.x PRs that
+      # cannot be merged. Revisit when moving to the next target framework.
       #
       # Security updates are unaffected: .NET servicing fixes ship as
-      # patches on the 9.0.x line, which is not ignored here.
+      # patches on the 10.0.x line, which is not ignored here.
       - dependency-name: "Microsoft.Extensions.*"
         update-types:
           - version-update:semver-major
@@ -42,20 +42,8 @@ updates:
 
       # Packages deliberately held back. Each ignores *minor* updates only, so
       # patch releases on the current line still raise PRs — a security fix
-      # shipped as e.g. Azure.Storage.Blobs 12.26.x would not be suppressed.
+      # shipped as e.g. Imageflow.Net 0.14.x would not be suppressed.
       #
-      # Azure.Storage: 12.29.1/12.27.1 raise the Azure.Core floor to 1.55.0,
-      # which depends on Microsoft.Extensions.{Configuration,Hosting}
-      # .Abstractions 10.0.3 and drags the solution onto the .NET 10 package
-      # line (NU1605 package downgrade). Azure.Core 1.47.3 has no
-      # Microsoft.Extensions dependencies. Remove when moving to net10.0.
-      - dependency-name: "Azure.Storage.Blobs"
-        update-types:
-          - version-update:semver-minor
-      - dependency-name: "Azure.Storage.Queues"
-        update-types:
-          - version-update:semver-minor
-
       # Microsoft.ApplicationInsights.AspNetCore 3.x pulls
       # Microsoft.ApplicationInsights 3.x, which Serilog.Sinks.ApplicationInsights
       # 5.0.1 excludes (requires >= 2.23.0 && < 3.0.0). This one is worth calling

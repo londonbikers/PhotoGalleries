@@ -1,7 +1,7 @@
 {
   "name": "PhotoGalleries",
-  // Ubuntu 24.04 + .NET 9 SDK: matches the Linux VPS the app is deployed to.
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-noble",
+  // Ubuntu 24.04 + .NET 10 SDK: matches the Linux VPS the app is deployed to.
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble",
 
   "features": {
     // Lets Add-Secrets.ps1 run unchanged inside the container.

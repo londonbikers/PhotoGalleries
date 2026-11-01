@@ -15,7 +15,7 @@ jobs:
     - name: Set up .NET Core
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Build with dotnet
       run: dotnet build LB.PhotoGalleries/LB.PhotoGalleries.csproj --configuration Release
@@ -24,7 +24,7 @@ jobs:
       run: dotnet publish LB.PhotoGalleries/LB.PhotoGalleries.csproj --configuration Release
       
     - name: Remove server specific config files
-      run: sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net9.0/publish/appsettings*
+      run: sudo rm -f /home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net10.0/publish/appsettings*
 
     - name: Stop service before deployment
       uses: appleboy/ssh-action@v1.2.5
@@ -50,7 +50,7 @@ jobs:
         key: ${{ secrets.TEST_SSH_KEY }}
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         strip_components: 10
-        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net9.0/publish/*"
+        source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net10.0/publish/*"
         target: "${{ secrets.TEST_REMOTE_DIR }}"
         overwrite: true
 
