@@ -1,0 +1,56 @@
+{
+  "name": "PhotoGalleries",
+  // Ubuntu 24.04 + .NET 9 SDK: matches the Linux VPS the app is deployed to.
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-noble",
+
+  "features": {
+    // Lets Add-Secrets.ps1 run unchanged inside the container.
+    "ghcr.io/devcontainers/features/powershell:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "mounts": [
+    // dotnet user-secrets live here on Linux; a named volume keeps them across container rebuilds.
+    "source=photogalleries-usersecrets,target=/home/vscode/.microsoft/usersecrets,type=volume",
+    // Cache NuGet packages across rebuilds.
+    "source=photogalleries-nuget,target=/home/vscode/.nuget/packages,type=volume",
+    // Claude Code login, settings and history, kept across rebuilds (see CLAUDE_CONFIG_DIR below).
+    "source=photogalleries-claude,target=/home/vscode/.claude,type=volume"
+  ],
+
+  "containerEnv": {
+    // Point Claude Code's whole config (including what would otherwise be ~/.claude.json) into the persisted volume.
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+  },
+
+  // Named volumes are created root-owned; hand them to the dev user, then generate a dev HTTPS cert and restore.
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.microsoft /home/vscode/.nuget /home/vscode/.claude && dotnet dev-certs https && dotnet restore LB.PhotoGalleries.sln",
+
+  "forwardPorts": [44343],
+  "portsAttributes": {
+    "44343": {
+      "label": "Web (HTTPS)",
+      "protocol": "https",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "remoteEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-vscode.powershell",
+        "github.vscode-github-actions",
+        "anthropic.claude-code"
+      ]
+    }
+  },
+
+  "remoteUser": "vscode"
+}

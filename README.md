@@ -51,10 +51,24 @@ The application follows a clean architecture pattern:
 
 ## Development
 
-### Prerequisites
+### Dev container (recommended)
+
+The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 9 SDK, PowerShell and the C# tooling on Ubuntu 24.04, matching the Linux VPS the app runs on. There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
+
+1. Install Docker Desktop and the VS Code **Dev Containers** extension.
+2. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
+   For faster file I/O on Windows, use **Dev Containers: Clone Repository in Container Volume** instead.
+3. Load secrets once (they're kept in a Docker volume, so they survive container rebuilds):
+   ```bash
+   pwsh ./Add-Secrets.ps1 -SourceFile /path/to/web-secrets.json -Project Web
+   pwsh ./Add-Secrets.ps1 -SourceFile /path/to/worker-secrets.json -Project Worker
+   ```
+   Make sure any path settings (e.g. `ImageFlow:DiskCachePath`, `Logging:Path`) are Linux paths.
+4. Use the **.NET Core Launch (web)** or **.NET Core Launch (Worker)** debug configurations. The site is forwarded to `https://localhost:44343`. The container's dev certificate isn't trusted by your host browser, so expect a certificate warning the first time.
+
+### Prerequisites (without the dev container)
 - .NET 9.0 SDK
-- Azure Cosmos DB Emulator (for local development)
-- Azure Storage Emulator or Azurite
+- Access to the dev Cosmos DB and Azure Storage account
 
 ### Getting Started
 
@@ -73,16 +87,17 @@ dotnet run
 
 ### Configuration
 
-The application uses `appsettings.json` for configuration. For local development, create an `appsettings.Development.json` file with your settings:
+Secrets are supplied via `dotnet user-secrets`. `Add-Secrets.ps1` flattens a JSON file into user-secrets for the Web or Worker project. The keys the app reads include:
 
 ```json
 {
-  "ConnectionStrings": {
-    "CosmosDb": "your-cosmos-connection-string",
-    "BlobStorage": "your-blob-storage-connection-string"
-  }
+  "CosmosDB": { "Uri": "...", "PrimaryKey": "...", "DatabaseName": "PhotoGalleries" },
+  "Storage": { "ConnectionString": "..." },
+  "Authentication": { "Authority": "...", "ClientId": "...", "ClientSecret": "...", "CloseSiteToThePublic": "false" }
 }
 ```
+
+See `LB.PhotoGalleries.Worker/appsettings.json` for the Worker's full set.
 
 ## Deployment
 
