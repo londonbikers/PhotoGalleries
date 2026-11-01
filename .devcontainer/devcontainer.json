@@ -1,6 +1,6 @@
 {
   "name": "PhotoGalleries",
-  // Ubuntu 24.04 + .NET 10 SDK: matches the Linux VPS the app is deployed to.
+  // Ubuntu 24.04 + .NET 10 SDK. The VPS is on Ubuntu 22.04, with .NET from the ppa:dotnet/backports feed.
   "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble",
 
   "features": {

@@ -53,7 +53,7 @@ The application follows a clean architecture pattern:
 
 ### Dev container (recommended)
 
-The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell and the C# tooling on Ubuntu 24.04, matching the Linux VPS the app runs on. There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
+The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
 
 1. Install Docker Desktop and the VS Code **Dev Containers** extension.
 2. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
@@ -106,7 +106,7 @@ The application uses GitHub Actions for automated deployment:
 - **TEST**: Automatically deploys on push to `master` branch
 - **PROD**: Manual deployment via GitHub Actions workflow
 
-Both environments are hosted on VPS servers running Ubuntu with the ASP.NET Core 10.0 runtime.
+Both environments are hosted on VPS servers running Ubuntu 22.04 with the ASP.NET Core 10.0 runtime from the Ubuntu .NET backports feed (`ppa:dotnet/backports`). Microsoft no longer publishes .NET to its own Ubuntu package repository.
 
 ## URL Structure
 
