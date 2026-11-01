@@ -1,6 +1,9 @@
-﻿using LB.PhotoGalleries.Models.Utilities;
+﻿using LB.PhotoGalleries.Models;
+using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Models.Utilities;
 using LB.PhotoGalleries.Shared;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -121,31 +124,64 @@ public class UserServer
         return response.FirstOrDefault();
     }
 
-    public async Task<List<User>> GetLatestUsersAsync(int maxResults)
-    {
-        // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
-        if (maxResults > 100)
-            maxResults = 100;
-
-        var queryDefinition = new QueryDefinition("SELECT TOP @maxResults * FROM c ORDER BY c.Created DESC").WithParameter("@maxResults", maxResults);
-        return await GetUsersByQueryAsync(queryDefinition);
-    }
-
     /// <summary>
-    /// Performs a search for users with a given search term in their name or email address.
+    /// Gets a page of users, optionally only those with a given search term in their name or email address.
     /// </summary>
-    public async Task<List<User>> SearchForUsers(string searchString, int maxResults)
+    /// <param name="searchString">Optional term to filter users by name or email address.</param>
+    /// <param name="sortBy">The property to sort the users by.</param>
+    /// <param name="descending">Sorts largest/newest/Z first when true.</param>
+    /// <param name="page">The page of users to return results from, for the first page use 1.</param>
+    /// <param name="pageSize">The maximum number of users to return per page, i.e. 50.</param>
+    public async Task<PagedResultSet<User>> GetUsersAsync(string searchString, UserSortBy sortBy, bool descending, int page = 1, int pageSize = 50)
     {
-        // limit the results to avoid putting excessive strain on the database and from incurring unnecessary charges
-        if (maxResults > 100)
-            maxResults = 100;
+        if (pageSize < 1)
+            throw new ArgumentOutOfRangeException(nameof(pageSize), "pageSize must be a positive number");
 
-        var queryDefinition =
-            new QueryDefinition("SELECT TOP @maxResults * FROM c WHERE CONTAINS(c.Name, @searchString, true) OR CONTAINS(c.Email, @searchString, true) ORDER BY c.Created DESC")
-                .WithParameter("@searchString", searchString)
-                .WithParameter("@maxResults", maxResults);
-                
-        return await GetUsersByQueryAsync(queryDefinition);
+        if (page < 1)
+            page = 1;
+
+        // limit page size to avoid incurring unnecessary charges and increasing latency
+        if (pageSize > 100)
+            pageSize = 100;
+
+        var where = searchString.HasValue() ? " WHERE CONTAINS(c.Name, @searchString, true) OR CONTAINS(c.Email, @searchString, true)" : string.Empty;
+
+        // comment counts aren't stored against users, so to sort by them we have to get them all and sort in memory
+        if (sortBy == UserSortBy.Comments)
+            return await GetUsersSortedByCommentCountAsync(where, searchString, descending, page, pageSize);
+
+        var countQuery = new QueryDefinition("SELECT VALUE COUNT(1) FROM c" + where);
+        if (searchString.HasValue())
+            countQuery.WithParameter("@searchString", searchString);
+
+        var total = (await QueryAsync<int>(Constants.UsersContainerName, countQuery)).FirstOrDefault();
+        var pagedResultSet = new PagedResultSet<User> { PageSize = pageSize, TotalResults = total };
+
+        // don't let users try and request a page that doesn't exist
+        if (page > pagedResultSet.TotalPages)
+            page = Math.Max(pagedResultSet.TotalPages, 1);
+
+        pagedResultSet.CurrentPage = page;
+        if (total == 0)
+            return pagedResultSet;
+
+        // sortBy is an enum, so only these property names can ever end up in the query
+        var sortProperty = sortBy switch
+        {
+            UserSortBy.Name => "c.Name",
+            UserSortBy.Email => "c.Email",
+            _ => "c.Created"
+        };
+
+        var queryDefinition = new QueryDefinition($"SELECT * FROM c{where} ORDER BY {sortProperty} {(descending ? "DESC" : "ASC")} OFFSET @offset LIMIT @limit")
+            .WithParameter("@offset", (page - 1) * pageSize)
+            .WithParameter("@limit", pageSize);
+
+        if (searchString.HasValue())
+            queryDefinition.WithParameter("@searchString", searchString);
+
+        pagedResultSet.Results = await GetUsersByQueryAsync(queryDefinition);
+        return pagedResultSet;
     }
 
     public async Task<int> GetUserGalleryCountAsync(User user)
@@ -162,11 +198,34 @@ public class UserServer
         if (user == null)
             throw new InvalidOperationException("User is null");
 
-        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-        var galleryComments = await Server.Instance.Galleries.GetGalleriesScalarByQueryAsync(query);
-        query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.Comments.CreatedByUserId = @userId").WithParameter("@userId", user.Id);
-        var imageComments = await Server.Instance.Images.GetImagesScalarByQueryAsync(query);
-        return galleryComments + imageComments;
+        var commentCounts = await GetUserCommentCountsAsync(new[] { user.Id });
+        return commentCounts.GetValueOrDefault(user.Id);
+    }
+
+    /// <summary>
+    /// Gets how many comments users have made across galleries and images, keyed by user id.
+    /// Users who haven't commented aren't included.
+    /// </summary>
+    /// <param name="userIds">The users to count comments for, or null to count comments for every user.</param>
+    public async Task<Dictionary<string, int>> GetUserCommentCountsAsync(IReadOnlyCollection<string> userIds = null)
+    {
+        var commentCounts = new Dictionary<string, int>();
+        if (userIds is { Count: 0 })
+            return commentCounts;
+
+        // comments are an array on each gallery and image, so they have to be joined to be filtered and grouped on
+        var query = "SELECT cm.CreatedByUserId AS UserId, COUNT(1) AS CommentCount FROM c JOIN cm IN c.Comments" +
+                    (userIds != null ? " WHERE ARRAY_CONTAINS(@userIds, cm.CreatedByUserId)" : string.Empty) +
+                    " GROUP BY cm.CreatedByUserId";
+        var queryDefinition = new QueryDefinition(query);
+        if (userIds != null)
+            queryDefinition.WithParameter("@userIds", userIds);
+
+        foreach (var containerName in new[] { Constants.GalleriesContainerName, Constants.ImagesContainerName })
+            foreach (var userCommentCount in await QueryAsync<UserCommentCount>(containerName, queryDefinition))
+                commentCounts[userCommentCount.UserId] = commentCounts.GetValueOrDefault(userCommentCount.UserId) + userCommentCount.CommentCount;
+
+        return commentCounts;
     }
 
     public string GetUserPartitionKeyFromId(string userId)
@@ -290,6 +349,74 @@ public class UserServer
         Log.Debug($"UserServer.GetUsersByQueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
 
         return users;
+    }
+
+    private async Task<PagedResultSet<User>> GetUsersSortedByCommentCountAsync(string where, string searchString, bool descending, int page, int pageSize)
+    {
+        // get every matching user id, then order them by comment count, newest first where users have the same count
+        var stubsQuery = new QueryDefinition("SELECT c.id, c.Created FROM c" + where);
+        if (searchString.HasValue())
+            stubsQuery.WithParameter("@searchString", searchString);
+
+        var stubs = await QueryAsync<UserStub>(Constants.UsersContainerName, stubsQuery);
+        var commentCounts = await GetUserCommentCountsAsync();
+        var orderedStubs = descending
+            ? stubs.OrderByDescending(s => commentCounts.GetValueOrDefault(s.Id)).ThenByDescending(s => s.Created)
+            : stubs.OrderBy(s => commentCounts.GetValueOrDefault(s.Id)).ThenByDescending(s => s.Created);
+
+        var pagedResultSet = new PagedResultSet<User> { PageSize = pageSize, TotalResults = stubs.Count };
+
+        // don't let users try and request a page that doesn't exist
+        if (page > pagedResultSet.TotalPages)
+            page = Math.Max(pagedResultSet.TotalPages, 1);
+
+        pagedResultSet.CurrentPage = page;
+        var pageIds = orderedStubs.Skip((page - 1) * pageSize).Take(pageSize).Select(s => s.Id).ToList();
+        if (pageIds.Count == 0)
+            return pagedResultSet;
+
+        // retrieve just this page's users, then put them back into comment count order
+        var usersQuery = new QueryDefinition("SELECT * FROM c WHERE ARRAY_CONTAINS(@ids, c.id)").WithParameter("@ids", pageIds);
+        var users = await GetUsersByQueryAsync(usersQuery);
+        pagedResultSet.Results = users.OrderBy(u => pageIds.IndexOf(u.Id)).ToList();
+        return pagedResultSet;
+    }
+
+    private static async Task<List<T>> QueryAsync<T>(string containerName, QueryDefinition queryDefinition)
+    {
+        var container = Server.Instance.Database.GetContainer(containerName);
+        var queryResult = container.GetItemQueryIterator<T>(queryDefinition);
+        var results = new List<T>();
+        double charge = 0;
+        TimeSpan elapsedTime = default;
+
+        while (queryResult.HasMoreResults)
+        {
+            var resultSet = await queryResult.ReadNextAsync();
+            results.AddRange(resultSet);
+            charge += resultSet.RequestCharge;
+            elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
+        }
+
+        Log.Debug($"UserServer.QueryAsync: {containerName} query: {queryDefinition.QueryText}");
+        Log.Debug($"UserServer.QueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
+
+        return results;
+    }
+    #endregion
+
+    #region private classes
+    private class UserStub
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        public DateTime Created { get; set; }
+    }
+
+    private class UserCommentCount
+    {
+        public string UserId { get; set; }
+        public int CommentCount { get; set; }
     }
     #endregion
 }
