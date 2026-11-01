@@ -1,0 +1,101 @@
+name: Deploy Worker (reusable)
+
+# Builds LB.PhotoGalleries.Worker for linux-x64 and deploys it to the Worker host,
+# where it runs under supervisor as lb_photos_worker_<environment>.
+# Called by deploy-worker-staging.yml and deploy-worker-prod.yml.
+#
+# Server-side settings live in <TARGET_DIR>/appsettings.<Environment>.json (passed to
+# the Worker as its first argument by the supervisor program). They are never part of
+# the build output and rsync is told to leave them, and logs/, alone.
+#
+# Requires these repository secrets:
+#   WORKER_REMOTE_HOST   Worker host address
+#   WORKER_PORT          SSH port
+#   WORKER_REMOTE_USER   deploy account (lbp_deploy)
+#   WORKER_SSH_KEY       private key for that account
+#   WORKER_KNOWN_HOSTS   output of: ssh-keyscan -p <port> <host>
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "staging or production"
+        required: true
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      PROGRAM: lb_photos_worker_${{ inputs.environment }}
+      TARGET_DIR: /opt/lb-photos-worker/${{ inputs.environment }}
+      PUBLISH_DIR: ${{ github.workspace }}/worker-publish
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x'
+
+    # linux-x64 only: no Windows apphost or VC++ DLLs, and libimageflow.so lands in
+    # the app root where the Imageflow loader finds it.
+    - name: Publish
+      run: >
+        dotnet publish LB.PhotoGalleries.Worker/LB.PhotoGalleries.Worker.csproj
+        --configuration Release --runtime linux-x64 --self-contained false
+        -p:UseAppHost=false --output "$PUBLISH_DIR"
+
+    - name: Remove settings files and check the output
+      run: |
+        rm -f "$PUBLISH_DIR"/appsettings*.json
+        test -f "$PUBLISH_DIR/LB.PhotoGalleries.Worker.dll"
+        test -f "$PUBLISH_DIR/libimageflow.so"
+        grep -q '"version": "10\.' "$PUBLISH_DIR/LB.PhotoGalleries.Worker.runtimeconfig.json"
+
+    - name: Configure SSH
+      env:
+        SSH_KEY: ${{ secrets.WORKER_SSH_KEY }}
+        KNOWN_HOSTS: ${{ secrets.WORKER_KNOWN_HOSTS }}
+        HOST: ${{ secrets.WORKER_REMOTE_HOST }}
+        PORT: ${{ secrets.WORKER_PORT }}
+        USER: ${{ secrets.WORKER_REMOTE_USER }}
+      run: |
+        install -m 700 -d ~/.ssh
+        printf '%s\n' "$SSH_KEY" > ~/.ssh/worker_deploy
+        chmod 600 ~/.ssh/worker_deploy
+        printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+        cat > ~/.ssh/config <<EOF
+        Host worker
+          HostName $HOST
+          Port $PORT
+          User $USER
+          IdentityFile ~/.ssh/worker_deploy
+          IdentitiesOnly yes
+          BatchMode yes
+          StrictHostKeyChecking yes
+        EOF
+
+    - name: Stop the Worker
+      run: ssh worker "sudo -n /usr/bin/supervisorctl stop $PROGRAM"
+
+    # --delete clears files left by earlier deploys (the old process only ever added
+    # files). Excluded paths are also protected from deletion.
+    - name: Copy files
+      run: >
+        rsync -rltp --delete --chmod=D2750,F640
+        --exclude='/appsettings*.json' --exclude='/logs/'
+        "$PUBLISH_DIR/" "worker:$TARGET_DIR/"
+
+    - name: Start the Worker
+      run: ssh worker "sudo -n /usr/bin/supervisorctl start $PROGRAM"
+
+    # supervisor reports RUNNING after 1s; wait longer so a crash on startup
+    # (bad config, missing native library) fails the job.
+    - name: Check the Worker is still running
+      run: |
+        sleep 20
+        ssh worker "sudo -n /usr/bin/supervisorctl status $PROGRAM" | tee status.txt
+        grep -q RUNNING status.txt

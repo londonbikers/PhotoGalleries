@@ -1,0 +1,15 @@
+name: PROD Deploy Worker
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-worker.yml
+    with:
+      environment: production
+    secrets: inherit
