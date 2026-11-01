@@ -1,35 +1,75 @@
-﻿@using LB.PhotoGalleries.Shared
-@model IEnumerable<User>
+﻿@using LB.PhotoGalleries.Areas.Admin.Controllers
+@using LB.PhotoGalleries.Shared
+@using LB.PhotoGalleries.Models.Enums
+@model PagedResultSet<User>
 @{
     ViewData["Title"] = "Users Admin";
+    var commentCounts = (Dictionary<string, int>)ViewData["commentCounts"];
+    var searchString = (string)ViewData["searchString"];
+    const int maxPagesToDisplayInNav = 6;
+    var pageNumbers = Model.GetNavigationPageNumbers(Math.Min(Model.TotalPages, maxPagesToDisplayInNav));
 }
 
-<h1>Latest Users</h1>
+@functions {
+    UserSortBy CurrentSortBy => (UserSortBy)ViewData["sortBy"];
+    bool CurrentDescending => (bool)ViewData["descending"];
 
-<form asp-controller="Users" asp-action="Index">
+    // builds a url for the users list, leaving out any parameters that are at their default value
+    string ListUrl(UserSortBy sortBy, bool descending, int page)
+    {
+        return Url.Action("Index", new
+        {
+            q = (string)ViewData["searchString"],
+            s = sortBy == UserSortBy.Created ? null : sortBy.ToString().ToLower(),
+            d = descending == UsersController.DefaultsToDescending(sortBy) ? null : descending ? "desc" : "asc",
+            p = page > 1 ? page : (int?)null
+        });
+    }
+
+    // clicking the column already sorted on flips its direction, any other column starts with its default direction
+    string SortUrl(UserSortBy column) => ListUrl(column, column == CurrentSortBy ? !CurrentDescending : UsersController.DefaultsToDescending(column), 1);
+
+    string SortIndicator(UserSortBy column) => column != CurrentSortBy ? null : CurrentDescending ? " ▼" : " ▲";
+
+    string PageUrl(int page) => ListUrl(CurrentSortBy, CurrentDescending, page);
+}
+
+<h1>Users</h1>
+
+<form asp-controller="Users" asp-action="Index" method="get">
     <div class="form-row align-items-center">
         <div class="col-auto">
-            <label class="sr-only" for="SearchString">Name:</label>
-            <input type="text" name="SearchString" id="SearchString" class="form-control mb-2" placeholder="Search for a user...">
+            <label class="sr-only" for="q">Name:</label>
+            <input type="text" name="q" id="q" value="@searchString" class="form-control mb-2" placeholder="Search for a user...">
         </div>
         <div class="col-auto">
             <input type="submit" value="Filter" class="btn btn-primary mb-2" />
         </div>
+        @if (searchString.HasValue())
+        {
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-outline-secondary mb-2">Clear</a>
+            </div>
+        }
     </div>
 </form>
+
+<p class="text-muted">@Model.TotalResults.ToString("N0") @(Model.TotalResults == 1 ? "user" : "users")</p>
 
 <table class="table">
     <thead class="thead-dark">
         <tr>
             <th scope="col">Picture</th>
-            <th scope="col">@Html.DisplayNameFor(model => model.Name)</th>
-            <th scope="col">@Html.DisplayNameFor(model => model.Email)</th>
+            <th scope="col"><a href="@SortUrl(UserSortBy.Name)" class="text-white">Name@SortIndicator(UserSortBy.Name)</a></th>
+            <th scope="col"><a href="@SortUrl(UserSortBy.Email)" class="text-white">Email@SortIndicator(UserSortBy.Email)</a></th>
+            <th scope="col"><a href="@SortUrl(UserSortBy.Created)" class="text-white">Created@SortIndicator(UserSortBy.Created)</a></th>
+            <th scope="col"><a href="@SortUrl(UserSortBy.Comments)" class="text-white">Comments@SortIndicator(UserSortBy.Comments)</a></th>
             <th scope="col"></th>
             <th scope="col"></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Results)
         {
             <tr>
                 <td>
@@ -40,9 +80,36 @@
                 </td>
                 <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                <td title="@item.Created.ToString("dddd d MMMM yyyy, HH:mm")">@item.Created.ToString("d MMM yyyy")</td>
+                <td>@commentCounts.GetValueOrDefault(item.Id).ToString("N0")</td>
                 <td>@Html.ActionLink("Details", "Details", new {item.Id}, new {@class = "btn btn-sm btn-outline-secondary"})</td>
                 <td>@Html.ActionLink("Delete", "Delete", new {item.Id}, new { @class = "btn btn-sm btn-outline-danger" })</td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="User pages">
+        <ul class="pagination justify-content-center">
+            @if (Model.CurrentPage > 1)
+            {
+                <li class="page-item"><a class="page-link" href="@PageUrl(Model.CurrentPage - 1)">Previous</a></li>
+            }
+
+            @foreach (var pageNumber in pageNumbers)
+            {
+                <li class="page-item@(pageNumber == Model.CurrentPage ? " active" : "")"><a class="page-link" href="@PageUrl(pageNumber)">@pageNumber</a></li>
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <li class="page-item"><a class="page-link" href="@PageUrl(Model.CurrentPage + 1)">Next</a></li>
+            }
+            <li class="page-item disabled">
+                <span class="page-link">Page @Model.CurrentPage of @Model.TotalPages</span>
+            </li>
+        </ul>
+    </nav>
+}
