@@ -6,7 +6,7 @@ A modern photo gallery platform showcasing photography from [londonbikers.com](h
 
 ## Tech Stack
 
-- **ASP.NET Core 9.0** - Modern web framework with MVC pattern
+- **ASP.NET Core 10.0** - Modern web framework with MVC pattern
 - **Azure Cosmos DB** - NoSQL database for scalable data storage
 - **Azure Blob Storage** - Photo storage with CDN integration
 - **Azure CDN** - Global content delivery for fast image loading
@@ -53,7 +53,7 @@ The application follows a clean architecture pattern:
 
 ### Dev container (recommended)
 
-The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 9 SDK, PowerShell and the C# tooling on Ubuntu 24.04, matching the Linux VPS the app runs on. There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
+The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
 
 1. Install Docker Desktop and the VS Code **Dev Containers** extension.
 2. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
@@ -67,7 +67,7 @@ The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) t
 4. Use the **.NET Core Launch (web)** or **.NET Core Launch (Worker)** debug configurations. The site is forwarded to `https://localhost:44343`. The container's dev certificate isn't trusted by your host browser, so expect a certificate warning the first time.
 
 ### Prerequisites (without the dev container)
-- .NET 9.0 SDK
+- .NET 10.0 SDK
 - Access to the dev Cosmos DB and Azure Storage account
 
 ### Getting Started
@@ -106,7 +106,7 @@ The application uses GitHub Actions for automated deployment:
 - **TEST**: Automatically deploys on push to `master` branch
 - **PROD**: Manual deployment via GitHub Actions workflow
 
-Both environments are hosted on VPS servers running Ubuntu with .NET 9.0 runtime.
+Both environments are hosted on VPS servers running Ubuntu 22.04 with the ASP.NET Core 10.0 runtime from the Ubuntu .NET backports feed (`ppa:dotnet/backports`). Microsoft no longer publishes .NET to its own Ubuntu package repository.
 
 ## URL Structure
 

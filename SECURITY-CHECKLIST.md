@@ -5,6 +5,13 @@ This document tracks security issues, dependency updates, and technical improvem
 ## 🚨 IMMEDIATE ACTION REQUIRED
 
 ### Framework & Support
+- [ ] **Upgrade to .NET 10.0** - .NET 9.0 is out of support (EOL: November 10, 2026)
+  - [x] Update all `.csproj` files in `LB.PhotoGalleries.sln` from `net9.0` to `net10.0`
+  - [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` and `Microsoft.Extensions.Configuration.*` 9.0.22 → 10.0.14; `Serilog.AspNetCore` 9.0.0 → 10.0.0
+  - [x] Update CI/CD pipelines (`dotnet-version: '10.0.x'`, publish paths `bin/Release/net10.0/publish`)
+  - [ ] Install the ASP.NET Core 10.0 runtime on the VPS servers (TEST and PROD), and the .NET 10.0 runtime for the Worker
+  - Not migrated: `LB.PhotoGalleries.TagsMigrator` (not in the solution, and already fails to build against the current `Image` model)
+
 - [x] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
   - [x] Update all `.csproj` files from `net6.0` to `net9.0`
   - [x] Test application thoroughly in dev environment
