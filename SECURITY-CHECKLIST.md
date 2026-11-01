@@ -5,12 +5,20 @@ This document tracks security issues, dependency updates, and technical improvem
 ## 🚨 IMMEDIATE ACTION REQUIRED
 
 ### Framework & Support
-- [ ] **Upgrade to .NET 10.0** - .NET 9.0 is out of support (EOL: November 10, 2026)
+- [x] **Upgrade to .NET 10.0** - .NET 9.0 is out of support (EOL: November 10, 2026)
   - [x] Update all `.csproj` files in `LB.PhotoGalleries.sln` from `net9.0` to `net10.0`
   - [x] `Microsoft.AspNetCore.Authentication.OpenIdConnect` and `Microsoft.Extensions.Configuration.*` 9.0.22 → 10.0.14; `Serilog.AspNetCore` 9.0.0 → 10.0.0
   - [x] Update CI/CD pipelines (`dotnet-version: '10.0.x'`, publish paths `bin/Release/net10.0/publish`)
-  - [ ] Install the ASP.NET Core 10.0 runtime on the VPS servers (TEST and PROD), and the .NET 10.0 runtime for the Worker
+  - [x] Install the ASP.NET Core 10.0 runtime on the VPS servers (TEST and PROD), and the .NET 10.0 runtime for the Worker
+        (2026-11-01: both VPSs switched to `ppa:dotnet/backports`, as packages.microsoft.com stopped at 9.0.4 for
+        Ubuntu 22.04; web and Worker deployed to TEST/STAGING and PROD on .NET 10)
   - Not migrated: `LB.PhotoGalleries.TagsMigrator` (not in the solution, and already fails to build against the current `Image` model)
+
+- [ ] **Sign in with authorization code flow + PKCE** instead of hybrid flow
+  - [x] `Startup.cs`: `ResponseType = code`, `UsePkce = true`. Claims come from the token endpoint's id_token, so the
+        IdP clients must keep `AlwaysIncludeUserClaimsInIdToken = true`
+  - [ ] LB-IDP clients `lb.galleries.dev`, `lb.photos.test`, `lb.photos.prod` switched to `GrantTypes.Code` with
+        `RequirePkce = true` (DEV first, then the production IdP release, then PROD Deploy LBP straight after)
 
 - [x] **Upgrade to .NET 9.0** - .NET 6.0 is out of support (EOL: November 12, 2024)
   - [x] Update all `.csproj` files from `net6.0` to `net9.0`
@@ -394,7 +402,7 @@ against a live Cosmos instance.
 
 ### Review Dates
 - Initial Review: 2025-01-22
-- Last Updated: 2026-08-08 (dependency update pass)
+- Last Updated: 2026-11-01 (.NET 10 upgrade, sign-in moving to code flow + PKCE)
 - Next Review: _TBD_
 
 ### Notes
