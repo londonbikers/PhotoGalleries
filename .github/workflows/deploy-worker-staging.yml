@@ -1,0 +1,26 @@
+name: STAGING Deploy Worker
+
+# Deploys the staging Worker when anything it's built from changes on master.
+# Website-only changes don't restart it.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'LB.PhotoGalleries.Worker/**'
+      - 'LB.PhotoGalleries.Models/**'
+      - 'LB.PhotoGalleries.Shared/**'
+      - '.github/workflows/_deploy-worker.yml'
+      - '.github/workflows/deploy-worker-staging.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-worker.yml
+    with:
+      environment: staging
+    secrets: inherit

@@ -108,6 +108,13 @@ The application uses GitHub Actions for automated deployment:
 
 Both environments are hosted on VPS servers running Ubuntu 22.04 with the ASP.NET Core 10.0 runtime from the Ubuntu .NET backports feed (`ppa:dotnet/backports`). Microsoft no longer publishes .NET to its own Ubuntu package repository.
 
+The **Worker** runs on a separate VPS under supervisor (`lb_photos_worker_staging`, `lb_photos_worker_production`), each reading its own `appsettings.<Environment>.json` from its folder under `/opt/lb-photos-worker/`:
+
+- **STAGING**: `STAGING Deploy Worker` runs automatically on push to `master` when the Worker, Models or Shared projects change
+- **PROD**: `PROD Deploy Worker`, run manually
+
+Both build a linux-x64 publish and rsync it over SSH as `lbp_deploy`, leaving the server's `appsettings*.json` and `logs/` untouched.
+
 ## URL Structure
 
 | Path | Description |
