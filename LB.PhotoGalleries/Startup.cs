@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -81,13 +82,17 @@ public class Startup
             })
             .AddOpenIdConnect("oidc", options =>
             {
-                // idp configuration (hybrid flow)
+                // idp configuration (authorization code flow with PKCE)
+                // the handler only sends PKCE for the plain code flow, so this must stay ResponseType = code
                 options.Authority = Configuration["Authentication:Authority"];
                 options.ClientId = Configuration["Authentication:ClientId"];
                 options.ClientSecret = Configuration["Authentication:ClientSecret"];
-                options.ResponseType = "code id_token";
+                options.ResponseType = OpenIdConnectResponseType.Code;
+                options.UsePkce = true;
 
                 // token and claim configuration
+                // user claims come from the id_token returned by the token endpoint (the userinfo endpoint isn't called),
+                // so the idp client must keep AlwaysIncludeUserClaimsInIdToken = true
                 options.SaveTokens = true;
                 options.Scope.Add("openid");
                 options.Scope.Add("email");
