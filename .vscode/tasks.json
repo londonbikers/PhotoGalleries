@@ -26,6 +26,13 @@
             "problemMatcher": "$msCompile"
         },
         {
+            // Web and Worker share projects (Shared, Models, Application), so build them one after the other, never in parallel.
+            "label": "build-all",
+            "dependsOn": ["build", "build-worker"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
             "label": "publish",
             "command": "dotnet",
             "type": "process",

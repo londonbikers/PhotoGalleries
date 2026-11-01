@@ -38,6 +38,50 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
+        },
+        // Copies of the two configs above without a preLaunchTask, for the "Web + Worker" compound,
+        // which builds once up front. Grouped at the bottom of the dropdown (hiding them also hides the compound).
+        {
+            "name": "Web (no build)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/LB.PhotoGalleries/bin/Debug/net9.0/LB.PhotoGalleries.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/LB.PhotoGalleries",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "https://localhost:44343"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bContent root path:\\s+(.+)",
+                "uriFormat": "https://localhost:44343"
+            },
+            "presentation": { "group": "z-compound-parts" }
+        },
+        {
+            "name": "Worker (no build)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/LB.PhotoGalleries.Worker/bin/Debug/net9.0/LB.PhotoGalleries.Worker.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/LB.PhotoGalleries.Worker",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "presentation": { "group": "z-compound-parts" }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Web + Worker",
+            "configurations": ["Web (no build)", "Worker (no build)"],
+            "preLaunchTask": "build-all",
+            "stopAll": true,
+            "presentation": { "order": 1 }
         }
     ]
 }
