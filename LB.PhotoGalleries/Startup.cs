@@ -32,6 +32,15 @@ public class Startup
 
     public IConfiguration Configuration { get; }
 
+    private const string ContentSecurityPolicy =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdnjs.cloudflare.com https://js.monitor.azure.com; " +
+        "style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net; " +
+        "img-src 'self' https:; " +
+        "font-src 'self' https://cdn.jsdelivr.net; " +
+        "connect-src 'self' https://dc.services.visualstudio.com https://stackpath.bootstrapcdn.com; " +
+        "frame-ancestors 'none'";
+
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
@@ -189,6 +198,14 @@ public class Startup
 
             // don't leak full urls to third parties via the referer header
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+            // the site doesn't use these browser features, so don't let any page or embed ask for them
+            headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+
+            // keep in step with the scripts, styles and CDNs the views use. frame-ancestors 'none' takes
+            // precedence over X-Frame-Options in modern browsers. report-only in development so the
+            // scripts dev tooling injects (e.g. browser refresh) aren't blocked; violations show in the console.
+            headers[env.IsDevelopment() ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy"] = ContentSecurityPolicy;
 
             await next();
         });
