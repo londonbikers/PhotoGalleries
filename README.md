@@ -53,7 +53,7 @@ The application follows a clean architecture pattern:
 
 ### Dev container (recommended)
 
-The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
+The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell, the GitHub and Azure CLIs and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
 
 1. Install Docker Desktop and the VS Code **Dev Containers** extension.
 2. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
