@@ -227,10 +227,10 @@
         </div>
 
         <div id="card-container" class="float-clear row mt-3" data-bind="sortable: { foreach: Images, options: { onEnd: OnImageMoved } }">
-            <div class="col-md-4" data-bind="attr: { id: 'gi-'+Id }">
-                <div class="card mb-4 shadow-sm">
+            <div data-bind="attr: { id: 'gi-'+Id }, css: $root.Thumbnail().column">
+                <div class="card mb-4 shadow-sm" data-bind="style: { width: $root.Thumbnail().width }">
                     <a data-bind="attr: { href: GetImageEditUrl(Id) }"><img data-bind="attr: { title: Name, src: GetImageThumbnailUrl(Files, $element) }" class="img-fluid"/></a>
-                    <div class="card-body card-body-thin text-center">
+                    <div class="card-body card-body-thin text-center" data-bind="visible: $root.Thumbnail().showCaption, style: { fontSize: $root.Thumbnail().fontSize }">
                         <p class="card-text" data-bind="text: Name"></p>
                     </div>
                 </div>
@@ -549,20 +549,22 @@
                 $("#manage-tags-tab").show();
             }
 
+            // the ordering tab's thumbnail size is part of the view model, rather than applied to the cards with jquery, so cards
+            // knockout redraws (i.e. after being dragged) keep it. it's remembered in local storage, so it also survives the
+            // page reload after ordering images by name, filename or capture date.
+            const thumbnailSizes = {
+                small: { column: 'col-md-2', width: '175px', showCaption: false, fontSize: null },
+                medium: { column: 'col-md-3', width: '268px', showCaption: true, fontSize: '0.75rem' },
+                large: { column: 'col-md-4', width: null, showCaption: true, fontSize: null }
+            };
+            const thumbnailSizeStorageKey = 'gallery-edit-thumbnail-size';
+            const storedThumbnailSize = localStorage.getItem(thumbnailSizeStorageKey);
+            vm.ThumbnailSize = ko.observable(thumbnailSizes[storedThumbnailSize] ? storedThumbnailSize : 'large');
+            vm.Thumbnail = ko.pureComputed(function() { return thumbnailSizes[vm.ThumbnailSize()]; });
+
             vm.SetThumbnailSize = function(size) {
-                if (size === 'small') {
-                    $(".card").css('width', 175);
-                    $(".card-body").hide();
-                    $("#card-container").children().removeClass('col-md-4 col-md-3').addClass('col-md-2');
-                } else if (size === 'medium') {
-                    $(".card").css('width', 268);
-                    $(".card-body").show().css('font-size', '0.75rem');
-                    $("#card-container").children().removeClass('col-md-2 col-md-4').addClass('col-md-3');
-                } else {
-                    $(".card").css('width', 368);
-                    $(".card-body").show().css('font-size', '1rem');
-                    $("#card-container").children().removeClass('col-md-2 col-md-3').addClass('col-md-4');
-                }
+                vm.ThumbnailSize(size);
+                localStorage.setItem(thumbnailSizeStorageKey, size);
             }
 
             vm.ToggleUpdateImagesTopControl = function(controlId) {
