@@ -45,49 +45,56 @@ public class NotificationService : BackgroundService
         int.TryParse(_configuration["Services:Notifications:MessageBatchSize"], out var messageBatchSize);
         int.TryParse(_configuration["Services:Notifications:MessageBatchVisibilityTimeoutMins"], out var messageBatchVisibilityMins);
 
-        if (!await _queueClient.ExistsAsync(stoppingToken))
+        try
         {
-            _log.LogCritical($"LB.PhotoGalleries.Services.NotificationService.ExecuteAsync() - {queueName} queue does not exist. Cannot continue.");
-            return;
-        }
-
-        if (!int.TryParse(_configuration["Services:Notifications:ZeroMessagesPollIntervalSeconds"], out var zeroMessagesPollIntervalSeconds))
-            zeroMessagesPollIntervalSeconds = 5;
-        var delayTime = TimeSpan.FromSeconds(zeroMessagesPollIntervalSeconds);
-        var zeroMessagesCount = 0;
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            _log.LogDebug("LB.PhotoGalleries.Services.NotificationService task doing background work.");
-
-            // get a batch of messages from the queue to process
-            // getting a batch is more efficient as it minimises the number of HTTP calls we have to make to the queue
-            var messages = await _queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins), stoppingToken);
-            if (zeroMessagesCount < 2)
-                _log.LogInformation($"NotificationService.ExecuteAsync() - Received {messages.Value.Length} messages from the {queueName} queue ");
-
-            if (messages.Value.Length > 0)
+            if (!await _queueClient.ExistsAsync(stoppingToken))
             {
-                foreach (var message in messages.Value)
+                _log.LogCritical($"LB.PhotoGalleries.Services.NotificationService.ExecuteAsync() - {queueName} queue does not exist. Cannot continue.");
+                return;
+            }
+
+            if (!int.TryParse(_configuration["Services:Notifications:ZeroMessagesPollIntervalSeconds"], out var zeroMessagesPollIntervalSeconds))
+                zeroMessagesPollIntervalSeconds = 5;
+            var delayTime = TimeSpan.FromSeconds(zeroMessagesPollIntervalSeconds);
+            var zeroMessagesCount = 0;
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                _log.LogDebug("LB.PhotoGalleries.Services.NotificationService task doing background work.");
+
+                // get a batch of messages from the queue to process
+                // getting a batch is more efficient as it minimises the number of HTTP calls we have to make to the queue
+                var messages = await _queueClient.ReceiveMessagesAsync(messageBatchSize, TimeSpan.FromMinutes(messageBatchVisibilityMins), stoppingToken);
+                if (zeroMessagesCount < 2)
+                    _log.LogInformation($"NotificationService.ExecuteAsync() - Received {messages.Value.Length} messages from the {queueName} queue ");
+
+                if (messages.Value.Length > 0)
                 {
-                    await HandleMessageAsync(message);
+                    foreach (var message in messages.Value)
+                    {
+                        await HandleMessageAsync(message);
+                    }
+                }
+
+                // if we received messages this iteration then there's a good chance there's more to process so don't pause between polls
+                // otherwise limit the rate we poll the queue and also don't log messages after a while
+                if (messages.Value.Length == 0)
+                {
+                    if (zeroMessagesCount == 2)
+                        _log.LogInformation($"NotificationService.ExecuteAsync() - Stopping logging until we we receive messages again. Still polling the queue every {delayTime} seconds though");
+
+                    zeroMessagesCount += 1;
+                    await Task.Delay(delayTime, stoppingToken);
+                }
+                else
+                {
+                    zeroMessagesCount = 0;
                 }
             }
-
-            // if we received messages this iteration then there's a good chance there's more to process so don't pause between polls
-            // otherwise limit the rate we poll the queue and also don't log messages after a while
-            if (messages.Value.Length == 0)
-            {
-                if (zeroMessagesCount == 2)
-                    _log.LogInformation($"NotificationService.ExecuteAsync() - Stopping logging until we we receive messages again. Still polling the queue every {delayTime} seconds though");
-
-                zeroMessagesCount += 1;
-                await Task.Delay(delayTime, stoppingToken);
-            }
-            else
-            {
-                zeroMessagesCount = 0;
-            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // the host is shutting down. Task.Delay and the queue calls throw when stoppingToken is cancelled, which is expected
         }
 
         _log.LogDebug("LB.PhotoGalleries.Services.NotificationService.ExecuteAsync() - Stopping");

@@ -45,7 +45,7 @@ public class User
     /// <summary>
     /// The date when the user was created on the site.
     /// </summary>
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// If this user registered in the Apollo era then we have a way to link their identity back to the IDP beyond just email addresses which are not immutable.
