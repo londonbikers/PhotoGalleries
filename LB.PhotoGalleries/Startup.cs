@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using Imageflow.Fluent;
 using Imageflow.Server;
 using Imageflow.Server.HybridCache;
@@ -7,6 +8,7 @@ using LB.PhotoGalleries.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -54,6 +56,14 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+        // keep the data-protection keys, which protect the sign-in and session cookies, in blob storage so restarts and
+        // deploys don't sign everyone out. each environment has its own storage account, so environments never share keys.
+        var dataProtectionContainer = new BlobContainerClient(Configuration["Storage:ConnectionString"], "dataprotection");
+        dataProtectionContainer.CreateIfNotExists();
+        services.AddDataProtection()
+            .SetApplicationName("LB.PhotoGalleries")
+            .PersistKeysToAzureBlobStorage(dataProtectionContainer.GetBlobClient("keys.xml"));
+
         // add session so we can track some user events
         services.AddDistributedMemoryCache();
         services.AddSession(options =>

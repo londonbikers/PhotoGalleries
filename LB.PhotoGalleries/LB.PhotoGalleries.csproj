@@ -10,6 +10,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Extensions.AspNetCore.DataProtection.Blobs" Version="1.5.5" />
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <PackageReference Include="Imageflow.Server" Version="0.9.0" />
     <PackageReference Include="Imageflow.Server.HybridCache" Version="0.9.0" />
