@@ -58,22 +58,17 @@ function DoesBrowserSupportWebP() {
 
 // aggressively encodes a piece of text to be placed into a URL.
 // is not guaranteed to be reversible so best used just for aesthetic reasons.
+// must match Helpers.EncodeParamForUrl() on the server exactly, as pages permanently redirect any other name to the one it produces.
 function EncodeParamForUrl(parameter)
 {
-    // remove some characters
-    parameter = parameter.replace(/\(|\)|'|@|#/g, "");
-
     // replace hyphens with underscores (all occurrences)
     parameter = parameter.replace(/-/g, "_");
 
-    // replace others with hyphens
-    parameter = parameter.replace(/-| |\.|\//g, "-");
+    // replace spaces and slashes with hyphens
+    parameter = parameter.replace(/ |\//g, "-");
 
-    // make sure we haven't doubled up hyphens
-    parameter = parameter.replace(/-{2,}/g, "-");
-
-    // make sure we don't have any leading or trailing hyphens either
-    parameter = parameter.replace(/^-|-$/g, "");
+    // remove some characters
+    parameter = parameter.replace(/\(|\)|'|@|#/g, "");
 
     // then just lower case it
     return parameter.toLowerCase();
@@ -203,3 +198,27 @@ function DateToTicks(date) {
     const dateObj = new Date(date);
     return ((dateObj.getTime() * 10000) + 621355968000000000);
 }
+
+// when following a link to a comment, i.e. from a notification email or the admin comments list, scroll it into view
+// and briefly highlight it so it's obvious which comment the link was for. comment anchors look like #c637450000000000000.
+function FocusLinkedComment() {
+    if (!/^#c\d+$/.test(window.location.hash))
+        return;
+
+    const comment = document.getElementById(window.location.hash.substring(1));
+    if (!comment)
+        return;
+
+    // the browser jumps to the comment before scripts have finished laying out the page (i.e. sizing the photo), so jump again now it's settled.
+    // centring it also keeps it clear of the fixed navigation bar.
+    comment.scrollIntoView({ block: "center" });
+
+    // the highlight stays once it's faded, so take it off any comment followed before this one,
+    // and restart the animation if the same comment is followed again
+    document.querySelectorAll(".comment-focus").forEach(focused => focused.classList.remove("comment-focus"));
+    void comment.offsetWidth;
+    comment.classList.add("comment-focus");
+}
+
+window.addEventListener("load", FocusLinkedComment);
+window.addEventListener("hashchange", FocusLinkedComment);

@@ -29,6 +29,13 @@ public class ImagesController : Controller
         if (image == null)
             return RedirectToActionPermanent("Index", "Home");
 
+        // the name is only there for readability, so send any other name to the canonical url to avoid duplicate pages
+        var canonicalPath = Url.Action("Details", "Images", new { galleryId = image.GalleryId, imageId = image.Id, name = Helpers.EncodeParamForUrl(image.Name) });
+        if (!Helpers.IsCanonicalUrlName(name, image.Name))
+            return RedirectPermanent(canonicalPath + Request.QueryString);
+
+        var canonicalUrl = Helpers.GetAbsoluteUrl(_configuration, canonicalPath);
+        ViewData["canonicalUrl"] = canonicalUrl;
         ViewData.Model = image;
         ViewData["gallery"] = await Server.Instance.Galleries.GetGalleryAsync(image.GalleryCategoryId, galleryId);
         ViewData["category"] = Server.Instance.Categories.Categories.Single(c => c.Id == image.GalleryCategoryId);
@@ -51,7 +58,7 @@ public class ImagesController : Controller
         }
 
         // build the open-graph model to enable great presentation when pages are indexed/shared
-        var openGraphModel = new OpenGraphModel {Title = image.Name, Url = Request.GetRawUrl().AbsoluteUri};
+        var openGraphModel = new OpenGraphModel {Title = image.Name, Url = canonicalUrl};
 
         if (!string.IsNullOrEmpty(image.Caption))
             openGraphModel.Description = Helpers.GetFirstParagraph(image.Caption);
