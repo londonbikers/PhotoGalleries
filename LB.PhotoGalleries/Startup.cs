@@ -17,10 +17,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Serilog;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries;
 
@@ -110,6 +112,16 @@ public class Startup
                 // create a user object in our database the first time they login
                 // or update them if their claims change
                 options.Events.OnTicketReceived = async ctx => { await UserManagement.UpdateUserFromClaimsAsync(ctx); };
+
+                // the idp sent back an error (e.g. access_denied) or the code couldn't be exchanged for tokens.
+                // log the idp's error and show a sign-in failed page, rather than an unhandled exception.
+                options.Events.OnRemoteFailure = ctx =>
+                {
+                    Log.Warning(ctx.Failure, "Sign-in failed: {Message}", ctx.Failure?.Message);
+                    ctx.Response.Redirect("/signinfailed");
+                    ctx.HandleResponse();
+                    return Task.CompletedTask;
+                };
             });
 
         services.Configure<RequestLocalizationOptions>(options =>

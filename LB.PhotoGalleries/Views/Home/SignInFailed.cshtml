@@ -1,0 +1,17 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Sign-in failed";
+}
+
+<h1 class="text-danger">Sign-in failed.</h1>
+<p>We couldn't sign you in. Please try again in a few minutes.</p>
+<p>If it keeps happening, please let us know, and include the request ID below.</p>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<p><a href="/">Back to the homepage</a></p>
