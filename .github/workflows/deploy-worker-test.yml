@@ -1,7 +1,9 @@
-name: STAGING Deploy Worker
+name: TEST Deploy Worker
 
-# Deploys the staging Worker when anything it's built from changes on master.
+# Deploys the TEST Worker when anything it's built from changes on master.
 # Website-only changes don't restart it.
+# On the Worker host the TEST Worker is still named "staging" (supervisor program, folder and
+# appsettings.Staging.json), so that's the environment passed to the reusable workflow.
 on:
   push:
     branches:
@@ -11,11 +13,11 @@ on:
       - 'LB.PhotoGalleries.Models/**'
       - 'LB.PhotoGalleries.Shared/**'
       - '.github/workflows/_deploy-worker.yml'
-      - '.github/workflows/deploy-worker-staging.yml'
+      - '.github/workflows/deploy-worker-test.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-worker-staging
+  group: deploy-worker-test
   cancel-in-progress: false
 
 jobs:

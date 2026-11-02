@@ -1,7 +1,9 @@
-name: PROD Deploy LBP
+name: TEST Deploy Web
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   build-and-deploy:
@@ -34,9 +36,9 @@ jobs:
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         script: |
           if command -v sudo &> /dev/null; then
-            sudo systemctl stop prod-lbp.service || systemctl stop prod-lbp.service
+            sudo systemctl stop test-lbp.service || systemctl stop test-lbp.service
           else
-            systemctl stop prod-lbp.service
+            systemctl stop test-lbp.service
           fi
 
     - name: Copying files to server
@@ -49,7 +51,7 @@ jobs:
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         strip_components: 10
         source: "/home/runner/work/PhotoGalleries/PhotoGalleries/LB.PhotoGalleries/bin/Release/net10.0/publish/*"
-        target: "${{ secrets.PROD_REMOTE_DIR }}"
+        target: "${{ secrets.TEST_REMOTE_DIR }}"
         overwrite: true
 
     - name: Restart service after deployment
@@ -62,7 +64,7 @@ jobs:
         passphrase: ${{ secrets.TEST_SSH_KEY_PASSPHRASE }}
         script: |
           if command -v sudo &> /dev/null; then
-            sudo systemctl start prod-lbp.service || systemctl start prod-lbp.service
+            sudo systemctl start test-lbp.service || systemctl start test-lbp.service
           else
-            systemctl start prod-lbp.service
+            systemctl start test-lbp.service
           fi
