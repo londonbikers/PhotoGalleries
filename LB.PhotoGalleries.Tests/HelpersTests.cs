@@ -9,7 +9,7 @@ public class HelpersTests
     {
         const string name = "</script><div data-bind=\"text: 1\">'&";
 
-        var json = Helpers.ToScriptJson(new { Name = name }).ToString();
+        var json = Helpers.ToScriptJson(new { Name = name }).ToString()!;
 
         Assert.DoesNotContain("<", json);
         Assert.DoesNotContain(">", json);
