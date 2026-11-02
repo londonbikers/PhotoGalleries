@@ -350,6 +350,13 @@
             console.log(`image dims: ${image.Width} x ${image.Height}`);
             console.log(`scaled dims: ${dims.width} x ${dims.height}`);
 
+            // pre-generated files are never bigger than the original. when the original is smaller than the screen needs
+            // (i.e. on high-dpi screens), have the server enlarge it so the watermark is drawn at full resolution rather
+            // than being stretched, and blurred, by the browser. larger originals keep their cache-friendly urls.
+            const upscale = image.Width < dims.width || image.Height < dims.height
+                ? `&w=${dims.width}&h=${dims.height}&scale=both`
+                : "";
+
             // choose an appropriate ImageFileSpec for scaled dimensions:
             // find first available image spec that is larger than scaled dims
             if (dims.width <= 800 && dims.height <= 800 && image.Files.Spec800Id != null) {
@@ -357,13 +364,13 @@
                 return `/di800/${image.Files.Spec800Id}`;
             } else if (dims.width <= 1920 && dims.height <= 1920 && image.Files.Spec1920Id != null) {
                 console.log("GetImageSrc(): returning di1920");
-                return `/di1920/${image.Files.Spec1920Id}?o=${orientation}`;
+                return `/di1920/${image.Files.Spec1920Id}?o=${orientation}${upscale}`;
             } else if (dims.width <= 2560 && dims.height <= 2560 && image.Files.Spec2560Id != null) {
                 console.log("GetImageSrc(): returning di2560");
-                return `/di2560/${image.Files.Spec2560Id}?o=${orientation}`;
+                return `/di2560/${image.Files.Spec2560Id}?o=${orientation}${upscale}`;
             } else if (dims.width <= 3840 && dims.height <= 3840 && image.Files.Spec3840Id != null) {
                 console.log("GetImageSrc(): returning di3840");
-                return `/di3840/${image.Files.Spec3840Id}?o=${orientation}`;
+                return `/di3840/${image.Files.Spec3840Id}?o=${orientation}${upscale}`;
             } else {
                 console.log("GetImageSrc(): returning second dio");
                 return `/dio/${image.Files.OriginalId}?w=${dims.width}&h=${dims.height}`;

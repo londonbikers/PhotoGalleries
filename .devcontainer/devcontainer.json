@@ -8,7 +8,9 @@
     "ghcr.io/devcontainers/features/powershell:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     // Azure CLI, for working with the Cosmos DB and Storage accounts.
-    "ghcr.io/devcontainers/features/azure-cli:1": {}
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    // Node, for npx playwright (installs the headless Chromium used for visual checks).
+    "ghcr.io/devcontainers/features/node:1": {}
   },
 
   "mounts": [
@@ -19,16 +21,21 @@
     // Claude Code login, settings and history, kept across rebuilds (see CLAUDE_CONFIG_DIR below).
     "source=photogalleries-claude,target=/home/vscode/.claude,type=volume",
     // Azure CLI sign-in, kept across rebuilds.
-    "source=photogalleries-azure,target=/home/vscode/.azure,type=volume"
+    "source=photogalleries-azure,target=/home/vscode/.azure,type=volume",
+    // Playwright's headless Chromium, kept across rebuilds.
+    "source=photogalleries-playwright,target=/home/vscode/.playwright,type=volume"
   ],
 
   "containerEnv": {
     // Point Claude Code's whole config (including what would otherwise be ~/.claude.json) into the persisted volume.
-    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    // Where Playwright installs and looks for browsers: the persisted volume above, rather than ~/.cache.
+    "PLAYWRIGHT_BROWSERS_PATH": "/home/vscode/.playwright"
   },
 
   // Named volumes are created root-owned; hand them to the dev user, then generate a dev HTTPS cert and restore.
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.microsoft /home/vscode/.nuget /home/vscode/.claude /home/vscode/.azure && dotnet dev-certs https && dotnet restore LB.PhotoGalleries.sln",
+  // Then install headless Chromium (and its system libraries) for screenshotting the running site at 1x/2x pixel density.
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.microsoft /home/vscode/.nuget /home/vscode/.claude /home/vscode/.azure /home/vscode/.playwright && dotnet dev-certs https && dotnet restore LB.PhotoGalleries.sln && npx -y playwright@1.64.1 install --with-deps chromium-headless-shell",
 
   "forwardPorts": [44343],
   "portsAttributes": {
