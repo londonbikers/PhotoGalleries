@@ -280,7 +280,16 @@ public class UserServer
         {
             // Security: Download with validation
             using var response = await client.GetAsync(originalPictureUrl, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                // identity providers explain what's wrong in the body, i.e. Facebook says when its app has been deactivated
+                var body = await response.Content.ReadAsStringAsync();
+                if (body.Length > 500)
+                    body = body[..500];
+
+                Log.Warning($"UserServer.DownloadAndStoreUserPictureAsync() - Picture download failed for user {user.Id}. Status: {(int)response.StatusCode} {response.StatusCode}. URL: {originalPictureUrl}. Response: {body}");
+                return;
+            }
 
             // Security: Validate Content-Type is an image
             var contentType = response.Content.Headers.ContentType?.MediaType;
@@ -322,7 +331,7 @@ public class UserServer
         }
         catch (Exception e)
         {
-            Log.Debug($"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading: {e.Message}");
+            Log.Warning(e, $"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading the picture for user {user.Id}. URL: {originalPictureUrl}");
         }
     }
 
