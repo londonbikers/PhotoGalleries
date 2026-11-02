@@ -458,13 +458,13 @@
             const self = this;
 
             // parse the image from a json blob
-            self.Image = @Html.Raw(JsonConvert.SerializeObject(new
+            self.Image = @Helpers.ToScriptJson(new
                          {
                              Model.Files,
                              Model.Metadata.Width,
                              Model.Metadata.Height,
                              Model.Name
-                         }));
+                         });
 
             self.ImageContainerWidth = $(".container-max").innerWidth();
             const pageHeight = $(window).height();

@@ -84,7 +84,7 @@
         // and convert to json so the Knockout script can parse it and use it.
         var payload = @if (galleries != null)
                       {
-                          @Html.Raw(JsonConvert.SerializeObject(galleries.Results.Select(g => new
+                          @Helpers.ToScriptJson(galleries.Results.Select(g => new
                           {
                               g.CategoryId,
                               g.Id,
@@ -93,7 +93,7 @@
                               g.ImageCount,
                               g.CommentCount,
                               CategoryName = Model.Name
-                          })))
+                          }))
                       };
 
         // the view model that knockout uses to bind data to the html

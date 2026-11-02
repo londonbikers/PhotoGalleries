@@ -72,14 +72,14 @@
 
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
-        var payload = @Html.Raw(JsonConvert.SerializeObject(Model.Results.Select(i => new
+        var payload = @Helpers.ToScriptJson(Model.Results.Select(i => new
                       {
                           i.Id,
                           i.GalleryId,
                           i.Name,
                           i.Files,
                           i.Comments.Count
-                      })));
+                      }));
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {

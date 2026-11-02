@@ -121,7 +121,7 @@ public class SearchController : Controller
             g.ImageCount,
             g.CommentCount,
             CategoryName = Server.Instance.Categories.GetCategory(g.CategoryId).Name
-        })) : null;
+        }), Helpers.ScriptJsonSettings) : null;
 
         ViewData["imagesJson"] = searchPagedResultSet.ImageResults != null ? JsonConvert.SerializeObject(searchPagedResultSet.ImageResults.Select(i => new
         {
@@ -130,7 +130,7 @@ public class SearchController : Controller
             i.Name,
             i.Files,
             i.Comments.Count
-        })) : null;
+        }), Helpers.ScriptJsonSettings) : null;
 
         return View();
     }

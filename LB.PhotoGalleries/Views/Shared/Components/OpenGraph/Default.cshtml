@@ -1,22 +1,22 @@
 ﻿@model OpenGraphModel
-<meta property="og:title" content="@Html.Raw(Model.Title)" />
-<meta property="og:description" content="@Html.Raw(Model.Description)" />
-<meta property="og:type" content="@Html.Raw(Model.Type)" />
-<meta property="og:locale" content="@Html.Raw(Model.Locale)" />
-<meta property="og:site_name" content="@Html.Raw(Model.SiteName)" />
-<meta property="og:url" content="@Html.Raw(Model.Url)" />
-<meta property="fb:app_id" content="@Html.Raw(Model.FbAppId)" />
+<meta property="og:title" content="@Model.Title" />
+<meta property="og:description" content="@Model.Description" />
+<meta property="og:type" content="@Model.Type" />
+<meta property="og:locale" content="@Model.Locale" />
+<meta property="og:site_name" content="@Model.SiteName" />
+<meta property="og:url" content="@Model.Url" />
+<meta property="fb:app_id" content="@Model.FbAppId" />
 @foreach (var image in Model.Images)
 {
-    <meta property="og:image" content="@Html.Raw(image.Url)" />
-    <meta property="og:image:type" content="@Html.Raw(image.ContentType)" />
+    <meta property="og:image" content="@image.Url" />
+    <meta property="og:image:type" content="@image.ContentType" />
     @if (image.Width.HasValue)
     {
-        <meta property="og:image:width" content="@Html.Raw(image.Width.Value)" />
+        <meta property="og:image:width" content="@image.Width.Value" />
     }
     @if (image.Height.HasValue)
     {
-        <meta property="og:image:height" content="@Html.Raw(image.Height.Value)" />
+        <meta property="og:image:height" content="@image.Height.Value" />
     }
 }
 
