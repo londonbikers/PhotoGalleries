@@ -53,7 +53,7 @@ The application follows a clean architecture pattern:
 
 ### Dev container (recommended)
 
-The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell, the GitHub and Azure CLIs and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
+The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) that provides .NET 10 SDK, PowerShell, the GitHub and Azure CLIs, Node, headless Chromium and the C# tooling on Ubuntu 24.04. (The VPS runs Ubuntu 22.04.) There are no emulators: the container talks to the shared dev Cosmos DB and Storage account.
 
 1. Install Docker Desktop and the VS Code **Dev Containers** extension.
 2. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
@@ -65,6 +65,13 @@ The repo includes a [dev container](https://containers.dev) (`.devcontainer/`) t
    ```
    Make sure any path settings (e.g. `ImageFlow:DiskCachePath`, `Logging:Path`) are Linux paths.
 4. Use the **.NET Core Launch (web)** or **.NET Core Launch (Worker)** debug configurations. The site is forwarded to `https://localhost:44343`. The container's dev certificate isn't trusted by your host browser, so expect a certificate warning the first time.
+5. To check pages visually from inside the container (e.g. how images and watermarks render on high-DPI screens), screenshot the running site with headless Chromium. `--force-device-scale-factor=2` simulates a Retina/phone screen:
+   ```bash
+   chrome=$(find "$PLAYWRIGHT_BROWSERS_PATH" -name chrome-headless-shell -type f | head -1)
+   "$chrome" --no-sandbox --ignore-certificate-errors --force-device-scale-factor=2 --window-size=1600,1000 \
+     --virtual-time-budget=15000 --screenshot=page.png "https://localhost:44343/i/<galleryId>/<imageId>/x"
+   ```
+   Use `--dump-dom` instead of `--screenshot` to see the rendered HTML; the page's `console.log` output goes to stderr.
 
 ### Prerequisites (without the dev container)
 - .NET 10.0 SDK
