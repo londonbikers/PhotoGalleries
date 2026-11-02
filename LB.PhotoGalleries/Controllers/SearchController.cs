@@ -1,6 +1,7 @@
 ﻿using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Serilog;
@@ -38,7 +39,8 @@ public class SearchController : Controller
         if (t == SearchResultsType.All || t == SearchResultsType.Categories)
         {
             // search for categories
-            categories = Server.Instance.Categories.Categories.Where(c => c.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            var terms = SearchTerms.Expand(q);
+            categories = Server.Instance.Categories.Categories.Where(c => terms.Any(term => c.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase))).ToList();
             ViewData["categories"] = categories;
         }
 

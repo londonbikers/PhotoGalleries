@@ -422,14 +422,19 @@ public class ImageServer
             rangeClause = $"AND i.Created >= \"{rangeFrom.ToString(Constants.CosmosDbDateTimeFormatString)}\"";
         }
 
+        // search for the term's plural/singular forms and synonyms too
+        var terms = SearchTerms.Expand(term);
+        var termsClause = string.Join(" OR ", terms.Select((_, n) => $"CONTAINS(i.Name, @term{n}, true) OR CONTAINS(i.TagsCsv, @term{n}, true)"));
+
         // get the complete list of ids
         var queryText = includeInactiveGalleries
-            ? $"SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE (CONTAINS(i.Name, @term, true) OR CONTAINS(i.TagsCsv, @term, true)) {rangeClause} ORDER BY {orderClause}"
+            ? $"SELECT TOP @maxResults i.id AS Id, i.GalleryId AS PartitionKey FROM i WHERE ({termsClause}) {rangeClause} ORDER BY {orderClause}"
             : "NOT CURRENTLY SUPPORTED - NO WAY TO TELL!";
 
         var queryDefinition = new QueryDefinition(queryText)
-            .WithParameter("@maxResults", maxResults)
-            .WithParameter("@term", term.ToLower());
+            .WithParameter("@maxResults", maxResults);
+        for (var n = 0; n < terms.Count; n++)
+            queryDefinition.WithParameter($"@term{n}", terms[n]);
 
         var databaseIds = await Server.GetIdsByQueryAsync(Constants.ImagesContainerName, queryDefinition);
 

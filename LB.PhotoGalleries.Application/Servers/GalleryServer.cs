@@ -180,9 +180,11 @@ public class GalleryServer
         if (maxResults > 500)
             maxResults = 500;
 
+        // search for the term's plural/singular forms and synonyms too
+        var terms = SearchTerms.Expand(term);
         var nameClause = string.Empty;
-        if (term.HasValue())
-            nameClause = "CONTAINS(g.Name, @term, true)";
+        if (terms.Count > 0)
+            nameClause = "(" + string.Join(" OR ", terms.Select((_, n) => $"CONTAINS(g.Name, @term{n}, true)")) + ")";
 
         var statusClause = string.Empty;
         if (searchStatus == SearchStatus.Active)
@@ -234,8 +236,9 @@ public class GalleryServer
 
         // get the complete list of ids
         var queryDefinition = new QueryDefinition(queryText)
-            .WithParameter("@maxResults", maxResults)
-            .WithParameter("@term", term);
+            .WithParameter("@maxResults", maxResults);
+        for (var n = 0; n < terms.Count; n++)
+            queryDefinition.WithParameter($"@term{n}", terms[n]);
 
         var databaseIds = await Server.GetIdsByQueryAsync(Constants.GalleriesContainerName, queryDefinition);
 
