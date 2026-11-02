@@ -37,13 +37,14 @@ public static class UserManagement
         else
         {
             // we already have an existing user for them, update their attributes if necessary
-            if (!user.Name.Equals(context.Principal.FindFirstValue("name"), StringComparison.CurrentCultureIgnoreCase))
+            // string.Equals rather than user.Name.Equals, as older or migrated users can have no name or email stored
+            if (!string.Equals(user.Name, context.Principal.FindFirstValue("name"), StringComparison.OrdinalIgnoreCase))
             {
                 user.Name = context.Principal.FindFirstValue("name");
                 updateNeeded = true;
             }
 
-            if (!user.Email.Equals(context.Principal.FindFirstValue("email"), StringComparison.CurrentCultureIgnoreCase))
+            if (!string.Equals(user.Email, context.Principal.FindFirstValue("email"), StringComparison.OrdinalIgnoreCase))
             {
                 user.Email = context.Principal.FindFirstValue("email");
                 updateNeeded = true;
@@ -59,10 +60,10 @@ public static class UserManagement
             Log.Debug("UpdateUserFromClaimsAsync(): We have a picture claim");
             Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture.HasValue(): {user.Picture.HasValue()}");
             Log.Debug($"UpdateUserFromClaimsAsync(): user.PictureHostedUrl.HasValue(): {user.PictureHostedUrl.HasValue()}");
-            Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase): {user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase)}");
+            Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture matches claim: {string.Equals(user.Picture, pictureClaimValue, StringComparison.OrdinalIgnoreCase)}");
 
             // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
-            if (!user.Picture.HasValue() || !user.PictureHostedUrl.HasValue() || !user.Picture.Equals(pictureClaimValue, StringComparison.CurrentCultureIgnoreCase))
+            if (!user.Picture.HasValue() || !user.PictureHostedUrl.HasValue() || !string.Equals(user.Picture, pictureClaimValue, StringComparison.OrdinalIgnoreCase))
             {
                 Log.Debug("UpdateUserFromClaimsAsync(): About to download picture");
                 await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
