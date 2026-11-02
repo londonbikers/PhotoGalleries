@@ -14,19 +14,21 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
     [Authorize(Roles = "Administrator")]
     public class UsersController : Controller
     {
-        // GET: /admin/users?q=search&s=name&d=asc&p=2
-        public async Task<ActionResult> Index(string q, string s, string d, int p = 1)
+        // GET: /admin/users?q=search&s=name&d=asc&p=2&n=100
+        public async Task<ActionResult> Index(string q, string s, string d, int p = 1, int? n = null)
         {
             var sortBy = Enum.TryParse<UserSortBy>(s, true, out var parsedSortBy) && Enum.IsDefined(parsedSortBy) ? parsedSortBy : UserSortBy.Created;
 
             var descending = d.HasValue() ? d == "desc" : DefaultsToDescending(sortBy);
 
-            var users = await Server.Instance.Users.GetUsersAsync(q, sortBy, descending, p, 50);
+            var pageSize = Helpers.GetAdminPageSize(n);
+            var users = await Server.Instance.Users.GetUsersAsync(q, sortBy, descending, p, pageSize);
             ViewData.Model = users;
             ViewData["commentCounts"] = await Server.Instance.Users.GetUserCommentCountsAsync(users.Results.Select(u => u.Id).ToList());
             ViewData["searchString"] = q;
             ViewData["sortBy"] = sortBy;
             ViewData["descending"] = descending;
+            ViewData["pageSize"] = pageSize;
             return View();
         }
 

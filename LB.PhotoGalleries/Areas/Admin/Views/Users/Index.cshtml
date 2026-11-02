@@ -13,6 +13,7 @@
 @functions {
     UserSortBy CurrentSortBy => (UserSortBy)ViewData["sortBy"];
     bool CurrentDescending => (bool)ViewData["descending"];
+    int PageSize => (int)ViewData["pageSize"];
 
     // builds a url for the users list, leaving out any parameters that are at their default value
     string ListUrl(UserSortBy sortBy, bool descending, int page)
@@ -22,7 +23,8 @@
             q = (string)ViewData["searchString"],
             s = sortBy == UserSortBy.Created ? null : sortBy.ToString().ToLower(),
             d = descending == UsersController.DefaultsToDescending(sortBy) ? null : descending ? "desc" : "asc",
-            p = page > 1 ? page : (int?)null
+            p = page > 1 ? page : (int?)null,
+            n = PageSize == Helpers.DefaultAdminPageSize ? (int?)null : PageSize
         });
     }
 
@@ -37,6 +39,15 @@
 <h1>Users</h1>
 
 <form asp-controller="Users" asp-action="Index" method="get">
+    @* keep the sort when filtering or changing the page size *@
+    @if (CurrentSortBy != UserSortBy.Created)
+    {
+        <input type="hidden" name="s" value="@CurrentSortBy.ToString().ToLower()" />
+    }
+    @if (CurrentDescending != UsersController.DefaultsToDescending(CurrentSortBy))
+    {
+        <input type="hidden" name="d" value="@(CurrentDescending ? "desc" : "asc")" />
+    }
     <div class="form-row align-items-center">
         <div class="col-auto">
             <label class="sr-only" for="q">Name:</label>
@@ -48,9 +59,10 @@
         @if (searchString.HasValue())
         {
             <div class="col-auto">
-                <a asp-action="Index" class="btn btn-outline-secondary mb-2">Clear</a>
+                <a href="@Url.Action("Index", new { n = PageSize == Helpers.DefaultAdminPageSize ? (int?)null : PageSize })" class="btn btn-outline-secondary mb-2">Clear</a>
             </div>
         }
+        <partial name="_PageSizeSelect" model="PageSize" />
     </div>
 </form>
 
@@ -81,7 +93,7 @@
                 <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
                 <td title="@item.Created.ToString("dddd d MMMM yyyy, HH:mm")">@item.Created.ToString("d MMM yyyy")</td>
-                <td>@commentCounts.GetValueOrDefault(item.Id).ToString("N0")</td>
+                <td><a asp-controller="Comments" asp-action="Index" asp-route-u="@item.Id">@commentCounts.GetValueOrDefault(item.Id).ToString("N0")</a></td>
                 <td>@Html.ActionLink("Details", "Details", new {item.Id}, new {@class = "btn btn-sm btn-outline-secondary"})</td>
                 <td>@Html.ActionLink("Delete", "Delete", new {item.Id}, new { @class = "btn btn-sm btn-outline-danger" })</td>
             </tr>

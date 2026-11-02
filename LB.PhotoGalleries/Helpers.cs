@@ -262,6 +262,21 @@ public class Helpers
         return Utilities.ValidateImageFileSignature(stream);
     }
 
+    /// <summary>
+    /// The page sizes admins can choose between on paged admin lists. The application tier caps page sizes at 100.
+    /// </summary>
+    public static readonly int[] AdminPageSizes = { 10, 25, 50, 100 };
+
+    public const int DefaultAdminPageSize = 50;
+
+    /// <summary>
+    /// Returns the requested admin list page size if it's one of the allowed ones, otherwise the default.
+    /// </summary>
+    public static int GetAdminPageSize(int? requestedPageSize)
+    {
+        return requestedPageSize.HasValue && AdminPageSizes.Contains(requestedPageSize.Value) ? requestedPageSize.Value : DefaultAdminPageSize;
+    }
+
     #region private methods
     /// <summary>
     /// Breaks text up into paragraphs.
