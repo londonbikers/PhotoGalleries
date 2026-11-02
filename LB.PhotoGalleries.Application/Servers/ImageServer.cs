@@ -749,7 +749,7 @@ public class ImageServer
     #region internal methods
     internal async Task<List<Image>> GetImagesUserHasCommentedOnAsync(string userId)
     {
-        const string query = "SELECT * FROM c WHERE c.Comments.CreatedByUserId = @userId";
+        const string query = "SELECT * FROM c WHERE EXISTS (SELECT VALUE cm FROM cm IN c.Comments WHERE cm.CreatedByUserId = @userId)";
         var queryDefinition = new QueryDefinition(query).WithParameter("@userId", userId);
         return await GetImagesByQueryAsync(queryDefinition);
     }
