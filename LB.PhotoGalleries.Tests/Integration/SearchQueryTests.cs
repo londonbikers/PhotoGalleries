@@ -1,5 +1,6 @@
 using LB.PhotoGalleries.Application;
 using LB.PhotoGalleries.Models.Enums;
+using LB.PhotoGalleries.Shared;
 
 namespace LB.PhotoGalleries.Tests.Integration;
 
@@ -23,7 +24,8 @@ public class SearchQueryTests
     {
         var active = (await CosmosTestDatabase.GetGalleriesAsync()).Where(g => g.Active).ToList();
         var term = PickTerm(active.Select(g => g.Name));
-        var expected = active.Where(g => g.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false).ToList();
+        var terms = SearchTerms.Expand(term);
+        var expected = active.Where(g => terms.Any(t => g.Name?.Contains(t, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
 
         var actual = await Server.Instance.Galleries.SearchForGalleriesAsync(term.ToUpperInvariant(), searchStatus: SearchStatus.Active, pageSize: 100);
 
@@ -36,9 +38,10 @@ public class SearchQueryTests
     {
         var images = await CosmosTestDatabase.GetImagesAsync();
         var term = PickTerm(images.Select(i => i.Name).Concat(images.SelectMany(i => (i.TagsCsv ?? "").Split(','))));
+        var terms = SearchTerms.Expand(term);
         var expected = images
-            .Where(i => (i.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (i.TagsCsv?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false))
+            .Where(i => terms.Any(t => (i.Name?.Contains(t, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                       (i.TagsCsv?.Contains(t, StringComparison.OrdinalIgnoreCase) ?? false)))
             .ToList();
 
         var actual = await Server.Instance.Images.SearchForImagesAsync(term.ToUpperInvariant(), pageSize: 100, includeInactiveGalleries: true);
@@ -50,8 +53,9 @@ public class SearchQueryTests
 
         // the page should keep the database's newest-first order. compare with cosmos's own ORDER BY rather than sorting
         // here: the dev data has a pair of images, uploaded seconds apart, that cosmos orders the other way round.
+        var termsClause = string.Join(" OR ", terms.Select(t => $"CONTAINS(i.Name, '{t}', true) OR CONTAINS(i.TagsCsv, '{t}', true)"));
         var ordered = await CosmosTestDatabase.QueryAsync<ImageRow>("Images",
-            $"SELECT TOP 100 i.id FROM i WHERE CONTAINS(i.Name, '{term}', true) OR CONTAINS(i.TagsCsv, '{term}', true) ORDER BY i.Created DESC");
+            $"SELECT TOP 100 i.id FROM i WHERE {termsClause} ORDER BY i.Created DESC");
         Assert.Equal(ordered.Select(i => i.Id), actual.Results.Select(i => i.Id));
     }
 }
