@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Serilog;
 using System;
 using System.Diagnostics;
@@ -33,14 +34,38 @@ public class HomeController : Controller
         return View();
     }
 
+    /// <summary>
+    /// Error page for unhandled exceptions. Anonymous so it still renders when the site is closed to the public,
+    /// otherwise the global authorize filter starts another sign-in, which fails the same way as the original error.
+    /// </summary>
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
         // access the unhandled exception and log it
         var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-        if (exceptionHandlerPathFeature?.Error != null)
-            Log.Error(exceptionHandlerPathFeature.Error, "Unhandled exception!");
+        var error = exceptionHandlerPathFeature?.Error;
 
+        // the idp refused to start a sign-in, e.g. it rejected our client secret (invalid_client)
+        if (error is OpenIdConnectProtocolException)
+        {
+            Log.Error(error, "Sign-in failed, the IdP returned an error: {Message}", error.Message);
+            return View(nameof(SignInFailed), new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        if (error != null)
+            Log.Error(error, "Unhandled exception!");
+
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    /// <summary>
+    /// Shown when signing in fails at the IdP. The OIDC OnRemoteFailure event sends users here, and Error() uses its view.
+    /// </summary>
+    [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult SignInFailed()
+    {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
