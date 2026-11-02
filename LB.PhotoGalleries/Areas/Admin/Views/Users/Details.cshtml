@@ -4,9 +4,15 @@
     ViewData["Title"] = $"User: {Model.Name}";
     var galleriesCount = (int)ViewData["galleriesCount"];
     var commentsCount = (int)ViewData["commentsCount"];
+    var message = (string)TempData["message"];
 }
 
 <h1>User Details</h1>
+
+@if (message.HasValue())
+{
+    <div class="alert alert-success" role="alert">@message</div>
+}
 
 <div>
     <h4>User</h4>
@@ -38,6 +44,20 @@
             </dt>
             <dd class="col-sm-10">
                 <img src="@ViewData.Model.PictureHostedUrl" width="50" title="@ViewData.Model.Name" class="comment-user-pic rounded" />
+                <form asp-action="RemovePicture" asp-route-id="@Model.Id" method="post" class="d-inline-block" onsubmit="return confirm('Remove this user\'s picture? It won\'t come back when they next sign in, unless they change their picture.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove picture</button>
+                </form>
+            </dd>
+        }
+
+        @if (ViewData.Model.RemovedPictureUrl.HasValue())
+        {
+            <dt class="col-sm-5">
+                @Html.DisplayNameFor(model => model.RemovedPictureUrl)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.RemovedPictureUrl)
+                <div class="small text-muted">Removed by an admin. Won't be used again unless they change their picture.</div>
             </dd>
         }
 

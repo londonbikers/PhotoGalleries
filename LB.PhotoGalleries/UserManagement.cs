@@ -1,6 +1,6 @@
 ﻿using LB.PhotoGalleries.Application;
+using LB.PhotoGalleries.Application.Servers;
 using LB.PhotoGalleries.Models;
-using LB.PhotoGalleries.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Serilog;
 using System;
@@ -26,7 +26,7 @@ public static class UserManagement
                 Id = context.Principal.FindFirstValue("sub"),
                 Name = context.Principal.FindFirstValue("name"),
                 Email = context.Principal.FindFirstValue("email"),
-                Picture = context.Principal.FindFirstValue("picture"),
+                // Picture is only set once the picture has been downloaded, below
                 LegacyApolloId = context.Principal.FindFirstValue("urn:londonbikers:legacyapolloid")
             };
 
@@ -54,19 +54,16 @@ public static class UserManagement
         // download their IDP-provided profile picture they're new or it's been updated
         var pictureClaimValue = context.Principal.FindFirstValue("picture");
 
-        // only update the picture if we have an inbound claim
-        if (pictureClaimValue.HasValue())
+        // only download the picture if we don't have it yet or it's changed, and not if an admin has removed it
+        if (UserServer.NeedsPictureDownload(user, pictureClaimValue))
         {
-            Log.Debug("UpdateUserFromClaimsAsync(): We have a picture claim");
-            Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture.HasValue(): {user.Picture.HasValue()}");
-            Log.Debug($"UpdateUserFromClaimsAsync(): user.PictureHostedUrl.HasValue(): {user.PictureHostedUrl.HasValue()}");
-            Log.Debug($"UpdateUserFromClaimsAsync(): user.Picture matches claim: {string.Equals(user.Picture, pictureClaimValue, StringComparison.OrdinalIgnoreCase)}");
+            Log.Debug("UpdateUserFromClaimsAsync(): About to download picture");
+            var previousPictureHostedUrl = user.PictureHostedUrl;
+            await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
 
-            // only update the picture if this is the first time we've got a picture or if the picture is different to the one we've already downloaded
-            if (!user.Picture.HasValue() || !user.PictureHostedUrl.HasValue() || !string.Equals(user.Picture, pictureClaimValue, StringComparison.OrdinalIgnoreCase))
+            // the download can fail, i.e. the picture isn't https, in which case there's nothing to save
+            if (user.PictureHostedUrl != previousPictureHostedUrl)
             {
-                Log.Debug("UpdateUserFromClaimsAsync(): About to download picture");
-                await Server.Instance.Users.DownloadAndStoreUserPictureAsync(user, pictureClaimValue);
                 updateNeeded = true;
                 Log.Debug("UpdateUserFromClaimsAsync(): Downloaded picture");
             }

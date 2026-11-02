@@ -47,6 +47,20 @@ namespace LB.PhotoGalleries.Areas.Admin.Controllers
             return View();
         }
 
+        // POST: /admin/users/removepicture/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RemovePicture(string id)
+        {
+            var user = await Server.Instance.Users.GetUserAsync(id);
+            if (user == null)
+                return NotFound();
+
+            await Server.Instance.Users.RemoveUserPictureAsync(user);
+            TempData["message"] = "Picture removed.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         // GET: /admin/users/delete/5
         public async Task<ActionResult> Delete(string id)
         {
