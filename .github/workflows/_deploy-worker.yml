@@ -2,7 +2,7 @@ name: Deploy Worker (reusable)
 
 # Builds LB.PhotoGalleries.Worker for linux-x64 and deploys it to the Worker host,
 # where it runs under supervisor as lb_photos_worker_<environment>.
-# Called by deploy-worker-staging.yml and deploy-worker-prod.yml.
+# Called by deploy-worker-test.yml and deploy-worker-prod.yml.
 #
 # Server-side settings live in <TARGET_DIR>/appsettings.<Environment>.json (passed to
 # the Worker as its first argument by the supervisor program). They are never part of
@@ -19,7 +19,7 @@ on:
   workflow_call:
     inputs:
       environment:
-        description: "staging or production"
+        description: "Server-side name: staging (the TEST Worker) or production"
         required: true
         type: string
 

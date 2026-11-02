@@ -11,7 +11,7 @@ This document tracks security issues, dependency updates, and technical improvem
   - [x] Update CI/CD pipelines (`dotnet-version: '10.0.x'`, publish paths `bin/Release/net10.0/publish`)
   - [x] Install the ASP.NET Core 10.0 runtime on the VPS servers (TEST and PROD), and the .NET 10.0 runtime for the Worker
         (2026-11-01: both VPSs switched to `ppa:dotnet/backports`, as packages.microsoft.com stopped at 9.0.4 for
-        Ubuntu 22.04; web and Worker deployed to TEST/STAGING and PROD on .NET 10)
+        Ubuntu 22.04; web and Worker deployed to TEST and PROD on .NET 10)
   - Not migrated: `LB.PhotoGalleries.TagsMigrator` (not in the solution, and already fails to build against the current `Image` model)
 
 - [ ] **Sign in with authorization code flow + PKCE** instead of hybrid flow
