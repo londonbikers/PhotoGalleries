@@ -33,6 +33,7 @@ public class Server
     public GalleryServer Galleries { get; private set; }
     public ImageServer Images { get; private set; }
     public UserServer Users { get; private set; }
+    public CommentServer Comments { get; private set; }
 
     /// <summary>
     /// Provides access to application configuration data, i.e. connection strings.
@@ -55,7 +56,8 @@ public class Server
             Categories = new CategoryServer(),
             Galleries = new GalleryServer(),
             Images = new ImageServer(),
-            Users = new UserServer()
+            Users = new UserServer(),
+            Comments = new CommentServer()
         };
 
         Log.Information("Server constructed");
@@ -102,6 +104,31 @@ public class Server
         Log.Debug($"Utilities.GetIdsByQueryAsync: Total request charge: {charge}. Total elapsed time: {elapsedTime.TotalMilliseconds} ms");
 
         return ids;
+    }
+
+    /// <summary>
+    /// Runs a query against a container and returns every result, following continuation tokens as needed.
+    /// </summary>
+    internal static async Task<List<T>> QueryAsync<T>(string containerName, QueryDefinition queryDefinition)
+    {
+        var container = Instance.Database.GetContainer(containerName);
+        var queryResult = container.GetItemQueryIterator<T>(queryDefinition);
+        var results = new List<T>();
+        double charge = 0;
+        TimeSpan elapsedTime = default;
+
+        while (queryResult.HasMoreResults)
+        {
+            var resultSet = await queryResult.ReadNextAsync();
+            results.AddRange(resultSet);
+            charge += resultSet.RequestCharge;
+            elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
+        }
+
+        Log.Debug($"Server.QueryAsync: {containerName} query: {queryDefinition.QueryText}");
+        Log.Debug($"Server.QueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
+
+        return results;
     }
     #endregion
 

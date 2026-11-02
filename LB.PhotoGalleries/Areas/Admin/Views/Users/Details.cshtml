@@ -78,7 +78,7 @@
             Number of comments
         </dt>
         <dd class="col-sm-10">
-            @commentsCount
+            <a asp-controller="Comments" asp-action="Index" asp-route-u="@Model.Id">@commentsCount</a>
         </dd>
 
     </dl>

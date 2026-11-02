@@ -83,6 +83,8 @@ public sealed class CosmosTheoryAttribute : TheoryAttribute
 public class CommentRow
 {
     public string CreatedByUserId { get; set; } = "";
+    public DateTime Created { get; set; }
+    public string? Text { get; set; }
 }
 
 public class GalleryRow

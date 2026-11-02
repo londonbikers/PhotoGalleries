@@ -152,7 +152,7 @@ public class UserServer
         if (searchString.HasValue())
             countQuery.WithParameter("@searchString", searchString);
 
-        var total = (await QueryAsync<int>(Constants.UsersContainerName, countQuery)).FirstOrDefault();
+        var total = (await Server.QueryAsync<int>(Constants.UsersContainerName, countQuery)).FirstOrDefault();
         var pagedResultSet = new PagedResultSet<User> { PageSize = pageSize, TotalResults = total };
 
         // don't let users try and request a page that doesn't exist
@@ -180,6 +180,18 @@ public class UserServer
 
         pagedResultSet.Results = await GetUsersByQueryAsync(queryDefinition);
         return pagedResultSet;
+    }
+
+    /// <summary>
+    /// Gets the users with the given ids. Ids of users that don't exist are ignored.
+    /// </summary>
+    public async Task<List<User>> GetUsersByIdsAsync(IReadOnlyCollection<string> userIds)
+    {
+        if (userIds.Count == 0)
+            return new List<User>();
+
+        var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE ARRAY_CONTAINS(@ids, c.id)").WithParameter("@ids", userIds);
+        return await GetUsersByQueryAsync(queryDefinition);
     }
 
     public async Task<int> GetUserGalleryCountAsync(User user)
@@ -220,7 +232,7 @@ public class UserServer
             queryDefinition.WithParameter("@userIds", userIds);
 
         foreach (var containerName in new[] { Constants.GalleriesContainerName, Constants.ImagesContainerName })
-            foreach (var userCommentCount in await QueryAsync<UserCommentCount>(containerName, queryDefinition))
+            foreach (var userCommentCount in await Server.QueryAsync<UserCommentCount>(containerName, queryDefinition))
                 commentCounts[userCommentCount.UserId] = commentCounts.GetValueOrDefault(userCommentCount.UserId) + userCommentCount.CommentCount;
 
         return commentCounts;
@@ -356,7 +368,7 @@ public class UserServer
         if (searchString.HasValue())
             stubsQuery.WithParameter("@searchString", searchString);
 
-        var stubs = await QueryAsync<UserStub>(Constants.UsersContainerName, stubsQuery);
+        var stubs = await Server.QueryAsync<UserStub>(Constants.UsersContainerName, stubsQuery);
         var commentCounts = await GetUserCommentCountsAsync();
         var orderedStubs = descending
             ? stubs.OrderByDescending(s => commentCounts.GetValueOrDefault(s.Id)).ThenByDescending(s => s.Created)
@@ -378,28 +390,6 @@ public class UserServer
         var users = await GetUsersByQueryAsync(usersQuery);
         pagedResultSet.Results = users.OrderBy(u => pageIds.IndexOf(u.Id)).ToList();
         return pagedResultSet;
-    }
-
-    private static async Task<List<T>> QueryAsync<T>(string containerName, QueryDefinition queryDefinition)
-    {
-        var container = Server.Instance.Database.GetContainer(containerName);
-        var queryResult = container.GetItemQueryIterator<T>(queryDefinition);
-        var results = new List<T>();
-        double charge = 0;
-        TimeSpan elapsedTime = default;
-
-        while (queryResult.HasMoreResults)
-        {
-            var resultSet = await queryResult.ReadNextAsync();
-            results.AddRange(resultSet);
-            charge += resultSet.RequestCharge;
-            elapsedTime += resultSet.Diagnostics.GetClientElapsedTime();
-        }
-
-        Log.Debug($"UserServer.QueryAsync: {containerName} query: {queryDefinition.QueryText}");
-        Log.Debug($"UserServer.QueryAsync: Total request charge: {charge}. Total elapsed time {elapsedTime.TotalMilliseconds} ms");
-
-        return results;
     }
     #endregion
 

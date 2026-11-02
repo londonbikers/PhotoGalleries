@@ -1,0 +1,11 @@
+@model int
+@* a page size picker for paged admin lists, to go inside the list's GET filter form. changing it re-submits the form, which starts back at page 1 *@
+<div class="col-auto">
+    <label class="sr-only" for="n">Per page:</label>
+    <select name="n" id="n" class="custom-select mb-2" onchange="this.form.submit()" title="Results per page">
+        @foreach (var size in Helpers.AdminPageSizes)
+        {
+            <option value="@size" selected="@(size == Model)">@size per page</option>
+        }
+    </select>
+</div>
