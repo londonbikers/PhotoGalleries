@@ -79,6 +79,9 @@ public class UserServer
             await Server.Instance.Images.UpdateImageAsync(image);
         }
 
+        // delete their picture too, as it's their personal data
+        await DeleteHostedPictureAsync(user);
+
         // delete the user
         var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);
         var result = await container.DeleteItemAsync<User>(user.Id, new PartitionKey(user.PartitionKey));
@@ -246,7 +249,7 @@ public class UserServer
     /// <param name="originalPictureUrl">The URL for the original version of the picture.</param>
     public async Task DownloadAndStoreUserPictureAsync(User user, string originalPictureUrl)
     {
-        if (user.Picture.HasValue() && user.Picture.Equals(originalPictureUrl, StringComparison.CurrentCultureIgnoreCase))
+        if (!NeedsPictureDownload(user, originalPictureUrl))
             return;
 
         // Security: Validate the picture URL before downloading to prevent SSRF attacks
@@ -266,16 +269,8 @@ public class UserServer
         // picture URL is different, download and store it
         var containerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageUserPicturesContainerName);
 
-        // delete any old version we have currently
-        string fileId;
-        if (user.PictureHostedUrl.HasValue())
-        {
-            fileId = user.PictureHostedUrl.Substring(user.PictureHostedUrl.LastIndexOf('/') + 1);
-            await containerClient.DeleteBlobIfExistsAsync(fileId);
-        }
-
         // download it and store the original picture
-        fileId = $"{user.Id}-{DateTime.Now.Ticks}.jpg";
+        var fileId = $"{user.Id}-{DateTime.Now.Ticks}.jpg";
         using var client = new HttpClient();
 
         // Security: Set reasonable timeout and size limits to prevent resource exhaustion
@@ -316,17 +311,70 @@ public class UserServer
             }
 
             await containerClient.UploadBlobAsync(fileId, imageStream);
+
+            // only delete the old version once the new one is stored, so a failed download doesn't leave them with a broken picture
+            await DeleteHostedPictureAsync(user);
             user.PictureHostedUrl = containerClient.Uri + "/" + fileId;
             user.Picture = originalPictureUrl;
+
+            // they've got a new picture, so any picture an admin removed no longer matters
+            user.RemovedPictureUrl = null;
         }
         catch (Exception e)
         {
             Log.Debug($"UserServer.DownloadAndStoreUserPictureAsync() - Exception downloading/uploading: {e.Message}");
         }
     }
+
+    /// <summary>
+    /// Works out if a user's picture from their identity provider needs downloading, i.e. we don't have a copy of it yet,
+    /// or it's changed since we downloaded it. A picture an admin has removed is never downloaded again.
+    /// </summary>
+    /// <param name="user">The user the picture is for.</param>
+    /// <param name="pictureUrl">The URL of the user's current picture at their identity provider.</param>
+    public static bool NeedsPictureDownload(User user, string pictureUrl)
+    {
+        if (!pictureUrl.HasValue())
+            return false;
+
+        if (string.Equals(pictureUrl, user.RemovedPictureUrl, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return !user.PictureHostedUrl.HasValue() || !string.Equals(pictureUrl, user.Picture, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Removes a user's picture, i.e. if it's inappropriate. It won't come back when they next sign in,
+    /// but if they change their picture at their identity provider, the new one will be used.
+    /// </summary>
+    public async Task RemoveUserPictureAsync(User user)
+    {
+        if (user == null)
+            throw new ArgumentNullException(nameof(user));
+
+        await DeleteHostedPictureAsync(user);
+
+        // remember which picture was removed, so it isn't downloaded again when they next sign in
+        if (user.Picture.HasValue())
+            user.RemovedPictureUrl = user.Picture;
+
+        user.Picture = null;
+        user.PictureHostedUrl = null;
+        await CreateOrUpdateUserAsync(user);
+    }
     #endregion
 
     #region private methods
+    private static async Task DeleteHostedPictureAsync(User user)
+    {
+        if (!user.PictureHostedUrl.HasValue())
+            return;
+
+        var containerClient = Server.Instance.BlobServiceClient.GetBlobContainerClient(Constants.StorageUserPicturesContainerName);
+        var fileId = user.PictureHostedUrl.Substring(user.PictureHostedUrl.LastIndexOf('/') + 1);
+        await containerClient.DeleteBlobIfExistsAsync(fileId);
+    }
+
     private static async Task<List<User>> GetUsersByQueryAsync(QueryDefinition queryDefinition)
     {
         var container = Server.Instance.Database.GetContainer(Constants.UsersContainerName);

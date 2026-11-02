@@ -31,6 +31,13 @@ public class User
     public string PictureHostedUrl { get; set; }
 
     /// <summary>
+    /// The original URL of a picture an admin has removed. It won't be downloaded again when the user signs in,
+    /// but a different picture from their identity provider will be.
+    /// </summary>
+    [DisplayName("Removed Picture URL")]
+    public string RemovedPictureUrl { get; set; }
+
+    /// <summary>
     /// The email address of the user.
     /// </summary>
     public string Email { get; set; }
