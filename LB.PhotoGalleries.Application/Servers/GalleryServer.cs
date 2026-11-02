@@ -7,6 +7,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries.Application.Servers;
@@ -26,6 +27,31 @@ public class GalleryServer
         var response = await container.ReadItemAsync<Gallery>(galleryId, new PartitionKey(categoryId));
         Log.Debug($"GalleryServer:GetGalleryAsync: Request charge: {response.RequestCharge}. Elapsed time: {response.Diagnostics.GetClientElapsedTime()} ms");
         return response.Resource;
+    }
+
+    /// <summary>
+    /// Gets a gallery, even if it's no longer in the category given, i.e. it's been moved since a link to it was made.
+    /// Looks in the given category first, as that's the cheapest way to get a gallery, then looks across all categories.
+    /// </summary>
+    /// <param name="categoryId">The category the gallery is expected to be in, or null if that's not known.</param>
+    /// <param name="galleryId">The unique identifier for the gallery.</param>
+    /// <returns>The gallery, or null if there's no gallery with that id in any category.</returns>
+    public async Task<Gallery> FindGalleryAsync(string categoryId, string galleryId)
+    {
+        if (categoryId.HasValue())
+        {
+            try
+            {
+                return await GetGalleryAsync(categoryId, galleryId);
+            }
+            catch (CosmosException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                Log.Debug($"GalleryServer.FindGalleryAsync: Gallery {galleryId} isn't in category {categoryId}, looking in all categories");
+            }
+        }
+
+        var queryDefinition = new QueryDefinition("SELECT * FROM c WHERE c.id = @galleryId").WithParameter("@galleryId", galleryId);
+        return (await Server.QueryAsync<Gallery>(Constants.GalleriesContainerName, queryDefinition)).FirstOrDefault();
     }
 
     public async Task<Gallery> GetGalleryByLegacyNumIdAsync(int galleryLegacyId)

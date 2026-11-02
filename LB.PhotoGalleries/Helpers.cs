@@ -157,6 +157,25 @@ public class Helpers
     }
 
     /// <summary>
+    /// Turns a site-relative path, i.e. from Url.Action(), into an absolute URL on the configured base URL.
+    /// </summary>
+    public static string GetAbsoluteUrl(IConfiguration config, string path)
+    {
+        return config["BaseUrl"].TrimEnd('/') + "/" + path.TrimStart('/');
+    }
+
+    /// <summary>
+    /// Works out if a name in a URL, i.e. a gallery or image name, is the canonical one for an object's actual name.
+    /// Names are only in URLs for readability and aren't used to find objects, so any name would otherwise serve the same page.
+    /// </summary>
+    /// <param name="urlName">The name from the URL, as decoded by routing.</param>
+    /// <param name="name">The object's actual name.</param>
+    public static bool IsCanonicalUrlName(string urlName, string name)
+    {
+        return string.Equals(urlName, EncodeParamForUrl(name ?? string.Empty), StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Returns the absolute URL of an image.
     /// </summary>
     public static string GetFullImageUrl(IConfiguration config, Image image)

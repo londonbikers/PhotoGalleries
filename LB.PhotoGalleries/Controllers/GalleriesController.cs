@@ -29,12 +29,23 @@ public class GalleriesController : Controller
         ViewData["Configuration"] = _configuration;
         var decodedCategoryName = Helpers.DecodeParameterFromUrl(categoryName);
         var category = Server.Instance.Categories.Categories.SingleOrDefault(c => c.Name.Equals(decodedCategoryName, StringComparison.CurrentCultureIgnoreCase));
+
+        // the gallery may have moved category, or the category been renamed, since the link was made, so look for it in any category
+        var gallery = await Server.Instance.Galleries.FindGalleryAsync(category?.Id, galleryId);
+        if (gallery == null)
+            return RedirectToAction("Index");
+
+        category = Server.Instance.Categories.GetCategory(gallery.CategoryId);
         if (category == null)
             return RedirectToAction("Index");
 
-        var gallery = await Server.Instance.Galleries.GetGalleryAsync(category.Id, galleryId);
-        if (gallery == null)
-            return RedirectToAction("Index");
+        // the names are only there for readability, so send any other names to the canonical url to avoid duplicate pages
+        var canonicalPath = Url.Action("Details", "Galleries", new { categoryName = Helpers.EncodeParamForUrl(category.Name), galleryId = gallery.Id, name = Helpers.EncodeParamForUrl(gallery.Name) });
+        if (!Helpers.IsCanonicalUrlName(categoryName, category.Name) || !Helpers.IsCanonicalUrlName(name, gallery.Name))
+            return RedirectPermanent(canonicalPath + Request.QueryString);
+
+        var canonicalUrl = Helpers.GetAbsoluteUrl(_configuration, canonicalPath);
+        ViewData["canonicalUrl"] = canonicalUrl;
 
         var images = Utilities.OrderImages(await Server.Instance.Images.GetGalleryImagesAsync(gallery.Id)).ToList();
         ViewData["images"] = images;
@@ -56,7 +67,7 @@ public class GalleriesController : Controller
         ViewData["megapixels"] = megapixels;
 
         // build the open-graph model to enable great presentation when pages are indexed/shared
-        var openGraphModel = new OpenGraphModel {Title = gallery.Name, Url = Request.GetRawUrl().AbsoluteUri};
+        var openGraphModel = new OpenGraphModel {Title = gallery.Name, Url = canonicalUrl};
         if (images.Count > 0)
         {
             var image = images.SingleOrDefault(i => i.Position == 0) ?? images[0];

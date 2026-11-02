@@ -382,6 +382,48 @@ body {
     /* empty class used to linkify user-supplied content */
 }
 
+/* briefly highlights a comment someone has followed a link to, i.e. from a notification email. see FocusLinkedComment() */
+/* a dark border that softens to a light grey one and stays, so the comment can still be found after looking around the page.
+   comments can run the full width of the screen, so the border is drawn inside them at the sides (in the column padding)
+   and in the gap between comments at the top and bottom, on a layer of its own so nothing moves when it appears. */
+.comment {
+    position: relative;
+}
+
+.comment-focus::before,
+.comment-focus::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: 5px;
+    right: 5px;
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+/* the light border that stays */
+.comment-focus::before {
+    border: 1px solid #c8c8c8;
+}
+
+/* the dark border on top, which fades away to reveal the light one. only its opacity is animated, which browsers
+   can do smoothly. animating the border's width or colour instead steps, as widths snap to whole pixels. */
+.comment-focus::after {
+    border: 2px solid #212529;
+    opacity: 0;
+    animation: comment-focus 4s ease-out;
+}
+
+@keyframes comment-focus {
+    0%, 40% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 .comment-user-pic {
     float: left;
     margin-right: 10px;
