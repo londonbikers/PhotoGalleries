@@ -491,3 +491,11 @@ img.image-fade, .image-fade img {
     border: 1px solid #ccc;
     border-radius: 10px;
 }
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.map-frame {
+    border: solid 1px #ccc;
+}

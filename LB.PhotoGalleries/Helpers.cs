@@ -280,3 +280,13 @@ public static class HttpRequestExtensions
         return new Uri(url);
     }
 }
+
+public static class HttpContextExtensions
+{
+    public const string CspNonceKey = "CspNonce";
+
+    /// <summary>
+    /// The Content-Security-Policy nonce for this request. Inline script blocks must carry it, i.e. &lt;script nonce="@Context.GetCspNonce()"&gt;.
+    /// </summary>
+    public static string GetCspNonce(this HttpContext context) => context.Items[CspNonceKey] as string;
+}
