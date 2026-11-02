@@ -520,6 +520,17 @@ public class GalleryServer
     #endregion
 
     #region internal methods
+    /// <summary>
+    /// Gets the galleries a user created or has commented on.
+    /// </summary>
+    internal async Task<List<Gallery>> GetGalleriesUserIsInvolvedInAsync(string userId)
+    {
+        // Comments is an array, so it has to be searched with EXISTS. c.Comments.CreatedByUserId is undefined and never matches.
+        const string query = "SELECT * FROM c WHERE c.CreatedByUserId = @userId OR EXISTS (SELECT VALUE cm FROM cm IN c.Comments WHERE cm.CreatedByUserId = @userId)";
+        var queryDefinition = new QueryDefinition(query).WithParameter("@userId", userId);
+        return await GetGalleriesByQueryAsync(queryDefinition);
+    }
+
     internal async Task<int> GetGalleriesScalarByQueryAsync(QueryDefinition queryDefinition)
     {
         if (queryDefinition == null)

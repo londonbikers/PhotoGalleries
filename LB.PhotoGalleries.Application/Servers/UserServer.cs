@@ -53,10 +53,7 @@ public class UserServer
             throw new ArgumentNullException(nameof(user));
 
         // get galleries where the user has been involved in some way (author/comments)
-        // Comments is an array, so it has to be searched with EXISTS. c.Comments.CreatedByUserId is undefined and never matches.
-        var query = "SELECT * FROM c WHERE c.CreatedByUserId = @userId OR EXISTS (SELECT VALUE cm FROM cm IN c.Comments WHERE cm.CreatedByUserId = @userId)";
-        var queryDefinition = new QueryDefinition(query).WithParameter("@userId", user.Id);
-        var galleries = await Server.Instance.Galleries.GetGalleriesByQueryAsync(queryDefinition);
+        var galleries = await Server.Instance.Galleries.GetGalleriesUserIsInvolvedInAsync(user.Id);
 
         // go through the galleries and look for user references and remove them then update the gallery
         foreach (var gallery in galleries)
