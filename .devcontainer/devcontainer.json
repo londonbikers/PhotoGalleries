@@ -6,7 +6,9 @@
   "features": {
     // Lets Add-Secrets.ps1 run unchanged inside the container.
     "ghcr.io/devcontainers/features/powershell:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Azure CLI, for working with the Cosmos DB and Storage accounts.
+    "ghcr.io/devcontainers/features/azure-cli:1": {}
   },
 
   "mounts": [
@@ -15,7 +17,9 @@
     // Cache NuGet packages across rebuilds.
     "source=photogalleries-nuget,target=/home/vscode/.nuget/packages,type=volume",
     // Claude Code login, settings and history, kept across rebuilds (see CLAUDE_CONFIG_DIR below).
-    "source=photogalleries-claude,target=/home/vscode/.claude,type=volume"
+    "source=photogalleries-claude,target=/home/vscode/.claude,type=volume",
+    // Azure CLI sign-in, kept across rebuilds.
+    "source=photogalleries-azure,target=/home/vscode/.azure,type=volume"
   ],
 
   "containerEnv": {
@@ -24,7 +28,7 @@
   },
 
   // Named volumes are created root-owned; hand them to the dev user, then generate a dev HTTPS cert and restore.
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.microsoft /home/vscode/.nuget /home/vscode/.claude && dotnet dev-certs https && dotnet restore LB.PhotoGalleries.sln",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.microsoft /home/vscode/.nuget /home/vscode/.claude /home/vscode/.azure && dotnet dev-certs https && dotnet restore LB.PhotoGalleries.sln",
 
   "forwardPorts": [44343],
   "portsAttributes": {
