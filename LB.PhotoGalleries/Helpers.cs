@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
@@ -197,6 +198,20 @@ public class Helpers
     {
         var galleryUrl = GetFullGalleryUrl(config, gallery);
         return $"{galleryUrl}#c{commentCreated.Ticks}";
+    }
+
+    /// <summary>
+    /// JSON settings for data written into a page's script blocks. Escapes &lt;, &gt;, &amp; and quotes as \u sequences, so a
+    /// value containing &lt;/script&gt; can't end the script block and inject markup.
+    /// </summary>
+    public static readonly JsonSerializerSettings ScriptJsonSettings = new() { StringEscapeHandling = StringEscapeHandling.EscapeHtml };
+
+    /// <summary>
+    /// Serialises a value as JSON that's safe to write into a script block, i.e. var payload = @Helpers.ToScriptJson(model);
+    /// </summary>
+    public static IHtmlContent ToScriptJson(object value)
+    {
+        return new HtmlString(JsonConvert.SerializeObject(value, ScriptJsonSettings));
     }
 
     /// <summary>

@@ -174,7 +174,7 @@
         $(document).ready(function () {
 
             // payload
-            const files = @Html.Raw(JsonConvert.SerializeObject(Model.Files));
+            const files = @Helpers.ToScriptJson(Model.Files);
 
             // display the right size image for the pixel density of the display, i.e. retina images need to be requested bigger than the intended display size.
             const scaledWidth = 550 * window.devicePixelRatio;

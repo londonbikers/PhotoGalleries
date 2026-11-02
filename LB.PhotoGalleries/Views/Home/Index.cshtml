@@ -105,7 +105,7 @@
         // convert the gallery server objects into a new lightweight object to aid with rendering of the gallery grid
         // and convert to json so the Knockout script can parse it and use it.
 
-        var featured_payload = @Html.Raw(JsonConvert.SerializeObject(featuredGalleries.Results.Select(g => new
+        var featured_payload = @Helpers.ToScriptJson(featuredGalleries.Results.Select(g => new
         {
             g.CategoryId,
             g.Id,
@@ -114,9 +114,9 @@
             g.ImageCount,
             g.CommentCount,
             CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name
-        })));
+        }));
 
-        var latest_payload = @Html.Raw(JsonConvert.SerializeObject(latestGalleries.Select(g => new
+        var latest_payload = @Helpers.ToScriptJson(latestGalleries.Select(g => new
                       {
                           g.CategoryId,
                           g.Id,
@@ -125,7 +125,7 @@
                           g.ImageCount,
                           g.CommentCount,
                           CategoryName = Server.Instance.Categories.Categories.Single(c => c.Id == g.CategoryId).Name
-                      })));
+                      }));
 
         // the view model that knockout uses to bind data to the html
         function ViewModel() {

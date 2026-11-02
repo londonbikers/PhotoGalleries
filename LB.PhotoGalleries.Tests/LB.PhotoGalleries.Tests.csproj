@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LB.PhotoGalleries.Shared\LB.PhotoGalleries.Shared.csproj" />
+    <ProjectReference Include="..\LB.PhotoGalleries\LB.PhotoGalleries.csproj" />
   </ItemGroup>
 
 </Project>

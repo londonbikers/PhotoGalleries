@@ -4,7 +4,7 @@
 @{
     var query = (string)ViewData["query"];
     ViewData["Title"] = $"Search for {query}";
-    var categoriesJson = Model.CategoryResults != null ? JsonConvert.SerializeObject(Model.CategoryResults.Select(c => new { c.Name })) : null;
+    var categoriesJson = Model.CategoryResults != null ? JsonConvert.SerializeObject(Model.CategoryResults.Select(c => new { c.Name }), Helpers.ScriptJsonSettings) : null;
     var galleriesJson = (string)ViewData["galleriesJson"];
     var imagesJson = (string)ViewData["imagesJson"];
 }

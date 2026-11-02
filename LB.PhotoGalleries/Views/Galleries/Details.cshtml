@@ -162,7 +162,7 @@
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.
-        const payload = @Html.Raw(JsonConvert.SerializeObject(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Comments.Count})));
+        const payload = @Helpers.ToScriptJson(images.Select(i => new {i.Id, i.GalleryId, i.Name, i.Metadata.Width, i.Metadata.Height, i.Files, i.Comments.Count}));
         const galleryId = '@Model.Id';
 
         // the view model that knockout uses to bind data to the html
