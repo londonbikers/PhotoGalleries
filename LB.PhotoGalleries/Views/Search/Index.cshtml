@@ -139,7 +139,7 @@
 {
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
-    <script type="text/javascript">
+    <script nonce="@Context.GetCspNonce()">
 
     // convert the category, gallery and image server objects into lightweight objects to aid with their rendering
     // and convert to json so the Knockout script can parse it and use them.

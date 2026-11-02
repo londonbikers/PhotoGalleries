@@ -329,7 +329,7 @@
     <script src="~/lib/linkify/linkify-jquery.min.js"></script>
     <script src="~/lib/jquery-touchswipe/jquery.touchSwipe.min.js"></script>
 
-    <script language="javascript">
+    <script nonce="@Context.GetCspNonce()">
 
         function GetImageSrc(image, imageContainerWidth, imageContainerHeight) {
             const dims = GetDpiScaledImageDimensions(image, imageContainerWidth, imageContainerHeight);

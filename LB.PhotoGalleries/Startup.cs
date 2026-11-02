@@ -18,10 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace LB.PhotoGalleries;
@@ -35,13 +37,18 @@ public class Startup
 
     public IConfiguration Configuration { get; }
 
-    private const string ContentSecurityPolicy =
+    // inline <script> blocks must carry the per-request nonce (HttpContext.GetCspNonce()).
+    // 'unsafe-eval' is still needed: knockout evaluates data-bind expressions with new Function().
+    // inline style attributes are only allowed for exactly "display: none;" (by hash, with 'unsafe-hashes'), the initial
+    // state for elements jquery's show() and knockout's visible binding reveal. any other styling belongs in site.css.
+    private static string GetContentSecurityPolicy(string nonce) =>
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdnjs.cloudflare.com https://js.monitor.azure.com; " +
-        "style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net; " +
-        "img-src 'self' https:; " +
+        $"script-src 'self' 'nonce-{nonce}' 'unsafe-eval' https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://js.monitor.azure.com; " +
+        "style-src 'self' 'unsafe-hashes' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' https://stackpath.bootstrapcdn.com https://cdn.jsdelivr.net; " +
+        "img-src 'self' https: data:; " +
         "font-src 'self' https://cdn.jsdelivr.net; " +
         "connect-src 'self' https://dc.services.visualstudio.com https://stackpath.bootstrapcdn.com; " +
+        "frame-src https://www.google.com; " +
         "frame-ancestors 'none'";
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -222,7 +229,9 @@ public class Startup
             // keep in step with the scripts, styles and CDNs the views use. frame-ancestors 'none' takes
             // precedence over X-Frame-Options in modern browsers. report-only in development so the
             // scripts dev tooling injects (e.g. browser refresh) aren't blocked; violations show in the console.
-            headers[env.IsDevelopment() ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy"] = ContentSecurityPolicy;
+            var nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+            context.Items[HttpContextExtensions.CspNonceKey] = nonce;
+            headers[env.IsDevelopment() ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy"] = GetContentSecurityPolicy(nonce);
 
             await next();
         });

@@ -44,7 +44,7 @@
                 }
                 &#8729 @images.Count Photos
                 &#8729
-                <span style="white-space: nowrap;">
+                <span class="text-nowrap">
                     <a href="#comments">@commentCount<text> Comments</text></a>
                 </span>
                 @if (User.IsInRole(Roles.Administrator.ToString()) || User.IsInRole(Roles.Photographer.ToString()))
@@ -158,7 +158,7 @@
     <script src="~/lib/linkify/linkify.min.js"></script>
     <script src="~/lib/linkify/linkify-jquery.min.js"></script>
 
-    <script type="text/javascript">
+    <script nonce="@Context.GetCspNonce()">
 
         // convert the big image documents into a new lightweight object to aid with rendering the image grid
         // and convert to json so the Knockout script can parse it and use it.

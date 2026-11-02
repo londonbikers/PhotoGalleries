@@ -18,7 +18,7 @@
 
 <h1>Edit Image</h1>
 
-<div id="reprocessed-metadata-banner" class="mt-1 alert alert-success" role="alert" style="display: none">
+<div id="reprocessed-metadata-banner" class="mt-1 alert alert-success" role="alert" style="display: none;">
     Image metadata is now being reprocessed!
 </div>
 
@@ -123,7 +123,7 @@
     </div>
     <div class="col">
 
-        <img id="preview-image" alt="@Model.Name" width="550" style="margin-bottom: 20px;" class="img-thumbnail" />
+        <img id="preview-image" alt="@Model.Name" width="550" class="img-thumbnail mb-20" />
 
         <dl class="row">
             <dt class="col-sm-10">
@@ -262,7 +262,7 @@
                 width="550"
                 height="450"
                 frameborder="0" 
-                style="border: solid 1px #ccc"
+                class="map-frame"
                 src="https://www.google.com/maps/embed/v1/view?key=@mapsKey&center=@Model.Metadata.LocationLatitude.Value,@Model.Metadata.LocationLongitude.Value&zoom=18" allowfullscreen>
             </iframe>
         }
@@ -272,7 +272,7 @@
                 width="550"
                 height="450"
                 frameborder="0" 
-                style="border: solid 1px #ccc"
+                class="map-frame"
                 src="https://www.google.com/maps/embed/v1/place?key=@mapsKey&q=@Model.Metadata.CombinedLocation&zoom=18" allowfullscreen>
             </iframe>
         }
@@ -287,7 +287,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
     <script src="~/lib/knockout/dist/knockout-3.5.1.js"></script>
 
-    <script type="text/javascript">
+    <script nonce="@Context.GetCspNonce()">
 
         function ViewModel() {
             const vm = this;
